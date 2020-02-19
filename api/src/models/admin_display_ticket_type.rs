@@ -56,11 +56,11 @@ impl AdminDisplayTicketType {
             None => None,
         };
 
-        let mut result = AdminDisplayTicketType {
+        let result = AdminDisplayTicketType {
             id: ticket_type.id,
             name: ticket_type.name.clone(),
             description: ticket_type.description.clone(),
-            status: ticket_type.status,
+            status: ticket_type.status(false, conn)?,
             start_date: ticket_type
                 .start_date
                 .and_then(|sd| if sd <= times::zero() { None } else { Some(sd) }),
@@ -81,33 +81,6 @@ impl AdminDisplayTicketType {
             web_sales_enabled: ticket_type.web_sales_enabled,
             box_office_sales_enabled: ticket_type.box_office_sales_enabled,
         };
-
-        let current_ticket_pricing = ticket_type.current_ticket_pricing(false, conn).optional()?;
-
-        if ticket_type.status == TicketTypeStatus::Published {
-            if result.available == 0 {
-                result.status = TicketTypeStatus::SoldOut;
-            } else {
-                if current_ticket_pricing.is_none() {
-                    result.status = TicketTypeStatus::NoActivePricing;
-                    let min_pricing = ticket_pricings.iter().min_by_key(|p| p.start_date);
-                    let max_pricing = ticket_pricings.iter().max_by_key(|p| p.end_date);
-
-                    if min_pricing
-                        .map(|p| p.start_date)
-                        .unwrap_or(ticket_type.start_date(conn)?)
-                        > dates::now().finish()
-                    {
-                        result.status = TicketTypeStatus::OnSaleSoon;
-                    }
-
-                    if max_pricing.map(|p| p.end_date).unwrap_or(ticket_type.end_date(conn)?) < dates::now().finish() {
-                        result.status = TicketTypeStatus::SaleEnded;
-                    }
-                }
-            }
-        }
-
         Ok(result)
     }
 }

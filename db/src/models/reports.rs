@@ -574,15 +574,6 @@ impl TicketCountRow {
 }
 
 impl Report {
-    pub fn schedule_domain_actions(conn: &PgConnection) -> Result<(), DatabaseError> {
-        // Settlements weekly domain event
-        if Report::upcoming_automatic_report_domain_action(conn)?.is_none() {
-            Report::create_next_automatic_report_domain_action(conn)?
-        }
-
-        Ok(())
-    }
-
     pub fn find_event_reports_for_processing(
         conn: &PgConnection,
     ) -> Result<HashMap<ReportTypes, Vec<Event>>, DatabaseError> {
@@ -628,19 +619,10 @@ impl Report {
             + Duration::days(1))
     }
 
-    pub fn upcoming_automatic_report_domain_action(conn: &PgConnection) -> Result<Option<DomainAction>, DatabaseError> {
-        Ok(DomainAction::find_by_resource(
-            None,
-            None,
-            DomainActionTypes::SendAutomaticReportEmails,
-            DomainActionStatus::Pending,
-            conn,
-        )?
-        .pop())
-    }
-
     pub fn create_next_automatic_report_domain_action(conn: &PgConnection) -> Result<(), DatabaseError> {
-        if let Some(upcoming_domain_action) = Report::upcoming_automatic_report_domain_action(conn)? {
+        if let Some(upcoming_domain_action) =
+            DomainAction::upcoming_domain_action(None, None, DomainActionTypes::SendAutomaticReportEmails, conn)?
+        {
             if upcoming_domain_action.scheduled_at > Utc::now().naive_utc() {
                 return DatabaseError::business_process_error("Settlement processing domain action is already pending");
             }

@@ -111,9 +111,12 @@ impl Code {
                 .to_db_error(ErrorCode::QueryError, "Could not load code with that redeem code")?,
         };
 
-        let available = code.max_uses - Code::find_number_of_uses(code.id, None, conn)?;
-
+        let available = code.available(conn)?;
         Ok(CodeAvailability { code, available })
+    }
+
+    pub fn available(&self, conn: &PgConnection) -> Result<i64, DatabaseError> {
+        Ok(self.max_uses - Code::find_number_of_uses(self.id, None, conn)?)
     }
 
     pub fn find_number_of_uses(

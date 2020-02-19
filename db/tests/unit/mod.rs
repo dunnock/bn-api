@@ -18,6 +18,7 @@ pub mod external_logins;
 pub mod fee_schedule_ranges;
 pub mod fee_schedules;
 pub mod genres;
+pub mod global;
 pub mod holds;
 pub mod notes;
 pub mod order_items;

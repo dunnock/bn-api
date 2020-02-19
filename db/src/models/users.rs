@@ -147,6 +147,24 @@ impl NewUser {
 }
 
 impl User {
+    pub fn is_attending_event(user_id: Uuid, event_id: Uuid, conn: &PgConnection) -> Result<bool, DatabaseError> {
+        use schema::*;
+        select(exists(
+            wallets::table
+                .inner_join(ticket_instances::table.on(ticket_instances::wallet_id.eq(wallets::id)))
+                .inner_join(assets::table.on(ticket_instances::asset_id.eq(assets::id)))
+                .inner_join(ticket_types::table.on(assets::ticket_type_id.eq(ticket_types::id)))
+                .filter(
+                    ticket_instances::status
+                        .eq_any(vec![TicketInstanceStatus::Redeemed, TicketInstanceStatus::Purchased]),
+                )
+                .filter(wallets::user_id.eq(user_id))
+                .filter(ticket_types::event_id.eq(event_id)),
+        ))
+        .get_result(conn)
+        .to_db_error(ErrorCode::QueryError, "Could not check if user is attending event")
+    }
+
     pub fn all(paging: &PagingParameters, conn: &PgConnection) -> Result<(Vec<User>, i64), DatabaseError> {
         DatabaseError::wrap(
             ErrorCode::QueryError,

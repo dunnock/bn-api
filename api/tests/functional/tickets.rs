@@ -516,7 +516,7 @@ fn ticket_transfer_authorization() {
     )
     .unwrap();
 
-    let tickets = cart.tickets(ticket_type.id, conn).unwrap();
+    let tickets = cart.tickets(None, conn).unwrap();
     //Try transfer before paying for the tickets
     let mut ticket_transfer_request = TransferTicketRequest {
         ticket_ids: vec![tickets[0].id, tickets[1].id],

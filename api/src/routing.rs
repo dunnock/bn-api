@@ -50,6 +50,9 @@ pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
         r.method(Method::PUT).with(cart::replace_cart);
         r.method(Method::GET).with(cart::show);
     })
+    .resource("/cart/{id}/duplicate", |r| {
+        r.method(Method::POST).with(cart::duplicate);
+    })
     .resource("/cart/clear_invalid_items", |r| {
         r.method(Method::DELETE).with(cart::clear_invalid_items);
     })

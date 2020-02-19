@@ -136,69 +136,6 @@ fn find_event_reports_for_processing() {
 }
 
 #[test]
-fn schedule_domain_actions() {
-    let project = TestProject::new();
-    let connection = project.get_connection();
-    let domain_actions = &DomainAction::find_by_resource(
-        None,
-        None,
-        DomainActionTypes::SendAutomaticReportEmails,
-        DomainActionStatus::Pending,
-        connection,
-    )
-    .unwrap();
-    assert_eq!(0, domain_actions.len());
-
-    // Schedule domain action
-    Report::schedule_domain_actions(connection).unwrap();
-    let domain_actions = &DomainAction::find_by_resource(
-        None,
-        None,
-        DomainActionTypes::SendAutomaticReportEmails,
-        DomainActionStatus::Pending,
-        connection,
-    )
-    .unwrap();
-    assert_eq!(1, domain_actions.len());
-
-    // No change since action exists
-    Report::schedule_domain_actions(connection).unwrap();
-    let domain_actions = &DomainAction::find_by_resource(
-        None,
-        None,
-        DomainActionTypes::SendAutomaticReportEmails,
-        DomainActionStatus::Pending,
-        connection,
-    )
-    .unwrap();
-    assert_eq!(1, domain_actions.len());
-
-    // Delete action
-    domain_actions[0].set_done(connection).unwrap();
-    let domain_actions = &DomainAction::find_by_resource(
-        None,
-        None,
-        DomainActionTypes::SendAutomaticReportEmails,
-        DomainActionStatus::Pending,
-        connection,
-    )
-    .unwrap();
-    assert_eq!(0, domain_actions.len());
-
-    // Added back as it was no longer there (the job creates the next domain action normally)
-    Report::schedule_domain_actions(connection).unwrap();
-    let domain_actions = &DomainAction::find_by_resource(
-        None,
-        None,
-        DomainActionTypes::SendAutomaticReportEmails,
-        DomainActionStatus::Pending,
-        connection,
-    )
-    .unwrap();
-    assert_eq!(1, domain_actions.len());
-}
-
-#[test]
 fn next_automatic_report_date() {
     let project = TestProject::new();
     let connection = project.get_connection();
@@ -225,34 +162,20 @@ fn next_automatic_report_date() {
 }
 
 #[test]
-fn upcoming_automatic_report_domain_action() {
-    let project = TestProject::new();
-    let connection = project.get_connection();
-    Report::create_next_automatic_report_domain_action(connection).unwrap();
-    let upcoming_automatic_report_domain_action = Report::upcoming_automatic_report_domain_action(connection).unwrap();
-    assert!(upcoming_automatic_report_domain_action.is_some());
-
-    // Mark as done
-    upcoming_automatic_report_domain_action
-        .unwrap()
-        .set_done(connection)
-        .unwrap();
-    let upcoming_automatic_report_domain_action = Report::upcoming_automatic_report_domain_action(connection).unwrap();
-    assert!(upcoming_automatic_report_domain_action.is_none());
-}
-
-#[test]
 fn create_next_automatic_report_domain_action() {
     let project = TestProject::new();
     let connection = project.get_connection();
-    assert!(Report::upcoming_automatic_report_domain_action(connection)
-        .unwrap()
-        .is_none());
+    assert!(
+        DomainAction::upcoming_domain_action(None, None, DomainActionTypes::SendAutomaticReportEmails, connection)
+            .unwrap()
+            .is_none()
+    );
 
     Report::create_next_automatic_report_domain_action(connection).unwrap();
-    let domain_action = Report::upcoming_automatic_report_domain_action(connection)
-        .unwrap()
-        .unwrap();
+    let domain_action =
+        DomainAction::upcoming_domain_action(None, None, DomainActionTypes::SendAutomaticReportEmails, connection)
+            .unwrap()
+            .unwrap();
     assert_eq!(
         domain_action.scheduled_at,
         Report::next_automatic_report_date().unwrap()

@@ -222,7 +222,12 @@ impl Organization {
         settlement_period_in_days: Option<u32>,
         conn: &PgConnection,
     ) -> Result<(), DatabaseError> {
-        if let Some(upcoming_domain_action) = self.upcoming_settlement_domain_action(conn)? {
+        if let Some(upcoming_domain_action) = DomainAction::upcoming_domain_action(
+            Some(Tables::Organizations),
+            Some(self.id),
+            DomainActionTypes::ProcessSettlementReport,
+            conn,
+        )? {
             if upcoming_domain_action.scheduled_at > Utc::now().naive_utc() {
                 return DatabaseError::business_process_error("Settlement processing domain action is already pending");
             }
@@ -252,25 +257,18 @@ impl Organization {
         conn: &PgConnection,
     ) -> Result<(), DatabaseError> {
         // Settlements weekly domain event
-        if self.upcoming_settlement_domain_action(conn)?.is_none() {
+        if DomainAction::upcoming_domain_action(
+            Some(Tables::Organizations),
+            Some(self.id),
+            DomainActionTypes::ProcessSettlementReport,
+            conn,
+        )?
+        .is_none()
+        {
             self.create_next_settlement_processing_domain_action(settlement_period_in_days, conn)?
         }
 
         Ok(())
-    }
-
-    pub fn upcoming_settlement_domain_action(
-        &self,
-        conn: &PgConnection,
-    ) -> Result<Option<DomainAction>, DatabaseError> {
-        Ok(DomainAction::find_by_resource(
-            Some(Tables::Organizations),
-            Some(self.id),
-            DomainActionTypes::ProcessSettlementReport,
-            DomainActionStatus::Pending,
-            conn,
-        )?
-        .pop())
     }
 
     pub fn slug(&self, conn: &PgConnection) -> Result<Slug, DatabaseError> {
@@ -375,7 +373,12 @@ impl Organization {
         }
 
         if attributes.timezone.is_some() && attributes.timezone != self.timezone {
-            if let Some(settlement_job) = self.upcoming_settlement_domain_action(conn)? {
+            if let Some(settlement_job) = DomainAction::upcoming_domain_action(
+                Some(Tables::Organizations),
+                Some(self.id),
+                DomainActionTypes::ProcessSettlementReport,
+                conn,
+            )? {
                 settlement_job.set_cancelled(conn)?;
             }
         }

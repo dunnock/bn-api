@@ -400,12 +400,7 @@ pub fn update_with_validation_errors() {
         .for_user(&user)
         .quantity(1)
         .finish();
-    let ticket_type = &event.ticket_types(true, None, &connection).unwrap()[0];
-    let ticket = box_office_order
-        .tickets(ticket_type.id, connection)
-        .unwrap()
-        .pop()
-        .unwrap();
+    let ticket = box_office_order.tickets(None, connection).unwrap().pop().unwrap();
     assert_eq!(
         ticket.update(attrs, user.id, connection),
         DatabaseError::business_process_error("Unable to update ticket as it is not purchased.",)
@@ -1254,12 +1249,7 @@ fn owner() {
         .on_behalf_of_user(&user3)
         .is_paid()
         .finish();
-    let ticket_type = &event.ticket_types(true, None, &connection).unwrap()[0];
-    let ticket = box_office_order
-        .tickets(ticket_type.id, connection)
-        .unwrap()
-        .pop()
-        .unwrap();
+    let ticket = box_office_order.tickets(None, connection).unwrap().pop().unwrap();
     assert_eq!(user3, ticket.owner(connection).unwrap());
 }
 
@@ -1349,8 +1339,7 @@ fn show_redeemable_ticket() {
         .quantity(1)
         .is_paid()
         .finish();
-    let ticket_type = &event.ticket_types(true, None, &connection).unwrap()[0];
-    let ticket = order.tickets(ticket_type.id, connection).unwrap().remove(0);
+    let ticket = order.tickets(None, connection).unwrap().remove(0);
     let result = TicketInstance::show_redeemable_ticket(ticket.id, connection).unwrap();
     assert_eq!(result.user_id, Some(user2.id));
 }

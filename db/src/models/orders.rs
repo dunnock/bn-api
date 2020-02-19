@@ -131,6 +131,301 @@ struct MatchData<'a> {
 }
 
 impl Order {
+    pub fn retarget_abandoned_carts(conn: &PgConnection) -> Result<(Vec<Order>), DatabaseError> {
+        let now = Utc::now().naive_utc();
+        let beginning_of_current_hour =
+            NaiveDate::from_ymd(now.year(), now.month(), now.day()).and_hms(now.hour(), 0, 0);
+        let yesterday_same_hour = beginning_of_current_hour - Duration::days(1);
+
+        let results: Vec<(Order, Uuid, Vec<Uuid>)> = orders::table
+            .inner_join(order_items::table.on(orders::id.eq(order_items::order_id)))
+            .inner_join(events::table.on(order_items::event_id.eq(events::id.nullable())))
+            // Filter carts to only those created during that window yesterday
+            .filter(orders::created_at.ge(yesterday_same_hour))
+            .filter(orders::created_at.lt(yesterday_same_hour + Duration::hours(1)))
+            // Limited to Draft to avoid any pending payment orders from being included
+            .filter(orders::status.eq(OrderStatus::Draft))
+            // Sanity check, these should have expired shortly after they were created
+            .filter(orders::expires_at.lt(now))
+            // Event level sanity checks
+            .filter(orders::on_behalf_of_user_id.is_null())
+            .filter(events::event_end.gt(now))
+            .filter(events::status.eq(EventStatus::Published))
+            .filter(events::cancelled_at.is_null())
+            .filter(events::deleted_at.is_null())
+            .filter(events::override_status.eq_any(vec![
+                EventOverrideStatus::PurchaseTickets,
+                EventOverrideStatus::TicketsAtTheDoor,
+                EventOverrideStatus::Free
+            ]).or(events::override_status.is_null()))
+            .filter(order_items::item_type.eq(OrderItemTypes::Tickets))
+            .distinct()
+            .select((
+                orders::all_columns,
+                events::id,
+                sql::<Array<dUuid>>("array_agg(distinct order_items.ticket_type_id)"),
+            ))
+            .group_by((orders::all_columns, events::id))
+            .get_results(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not get abandoned carts")?;
+
+        let mut order_event_id_map = HashMap::new();
+        let mut ticket_type_ids: Vec<Uuid> = Vec::new();
+        let mut abandoned_carts = Vec::new();
+        for (order, event_id, mut tt_ids) in results {
+            order_event_id_map.insert(order.id, event_id);
+            ticket_type_ids.append(&mut tt_ids);
+            abandoned_carts.push(order);
+        }
+
+        // Prefetching ticket types to avoid extra queries across orders from the same events
+        ticket_type_ids.sort();
+        ticket_type_ids.dedup();
+        let ticket_types = TicketType::find_by_ids(&ticket_type_ids, conn)?;
+        let mut ticket_types_map = HashMap::new();
+        for ticket_type in ticket_types {
+            ticket_types_map.insert(
+                ticket_type.id,
+                (ticket_type.clone(), ticket_type.valid_available_ticket_count(conn)?),
+            );
+        }
+
+        let mut carts_to_retarget = Vec::new();
+        for cart in abandoned_carts {
+            if cart.valid_for_duplicating(Some(&ticket_types_map), conn)? {
+                carts_to_retarget.push(cart.clone());
+            }
+        }
+
+        // From the remaining carts, filter out users who have received a targeted email for this event in the past
+        let mut user_ids: Vec<Uuid> = carts_to_retarget.iter().map(|c| c.user_id).collect();
+        user_ids.sort();
+        user_ids.dedup();
+        #[derive(Debug, Queryable, QueryableByName)]
+        struct R {
+            #[sql_type = "dUuid"]
+            user_id: Uuid,
+            #[sql_type = "Array<dUuid>"]
+            event_ids: Vec<Uuid>,
+        }
+        let query = r#"
+            SELECT
+                o.user_id,
+                array_agg(distinct oi.event_id) as event_ids
+            FROM
+                orders o
+            JOIN
+                order_items oi
+            ON
+                oi.order_id = o.id
+            JOIN
+                domain_events de
+            ON
+                de.main_table = 'Orders'
+            AND
+                de.main_id = o.id
+            WHERE
+                de.event_type = 'OrderRetargetingEmailTriggered'
+            AND
+                oi.event_id is not null
+            AND
+                o.user_id = ANY($1)
+            GROUP BY
+                o.user_id;
+        "#;
+        let results: Vec<R> = diesel::sql_query(query)
+            .bind::<Array<dUuid>, _>(user_ids)
+            .get_results(conn)
+            .to_db_error(
+                ErrorCode::QueryError,
+                "Could not check users to confirm they are eligible for retargeting",
+            )?;
+
+        let mut user_targeting_event_ids_mapping = HashMap::new();
+        for result in results {
+            user_targeting_event_ids_mapping.insert(result.user_id, result.event_ids);
+        }
+        carts_to_retarget.retain(|c| {
+            if let Some(event_id) = order_event_id_map.get(&c.id) {
+                if let Some(event_ids) = user_targeting_event_ids_mapping.get(&c.user_id) {
+                    // Only allow a single event to send one of these once
+
+                    if event_ids.contains(event_id) {
+                        return false;
+                    }
+                }
+                if User::is_attending_event(c.user_id, *event_id, conn)
+                    .ok()
+                    .unwrap_or(true)
+                {
+                    return false;
+                }
+            }
+            true
+        });
+
+        // Trigger cart abandoned event
+        for cart in &carts_to_retarget {
+            DomainEvent::create(
+                DomainEventTypes::OrderRetargetingEmailTriggered,
+                "Order retargeting email triggered".to_string(),
+                Tables::Orders,
+                Some(cart.id),
+                None,
+                None,
+            )
+            .commit(conn)?;
+        }
+        Ok(carts_to_retarget)
+    }
+
+    pub fn valid_for_duplicating(
+        &self,
+        ticket_type_cache: Option<&HashMap<Uuid, (TicketType, u32)>>,
+        conn: &PgConnection,
+    ) -> Result<bool, DatabaseError> {
+        let mut valid = true;
+        let now = Utc::now().naive_utc();
+        for item in self.items(conn)? {
+            if item.item_type != OrderItemTypes::Tickets {
+                continue;
+            }
+            if let Some(ticket_type_id) = item.ticket_type_id {
+                let (ticket_type, available_quantity) = if let Some(ticket_types_map) = ticket_type_cache {
+                    let (tt, q) = ticket_types_map.get(&ticket_type_id).ok_or_else(|| {
+                        DatabaseError::business_process_error::<(TicketType, u32)>(
+                            "Failed to load ticket type for order item",
+                        )
+                        .unwrap_err()
+                    })?;
+                    (tt.clone(), *q)
+                } else {
+                    let ticket_type = TicketType::find(ticket_type_id, conn)?;
+                    let available_quantity = ticket_type.valid_available_ticket_count(conn)?;
+                    (ticket_type, available_quantity)
+                };
+
+                if ticket_type.start_date.unwrap_or(times::infinity()) > now
+                    || ticket_type.end_date(conn)? < now
+                    || ticket_type.cancelled_at.is_some()
+                    || ticket_type.deleted_at.is_some()
+                {
+                    valid = false;
+                    break;
+                }
+
+                match ticket_type.status(false, conn)? {
+                    // We check sold out below, other statuses lead to these not sending out
+                    TicketTypeStatus::Published | TicketTypeStatus::SoldOut => (),
+                    _ => {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                // Default to available quantity for non hold orders
+                let mut available = available_quantity as i64;
+                if let Some(code_id) = item.code_id {
+                    let code = Code::find(code_id, conn)?;
+                    let code_available = code.available(conn)? as i64;
+
+                    if code_available < available {
+                        available = code_available;
+                    }
+                } else if let Some(hold_id) = item.hold_id {
+                    let hold = Hold::find(hold_id, conn)?;
+                    available = hold.quantity(conn)?.1 as i64;
+                }
+
+                if available < item.quantity {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        Ok(valid)
+    }
+
+    pub fn duplicate_order(&self, conn: &PgConnection) -> Result<Order, DatabaseError> {
+        if self.valid_for_duplicating(None, conn)? {
+            let user = User::find(self.on_behalf_of_user_id.unwrap_or(self.user_id), conn)?;
+            // Check if user has an unexpired cart
+            if let Some(cart) = Order::find_cart_for_user(user.id, conn)? {
+                if cart.items(conn)?.len() > 0 {
+                    return DatabaseError::conflict_error("You already have tickets in your cart");
+                }
+            }
+
+            let mut update_data = Vec::new();
+            let redemption_code = self.redemption_code(conn)?;
+            for item in self.items(conn)? {
+                if item.item_type != OrderItemTypes::Tickets {
+                    continue;
+                }
+
+                if let Some(ticket_type_id) = item.ticket_type_id {
+                    update_data.push(UpdateOrderItem {
+                        quantity: item.quantity as u32,
+                        ticket_type_id,
+                        redemption_code: redemption_code.clone(),
+                    });
+                }
+            }
+
+            let mut cart = Order::find_or_create_cart(&user, conn)?;
+            cart.update_quantities(self.user_id, &update_data, false, true, conn)
+                .map_err(|_err| {
+                    DatabaseError::business_process_error::<()>("Order is invalid for duplication").unwrap_err()
+                })?;
+            return Ok(cart);
+        } else {
+            return DatabaseError::business_process_error("Order is invalid for duplication");
+        }
+    }
+
+    pub fn create_next_retarget_abandoned_cart_domain_action(conn: &PgConnection) -> Result<(), DatabaseError> {
+        let now = Utc::now().naive_utc();
+        if let Some(upcoming_domain_action) =
+            DomainAction::upcoming_domain_action(None, None, DomainActionTypes::RetargetAbandonedOrders, conn)?
+        {
+            if upcoming_domain_action.scheduled_at > now {
+                return DatabaseError::business_process_error(
+                    "Retarget abandoned cart domain action is already pending",
+                );
+            }
+        }
+
+        let beginning_of_current_hour =
+            NaiveDate::from_ymd(now.year(), now.month(), now.day()).and_hms(now.hour(), 0, 0);
+        let next_action_date = beginning_of_current_hour + Duration::hours(1);
+
+        let mut action = DomainAction::create(
+            None,
+            DomainActionTypes::RetargetAbandonedOrders,
+            None,
+            json!({}),
+            None,
+            None,
+        );
+        action.schedule_at(next_action_date);
+        action.commit(conn)?;
+
+        Ok(())
+    }
+
+    pub fn redemption_code(&self, conn: &PgConnection) -> Result<Option<String>, DatabaseError> {
+        for item in self.items(conn)? {
+            if let Some(code_id) = item.code_id {
+                return Ok(Some(Code::find(code_id, conn)?.redemption_code));
+            }
+            if let Some(hold_id) = item.hold_id {
+                return Ok(Hold::find(hold_id, conn)?.redemption_code);
+            }
+        }
+
+        Ok(None)
+    }
+
     pub fn validate_record(&self, conn: &PgConnection) -> Result<(), DatabaseError> {
         let validation_errors = append_validation_error(
             Ok(()),
@@ -154,7 +449,7 @@ impl Order {
 
         if event_count > 1 {
             let mut validation_error =
-                create_validation_error("cart_event_limit_reached", "Cart limited to one event for purchasing");
+                create_validation_error("cart_event_limit_reached", "You already have another event ticket in your cart. Please clear your cart first to purchase tickets to this event.");
             validation_error.add_param(Cow::from("order_id"), &id);
             return Ok(Err(validation_error.into()));
         }
@@ -1530,11 +1825,23 @@ impl Order {
         OrderItem::find_for_order(self.id, conn)
     }
 
-    pub fn tickets(&self, ticket_type_id: Uuid, conn: &PgConnection) -> Result<Vec<TicketInstance>, DatabaseError> {
-        let items = self
+    pub fn tickets(
+        &self,
+        ticket_type_id: Option<Uuid>,
+        conn: &PgConnection,
+    ) -> Result<Vec<TicketInstance>, DatabaseError> {
+        let mut items: Vec<OrderItem> = self
             .items(conn)?
             .into_iter()
-            .filter(|i| i.item_type == OrderItemTypes::Tickets && i.ticket_type_id == Some(ticket_type_id));
+            .filter(|i| i.item_type == OrderItemTypes::Tickets)
+            .collect();
+
+        if ticket_type_id.is_some() {
+            items = items
+                .into_iter()
+                .filter(|i| i.ticket_type_id == ticket_type_id)
+                .collect();
+        }
         let mut result: Vec<TicketInstance> = vec![];
         for item in items {
             let mut instances = TicketInstance::find_for_order_item(item.id, conn)?;

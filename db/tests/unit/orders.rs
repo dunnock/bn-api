@@ -2,14 +2,663 @@ use bigneon_db::dev::times;
 use bigneon_db::dev::TestProject;
 use bigneon_db::models::*;
 use bigneon_db::schema::{fee_schedule_ranges, order_items, orders, ticket_instances};
+use bigneon_db::utils::dates;
 use bigneon_db::utils::errors::DatabaseError;
 use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::prelude::*;
 use chrono::Duration;
 use diesel;
 use diesel::prelude::*;
+use diesel::sql_types;
 use std::collections::HashMap;
 use uuid::Uuid;
+
+#[test]
+fn valid_for_duplicating() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project
+        .create_event()
+        .with_a_specific_number_of_tickets(20)
+        .with_tickets()
+        .with_ticket_type_count(1)
+        .finish();
+
+    let ticket_type = &event.ticket_types(true, None, connection).unwrap()[0];
+    // Reserve half of the tickets as part of the hold
+    let hold = project
+        .create_hold()
+        .with_quantity(10)
+        .with_ticket_type_id(ticket_type.id)
+        .finish();
+    let code = project
+        .create_code()
+        .with_max_uses(5)
+        .with_event(&event)
+        .for_ticket_type(&ticket_type)
+        .finish();
+    let order = project.create_order().quantity(5).for_event(&event).finish();
+    move_order_to_past(&order, dates::now().add_days(-7).finish(), connection);
+    assert!(order.valid_for_duplicating(None, connection).unwrap());
+
+    // Ticket type start date is in the future so duplicating fails
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_types
+        SET start_date = $2
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(ticket_type.id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_hours(1).finish())
+    .execute(connection)
+    .unwrap();
+    assert!(!order.valid_for_duplicating(None, connection).unwrap());
+
+    // Ticket type end date is in the past so duplicating fails
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_types
+        SET start_date = $2, end_date = $3
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(ticket_type.id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-1).finish())
+    .bind::<sql_types::Timestamp, _>(dates::now().add_hours(-1).finish())
+    .execute(connection)
+    .unwrap();
+    assert!(!order.valid_for_duplicating(None, connection).unwrap());
+
+    // cancelled_at
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_types
+        SET start_date = $2, end_date = $3, cancelled_at = '1999-01-01 0:0:0'
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(ticket_type.id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-1).finish())
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(1).finish())
+    .execute(connection)
+    .unwrap();
+    assert!(!order.valid_for_duplicating(None, connection).unwrap());
+
+    // deleted_at
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_types
+        SET deleted_at = '1999-01-01 0:0:0', cancelled_at = null
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(ticket_type.id)
+    .execute(connection)
+    .unwrap();
+    assert!(!order.valid_for_duplicating(None, connection).unwrap());
+
+    // status not published
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_types
+        SET deleted_at = null, cancelled_at = null
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(ticket_type.id)
+    .execute(connection)
+    .unwrap();
+    ticket_type
+        .current_ticket_pricing(false, connection)
+        .unwrap()
+        .destroy(None, connection)
+        .unwrap();
+    assert_eq!(
+        ticket_type.status(false, connection).unwrap(),
+        TicketTypeStatus::NoActivePricing
+    );
+    assert!(!order.valid_for_duplicating(None, connection).unwrap());
+
+    // sold out ticket type hold not sold out
+    ticket_type
+        .add_ticket_pricing(
+            "Ticket Pricing".to_string(),
+            dates::now().add_days(-2).finish(),
+            dates::now().add_days(2).finish(),
+            100,
+            false,
+            None,
+            None,
+            connection,
+        )
+        .unwrap();
+    assert!(order.valid_for_duplicating(None, connection).unwrap());
+    let mut paid_order = project.create_order().quantity(10).for_event(&event).is_paid().finish();
+    assert_eq!(
+        ticket_type.status(false, connection).unwrap(),
+        TicketTypeStatus::SoldOut
+    );
+    assert!(!order.valid_for_duplicating(None, connection).unwrap());
+
+    // New hold order duplication still succeeds
+    let hold_order = project
+        .create_order()
+        .for_event(&event)
+        .quantity(5)
+        .with_redemption_code(hold.redemption_code.clone().unwrap())
+        .finish();
+    move_order_to_past(&hold_order, dates::now().add_days(-7).finish(), connection);
+    assert!(hold_order.valid_for_duplicating(None, connection).unwrap());
+    // All hold inventory taken so logic fails
+    project
+        .create_order()
+        .for_event(&event)
+        .quantity(10)
+        .is_paid()
+        .with_redemption_code(hold.redemption_code.clone().unwrap())
+        .finish();
+    assert!(!hold_order.valid_for_duplicating(None, connection).unwrap());
+
+    // ticket type not sold out hold sold out
+    let items = paid_order.items(&connection).unwrap();
+    let order_item = items.iter().find(|i| i.item_type == OrderItemTypes::Tickets).unwrap();
+    let tickets = TicketInstance::find_for_order_item(order_item.id, connection).unwrap();
+    let refund_items: Vec<RefundItemRequest> = tickets
+        .iter()
+        .map(|t| RefundItemRequest {
+            order_item_id: order_item.id,
+            ticket_instance_id: Some(t.id),
+        })
+        .collect();
+
+    assert!(paid_order
+        .refund(&refund_items, order.user_id, None, false, connection)
+        .is_ok());
+    assert!(order.valid_for_duplicating(None, connection).unwrap());
+
+    // With ticket type cache (prefetch of ticket count used by the retargeting cart logic)
+    let mut ticket_type_cache: HashMap<Uuid, (TicketType, u32)> = HashMap::new();
+    ticket_type_cache.insert(ticket_type.id, (ticket_type.clone(), 5)); // 5 quantity remaining cached
+    assert!(order
+        .valid_for_duplicating(Some(&ticket_type_cache), connection)
+        .unwrap());
+    // With cache and a cached quantity of 0 showing cache is used
+    ticket_type_cache.remove(&ticket_type.id);
+    ticket_type_cache.insert(ticket_type.id, (ticket_type.clone(), 0)); // 0 quantity remaining cached
+    assert!(!order
+        .valid_for_duplicating(Some(&ticket_type_cache), connection)
+        .unwrap());
+
+    // code valid for max uses
+    let code_order = project
+        .create_order()
+        .for_event(&event)
+        .quantity(5)
+        .with_redemption_code(code.redemption_code.clone())
+        .finish();
+    move_order_to_past(&code_order, dates::now().add_days(-7).finish(), connection);
+    assert!(code_order.valid_for_duplicating(None, connection).unwrap());
+    // All code inventory taken so logic fails
+    project
+        .create_order()
+        .for_event(&event)
+        .quantity(5)
+        .is_paid()
+        .with_redemption_code(code.redemption_code.clone())
+        .finish();
+    assert!(!code_order.valid_for_duplicating(None, connection).unwrap());
+}
+
+#[test]
+fn retarget_abandoned_carts() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project.create_event().with_tickets().finish();
+    let ticket_type = &event.ticket_types(true, None, connection).unwrap()[0];
+    let event2 = project.create_event().with_tickets().finish();
+
+    let now = Utc::now().naive_utc();
+    let beginning_of_current_hour = NaiveDate::from_ymd(now.year(), now.month(), now.day()).and_hms(now.hour(), 0, 0);
+    let yesterday_same_hour = beginning_of_current_hour - Duration::days(1);
+
+    // Order from 10 minutes ago prior to window (went with last run so not included)
+    let old_order = project.create_order().for_event(&event).finish();
+    move_order_to_past(&old_order, yesterday_same_hour - Duration::minutes(10), connection);
+
+    // Order from window time, included
+    let order = project.create_order().for_event(&event).finish();
+    move_order_to_past(&order, yesterday_same_hour + Duration::minutes(10), connection);
+
+    // Paid order from same time (not included in retargeting since not draft)
+    let order2 = project.create_order().for_event(&event).is_paid().finish();
+    move_order_to_past(&order2, yesterday_same_hour + Duration::minutes(10), connection);
+
+    // Order from following hour after window, not included
+    let order3 = project.create_order().for_event(&event).finish();
+    move_order_to_past(&order3, yesterday_same_hour + Duration::hours(1), connection);
+
+    // Order from 30 minutes ago, not included
+    let order4 = project.create_order().for_event(&event).finish();
+    move_order_to_past(&order4, dates::now().add_minutes(30).finish(), connection);
+
+    // Box office order from window, ignored even though in draft
+    let user = project.create_user().finish();
+    let order5 = project
+        .create_order()
+        .for_event(&event)
+        .on_behalf_of_user(&user)
+        .finish();
+    move_order_to_past(&order5, yesterday_same_hour + Duration::minutes(10), connection);
+
+    // Domain event does not exist yet
+    let domain_events = DomainEvent::find(
+        Tables::Orders,
+        Some(order.id),
+        Some(DomainEventTypes::OrderRetargetingEmailTriggered),
+        connection,
+    )
+    .unwrap();
+    assert_eq!(0, domain_events.len());
+
+    // Trigger retargeting returning 1 valid order
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(orders.len(), 1);
+    assert_eq!(orders[0].id, order.id);
+
+    // Domain event now exists for this order
+    let domain_events = DomainEvent::find(
+        Tables::Orders,
+        Some(order.id),
+        Some(DomainEventTypes::OrderRetargetingEmailTriggered),
+        connection,
+    )
+    .unwrap();
+    assert_eq!(1, domain_events.len());
+
+    // Trigger retargeting again, does not return any orders as this user now has been sent a targeted email
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(0, orders.len());
+    let domain_events = DomainEvent::find(
+        Tables::Orders,
+        Some(order.id),
+        Some(DomainEventTypes::OrderRetargetingEmailTriggered),
+        connection,
+    )
+    .unwrap();
+    assert_eq!(1, domain_events.len());
+
+    // Update domain event to 8 days earlier, still does not trigger additional as user has already been sent email for given event
+    diesel::sql_query(
+        r#"
+        UPDATE domain_events
+        SET created_at = $2
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(domain_events[0].id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-8).finish())
+    .execute(connection)
+    .unwrap();
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(0, orders.len());
+    let domain_events = DomainEvent::find(
+        Tables::Orders,
+        Some(order.id),
+        Some(DomainEventTypes::OrderRetargetingEmailTriggered),
+        connection,
+    )
+    .unwrap();
+    assert_eq!(1, domain_events.len());
+
+    // Same user, different even can trigger now though
+    let user = User::find(order.user_id, connection).unwrap();
+    let order6 = project.create_order().for_event(&event2).for_user(&user).finish();
+    move_order_to_past(&order6, yesterday_same_hour + Duration::minutes(10), connection);
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(orders.len(), 1);
+    assert_eq!(orders[0].id, order6.id);
+    let domain_events = DomainEvent::find(
+        Tables::Orders,
+        Some(order6.id),
+        Some(DomainEventTypes::OrderRetargetingEmailTriggered),
+        connection,
+    )
+    .unwrap();
+    assert_eq!(1, domain_events.len());
+
+    // New order, would be included but event is now set to ended
+    let order7 = project.create_order().for_event(&event).finish();
+    move_order_to_past(&order7, yesterday_same_hour + Duration::minutes(10), connection);
+    diesel::sql_query(
+        r#"
+        UPDATE events
+        SET event_start = $2, event_end = $3
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(event.id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-8).finish())
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-1).finish())
+    .execute(connection)
+    .unwrap();
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(0, orders.len());
+
+    // Now event active but not published so won't be included
+    diesel::sql_query(
+        r#"
+        UPDATE events
+        SET event_start = $2, event_end = $3, status = 'Draft'
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(event.id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-8).finish())
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(3).finish())
+    .execute(connection)
+    .unwrap();
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(0, orders.len());
+
+    // Event must not be cancelled
+    diesel::sql_query(
+        r#"
+        UPDATE events
+        SET status = 'Published', cancelled_at = '1999-01-01 0:0:0'
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(event.id)
+    .execute(connection)
+    .unwrap();
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(0, orders.len());
+
+    // Event must not be deleted
+    diesel::sql_query(
+        r#"
+        UPDATE events
+        SET cancelled_at = null, deleted_at = '1999-01-01 0:0:0'
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(event.id)
+    .execute(connection)
+    .unwrap();
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(0, orders.len());
+
+    // Event override must not be invalid for purchasing
+    diesel::sql_query(
+        r#"
+        UPDATE events
+        SET deleted_at = null, override_status = 'Rescheduled'
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(event.id)
+    .execute(connection)
+    .unwrap();
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(0, orders.len());
+
+    // Valid with PurchaseTickets, TicketsAtDoor, Free, or null
+    diesel::sql_query(
+        r#"
+        UPDATE events
+        SET override_status = 'TicketsAtTheDoor'
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(event.id)
+    .execute(connection)
+    .unwrap();
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(orders.len(), 1);
+    assert_eq!(orders[0].id, order7.id);
+    let domain_events = DomainEvent::find(
+        Tables::Orders,
+        Some(order7.id),
+        Some(DomainEventTypes::OrderRetargetingEmailTriggered),
+        connection,
+    )
+    .unwrap();
+    assert_eq!(1, domain_events.len());
+
+    // Valid time period for order but ticket type now made invalid preventing retargeting
+    let order8 = project.create_order().for_event(&event).finish();
+    move_order_to_past(&order8, yesterday_same_hour + Duration::minutes(10), connection);
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_types
+        SET deleted_at = '1999-01-01 0:0:0'
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(ticket_type.id)
+    .execute(connection)
+    .unwrap();
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(0, orders.len());
+
+    // Sanity check / remove deleted date should be included now in results
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_types
+        SET deleted_at = null
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(ticket_type.id)
+    .execute(connection)
+    .unwrap();
+    let orders = Order::retarget_abandoned_carts(connection).unwrap();
+    assert_eq!(orders.len(), 1);
+    assert_eq!(orders[0].id, order8.id);
+    let domain_events = DomainEvent::find(
+        Tables::Orders,
+        Some(order8.id),
+        Some(DomainEventTypes::OrderRetargetingEmailTriggered),
+        connection,
+    )
+    .unwrap();
+    assert_eq!(1, domain_events.len());
+}
+
+#[test]
+fn duplicate_order() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project.create_event().with_tickets().finish();
+    let ticket_type = &event.ticket_types(true, None, connection).unwrap()[0];
+    let hold = project
+        .create_hold()
+        .with_quantity(10)
+        .with_ticket_type_id(ticket_type.id)
+        .finish();
+    let code = project
+        .create_code()
+        .with_max_uses(5)
+        .with_event(&event)
+        .for_ticket_type(&ticket_type)
+        .finish();
+
+    let order = project.create_order().quantity(5).for_event(&event).finish();
+    move_order_to_past(&order, dates::now().add_days(-7).finish(), connection);
+
+    // Invalid for duplication
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_types
+        SET start_date = $2
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(ticket_type.id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_hours(1).finish())
+    .execute(connection)
+    .unwrap();
+    assert!(!order.valid_for_duplicating(None, connection).unwrap());
+    let result = order.duplicate_order(connection);
+    assert_eq!(
+        result,
+        DatabaseError::business_process_error("Order is invalid for duplication",)
+    );
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_types
+        SET start_date = '1999-01-01 0:0:0'
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(ticket_type.id)
+    .execute(connection)
+    .unwrap();
+
+    // Successful duplication
+    let mut dupe_order = order.duplicate_order(connection).unwrap();
+    assert_ne!(dupe_order.id, order.id);
+    assert_eq!(dupe_order.user_id, order.user_id);
+    let order_items = order.items(connection).unwrap();
+    let dupe_order_items = dupe_order.items(connection).unwrap();
+    assert_eq!(order_items.len(), dupe_order_items.len());
+    let order_item = order_items
+        .iter()
+        .find(|i| i.item_type == OrderItemTypes::Tickets)
+        .unwrap();
+    let dupe_order_item = dupe_order_items
+        .iter()
+        .find(|i| i.item_type == OrderItemTypes::Tickets)
+        .unwrap();
+    assert_eq!(order_item.quantity, dupe_order_item.quantity);
+    assert_eq!(order_item.ticket_type_id, dupe_order_item.ticket_type_id);
+
+    // Fails to duplicate, tickets are already in cart
+    let result = order.duplicate_order(connection);
+    assert_eq!(
+        result,
+        DatabaseError::conflict_error("You already have tickets in your cart",)
+    );
+    dupe_order.clear_cart(dupe_order.user_id, connection).unwrap();
+
+    // Duplicates hold order
+    let hold_order = project
+        .create_order()
+        .for_event(&event)
+        .quantity(5)
+        .with_redemption_code(hold.redemption_code.clone().unwrap())
+        .finish();
+    move_order_to_past(&hold_order, dates::now().add_days(-7).finish(), connection);
+    let mut dupe_order = hold_order.duplicate_order(connection).unwrap();
+    assert_ne!(dupe_order.id, hold_order.id);
+    assert_eq!(dupe_order.user_id, hold_order.user_id);
+    let order_items = hold_order.items(connection).unwrap();
+    let dupe_order_items = dupe_order.items(connection).unwrap();
+    assert_eq!(order_items.len(), dupe_order_items.len());
+    let order_item = order_items
+        .iter()
+        .find(|i| i.item_type == OrderItemTypes::Tickets)
+        .unwrap();
+    let dupe_order_item = dupe_order_items
+        .iter()
+        .find(|i| i.item_type == OrderItemTypes::Tickets)
+        .unwrap();
+    assert_eq!(order_item.quantity, dupe_order_item.quantity);
+    assert_eq!(order_item.ticket_type_id, dupe_order_item.ticket_type_id);
+    assert_eq!(order_item.hold_id, dupe_order_item.hold_id);
+    dupe_order.clear_cart(dupe_order.user_id, connection).unwrap();
+
+    // Duplicates code order
+    let code_order = project
+        .create_order()
+        .for_event(&event)
+        .quantity(5)
+        .with_redemption_code(code.redemption_code.clone())
+        .finish();
+    move_order_to_past(&code_order, dates::now().add_days(-7).finish(), connection);
+    let dupe_order = code_order.duplicate_order(connection).unwrap();
+    assert_ne!(dupe_order.id, code_order.id);
+    assert_eq!(dupe_order.user_id, code_order.user_id);
+    let order_items = code_order.items(connection).unwrap();
+    let dupe_order_items = dupe_order.items(connection).unwrap();
+    assert_eq!(order_items.len(), dupe_order_items.len());
+    let order_item = order_items
+        .iter()
+        .find(|i| i.item_type == OrderItemTypes::Tickets)
+        .unwrap();
+    let dupe_order_item = dupe_order_items
+        .iter()
+        .find(|i| i.item_type == OrderItemTypes::Tickets)
+        .unwrap();
+    assert_eq!(order_item.quantity, dupe_order_item.quantity);
+    assert_eq!(order_item.ticket_type_id, dupe_order_item.ticket_type_id);
+    assert_eq!(order_item.code_id, dupe_order_item.code_id);
+}
+
+#[test]
+fn create_next_retarget_abandoned_cart_domain_action() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let now = Utc::now().naive_utc();
+
+    assert!(
+        DomainAction::upcoming_domain_action(None, None, DomainActionTypes::RetargetAbandonedOrders, connection)
+            .unwrap()
+            .is_none()
+    );
+
+    Order::create_next_retarget_abandoned_cart_domain_action(connection).unwrap();
+    let domain_action =
+        DomainAction::upcoming_domain_action(None, None, DomainActionTypes::RetargetAbandonedOrders, connection)
+            .unwrap()
+            .unwrap();
+    let beginning_of_current_hour = NaiveDate::from_ymd(now.year(), now.month(), now.day()).and_hms(now.hour(), 0, 0);
+    let next_action_date = beginning_of_current_hour + Duration::hours(1);
+    assert_eq!(domain_action.scheduled_at, next_action_date);
+    assert_eq!(domain_action.status, DomainActionStatus::Pending);
+    assert_eq!(domain_action.main_table, None);
+    assert_eq!(domain_action.main_table_id, None);
+}
+
+#[test]
+fn redemption_code() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project.create_event().with_tickets().with_ticket_pricing().finish();
+
+    // Regular order
+    let order = project.create_order().for_event(&event).finish();
+    assert_eq!(None, order.redemption_code(connection).unwrap());
+
+    // Code based order
+    let code = project
+        .create_code()
+        .with_event(&event)
+        .with_code_type(CodeTypes::Discount)
+        .for_ticket_type(&event.ticket_types(true, None, connection).unwrap()[0])
+        .with_discount_in_cents(Some(10))
+        .finish();
+    let order = project
+        .create_order()
+        .for_event(&event)
+        .with_redemption_code(code.redemption_code.clone())
+        .finish();
+    assert_eq!(Some(code.redemption_code), order.redemption_code(connection).unwrap());
+
+    // Hold based order
+    let hold = project
+        .create_hold()
+        .with_hold_type(HoldTypes::Discount)
+        .with_ticket_type_id(event.ticket_types(true, None, connection).unwrap()[0].id)
+        .finish();
+    let order = project
+        .create_order()
+        .for_event(&event)
+        .with_redemption_code(hold.redemption_code.clone().unwrap())
+        .finish();
+    assert_eq!(hold.redemption_code, order.redemption_code(connection).unwrap());
+}
 
 #[test]
 fn has_refunds() {
@@ -258,7 +907,7 @@ fn try_refresh_expired_cart() {
         )
         .unwrap();
     let ticket_ids: Vec<Uuid> = order
-        .tickets(ticket_type.id, connection)
+        .tickets(None, connection)
         .unwrap()
         .into_iter()
         .map(|t| t.id)
@@ -295,7 +944,7 @@ fn try_refresh_expired_cart() {
     let default_expiry = NaiveDateTime::from(Utc::now().naive_utc() + Duration::minutes(CART_EXPIRY_TIME_MINUTES));
     let order = Order::find(order.id, connection).unwrap();
     assert!((default_expiry.timestamp() - order.expires_at.unwrap().timestamp()).abs() < 2);
-    for ticket in order.tickets(ticket_type.id, connection).unwrap() {
+    for ticket in order.tickets(None, connection).unwrap() {
         assert!((default_expiry.timestamp() - ticket.reserved_until.unwrap().timestamp()).abs() < 2);
     }
 
@@ -339,7 +988,7 @@ fn try_refresh_expired_cart() {
     let default_expiry = NaiveDateTime::from(Utc::now().naive_utc() + Duration::minutes(CART_EXPIRY_TIME_MINUTES));
     let order = Order::find(order.id, connection).unwrap();
     assert!((default_expiry.timestamp() - order.expires_at.unwrap().timestamp()).abs() < 2);
-    for ticket in order.tickets(ticket_type.id, connection).unwrap() {
+    for ticket in order.tickets(None, connection).unwrap() {
         assert!((default_expiry.timestamp() - ticket.reserved_until.unwrap().timestamp()).abs() < 2);
     }
 
@@ -1161,19 +1810,22 @@ fn tickets() {
     let order_item = &items[0];
     let order_item2 = &items[1];
 
-    let tickets = cart.tickets(ticket_type.id, connection).unwrap();
+    let tickets = cart.tickets(Some(ticket_type.id), connection).unwrap();
     assert_eq!(2, tickets.len());
     assert_eq!(
         TicketInstance::find_for_order_item(order_item.id, connection).unwrap(),
         tickets
     );
 
-    let tickets = cart.tickets(ticket_type2.id, connection).unwrap();
+    let tickets = cart.tickets(Some(ticket_type2.id), connection).unwrap();
     assert_eq!(1, tickets.len());
     assert_eq!(
         TicketInstance::find_for_order_item(order_item2.id, connection).unwrap(),
         tickets
     );
+
+    let tickets = cart.tickets(None, connection).unwrap();
+    assert_eq!(3, tickets.len());
 }
 
 #[test]
@@ -2581,6 +3233,8 @@ fn purchase_metadata() {
         .with_organization(&organization)
         .with_tickets()
         .with_event_start(NaiveDate::from_ymd(2016, 7, 8).and_hms(12, 0, 0))
+        .with_sales_starting(NaiveDate::from_ymd(2016, 7, 8).and_hms(12, 0, 0))
+        .with_sales_ending(NaiveDate::from_ymd(2036, 7, 8).and_hms(12, 0, 0))
         .with_ticket_pricing()
         .finish();
     let ticket_type = event.ticket_types(true, None, connection).unwrap().remove(0);
@@ -5092,7 +5746,7 @@ fn validate_record() {
                 assert_eq!(errors["event_id"][0].code, "cart_event_limit_reached");
                 assert_eq!(
                     &errors["event_id"][0].message.clone().unwrap().into_owned(),
-                    "Cart limited to one event for purchasing"
+                    "You already have another event ticket in your cart. Please clear your cart first to purchase tickets to this event."
                 );
             }
             _ => panic!("Expected validation error"),
@@ -5438,9 +6092,7 @@ pub fn search_by_partial_ticket_id() {
     let event = project.create_event().with_tickets().finish();
     let order2 = project.create_order().for_event(&event).is_paid().finish();
 
-    let ticket = &order2
-        .tickets(event.ticket_types(false, None, connection).unwrap()[0].id, connection)
-        .unwrap()[0];
+    let ticket = &order2.tickets(None, connection).unwrap()[0];
     let actual = Order::search(
         None,
         None,
@@ -5773,7 +6425,7 @@ pub fn search_by_all() {
         .for_user(&user)
         .is_paid()
         .finish();
-    let ticket = &order2.tickets(ticket_type_id, connection).unwrap()[0];
+    let ticket = &order2.tickets(None, connection).unwrap()[0];
 
     let actual = Order::search(
         Some(event.id),
@@ -5921,4 +6573,30 @@ pub fn additional_fee() {
         .unwrap();
 
     assert_eq!(fees_item.unit_price_in_cents, 10050);
+}
+
+fn move_order_to_past(order: &Order, to_date: NaiveDateTime, connection: &PgConnection) {
+    let tickets: Vec<Uuid> = order.tickets(None, connection).unwrap().iter().map(|t| t.id).collect();
+    diesel::sql_query(
+        r#"
+        UPDATE orders
+        SET created_at = $2, expires_at = $2
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(order.id)
+    .bind::<sql_types::Timestamp, _>(to_date)
+    .execute(connection)
+    .unwrap();
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_instances
+        SET reserved_until = $2
+        WHERE id = ANY($1);
+        "#,
+    )
+    .bind::<sql_types::Array<sql_types::Uuid>, _>(tickets)
+    .bind::<sql_types::Timestamp, _>(to_date)
+    .execute(connection)
+    .unwrap();
 }

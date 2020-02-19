@@ -4,6 +4,27 @@ use chrono::{Duration, Utc};
 use uuid::Uuid;
 
 #[test]
+fn upcoming_domain_action() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    Report::create_next_automatic_report_domain_action(connection).unwrap();
+    let upcoming_automatic_report_domain_action =
+        DomainAction::upcoming_domain_action(None, None, DomainActionTypes::SendAutomaticReportEmails, connection)
+            .unwrap();
+    assert!(upcoming_automatic_report_domain_action.is_some());
+
+    // Mark as done
+    upcoming_automatic_report_domain_action
+        .unwrap()
+        .set_done(connection)
+        .unwrap();
+    let upcoming_automatic_report_domain_action =
+        DomainAction::upcoming_domain_action(None, None, DomainActionTypes::SendAutomaticReportEmails, connection)
+            .unwrap();
+    assert!(upcoming_automatic_report_domain_action.is_none());
+}
+
+#[test]
 fn commit() {
     let project = TestProject::new();
     let conn = project.get_connection();

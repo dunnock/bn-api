@@ -8,6 +8,97 @@ use itertools::Itertools;
 use uuid::Uuid;
 
 #[test]
+fn status() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project
+        .create_event()
+        .with_a_specific_number_of_tickets(10)
+        .with_ticket_type_count(1)
+        .finish();
+    // Ticket type created without pricing leading to no active pricing status
+    let ticket_type = &event.ticket_types(true, None, connection).unwrap()[0];
+    ticket_type
+        .current_ticket_pricing(false, connection)
+        .unwrap()
+        .destroy(None, connection)
+        .unwrap();
+    assert_eq!(
+        ticket_type.status(false, connection).unwrap(),
+        TicketTypeStatus::NoActivePricing
+    );
+
+    // Sales ended as all pricing periods have ended (only this one exists at this time which is in the past)
+    let ticket_pricing = ticket_type
+        .add_ticket_pricing(
+            "Ticket Pricing".to_string(),
+            dates::now().add_days(-2).finish(),
+            dates::now().add_days(-1).finish(),
+            10,
+            false,
+            None,
+            None,
+            connection,
+        )
+        .unwrap();
+    assert_eq!(
+        ticket_type.status(false, connection).unwrap(),
+        TicketTypeStatus::SaleEnded
+    );
+    ticket_pricing.destroy(None, connection).unwrap();
+
+    // On sale soon since pricing won't begin for a day
+    ticket_type
+        .add_ticket_pricing(
+            "Ticket Pricing".to_string(),
+            dates::now().add_days(1).finish(),
+            dates::now().add_days(2).finish(),
+            10,
+            false,
+            None,
+            None,
+            connection,
+        )
+        .unwrap();
+    assert_eq!(
+        ticket_type.status(false, connection).unwrap(),
+        TicketTypeStatus::OnSaleSoon
+    );
+
+    // Current pricing that's active shows published
+    ticket_type
+        .add_ticket_pricing(
+            "Ticket Pricing".to_string(),
+            dates::now().add_days(-1).finish(),
+            dates::now().add_days(1).finish(),
+            10,
+            false,
+            None,
+            None,
+            connection,
+        )
+        .unwrap();
+    assert_eq!(
+        ticket_type.status(false, connection).unwrap(),
+        TicketTypeStatus::Published
+    );
+
+    // Use up all but 1 quantity, no effect
+    project.create_order().for_event(&event).quantity(9).is_paid().finish();
+    assert_eq!(
+        ticket_type.status(false, connection).unwrap(),
+        TicketTypeStatus::Published
+    );
+
+    // Last item taken, sold out
+    project.create_order().for_event(&event).quantity(1).is_paid().finish();
+    assert_eq!(
+        ticket_type.status(false, connection).unwrap(),
+        TicketTypeStatus::SoldOut
+    );
+}
+
+#[test]
 fn end_date() {
     let project = TestProject::new();
     let connection = project.get_connection();

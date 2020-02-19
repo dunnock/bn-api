@@ -1,5 +1,4 @@
-use actix_web::HttpResponse;
-use actix_web::State;
+use actix_web::{HttpResponse, Path, State};
 use auth::user::User;
 use bigneon_db::models::TicketType as Dbticket_types;
 use bigneon_db::models::User as DbUser;
@@ -15,7 +14,7 @@ use helpers::application;
 use itertools::Itertools;
 use log::Level::Debug;
 use log::Level::Info;
-use models::RequestInfo;
+use models::*;
 use payments::AuthThenCompletePaymentBehavior;
 use payments::PaymentProcessor;
 use payments::PaymentProcessorBehavior;
@@ -85,6 +84,21 @@ pub fn update_cart(
     cart.set_tracking_data(json.tracking_data.clone(), Some(user.id()), connection)?;
 
     Ok(HttpResponse::Ok().json(Order::find(cart.id, connection)?.for_display(None, user.id(), connection)?))
+}
+
+pub fn duplicate(
+    (connection, path, user): (Connection, Path<PathParameters>, User),
+) -> Result<HttpResponse, BigNeonError> {
+    let connection = connection.get();
+    let order = Order::find(path.id, connection)?;
+    let user_id = order.on_behalf_of_user_id.unwrap_or(order.user_id);
+
+    if user_id != user.id() {
+        return application::forbidden("This cart does not belong to you");
+    }
+
+    let duplicate_order = order.duplicate_order(connection)?;
+    Ok(HttpResponse::Ok().json(duplicate_order.for_display(None, user.id(), connection)?))
 }
 
 pub fn destroy((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {

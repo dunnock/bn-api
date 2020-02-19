@@ -42,6 +42,15 @@ pub struct DomainActionEditableAttributes {
 }
 
 impl DomainAction {
+    pub fn upcoming_domain_action(
+        table: Option<Tables>,
+        id: Option<Uuid>,
+        domain_action_type: DomainActionTypes,
+        conn: &PgConnection,
+    ) -> Result<Option<DomainAction>, DatabaseError> {
+        Ok(DomainAction::find_by_resource(table, id, domain_action_type, DomainActionStatus::Pending, conn)?.pop())
+    }
+
     pub fn create(
         domain_event_id: Option<Uuid>,
         domain_action_type: DomainActionTypes,

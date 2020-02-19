@@ -223,7 +223,7 @@ fn schedule_missing_domain_actions(config: Config, database: Database) {
     }
 
     // Report specific domain actions
-    Report::schedule_domain_actions(connection).expect("Expected to schedule any missing domain actions");
+    schedule_domain_actions(connection).expect("Expected to schedule any missing domain actions");
 }
 
 fn sync_spotify_genres(config: Config, database: Database) {

@@ -12,6 +12,28 @@ use diesel::query_dsl::RunQueryDsl;
 use uuid::Uuid;
 
 #[test]
+fn available() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project
+        .create_event()
+        .with_ticket_type_count(1)
+        .with_tickets()
+        .with_ticket_pricing()
+        .finish();
+    let code = project.create_code().with_event(&event).with_max_uses(100).finish();
+    assert_eq!(code.available(connection).unwrap(), 100);
+    project
+        .create_order()
+        .for_event(&event)
+        .quantity(10)
+        .with_redemption_code(code.redemption_code.clone())
+        .is_paid()
+        .finish();
+    assert_eq!(code.available(connection).unwrap(), 90);
+}
+
+#[test]
 fn create() {
     let db = TestProject::new();
     let start_date = NaiveDateTime::from(Utc::now().naive_utc() - Duration::days(1));

@@ -1,6 +1,4 @@
-use actix_web::Path;
-use actix_web::Query;
-use actix_web::{http::StatusCode, FromRequest, HttpResponse};
+use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path, Query};
 use bigneon_api::controllers;
 use bigneon_api::controllers::cart;
 use bigneon_api::controllers::cart::*;
@@ -9,10 +7,12 @@ use bigneon_api::extractors::*;
 use bigneon_api::models::*;
 use bigneon_db::models::*;
 use bigneon_db::schema::{orders, ticket_instances};
+use bigneon_db::utils::dates;
 use chrono::prelude::*;
 use chrono::Duration;
 use diesel;
 use diesel::prelude::*;
+use diesel::sql_types;
 use functional::base;
 use globee::Customer;
 use globee::Email;
@@ -22,6 +22,7 @@ use serde_json;
 use support::database::TestDatabase;
 use support::test_request::TestRequest;
 use support::{self, *};
+use uuid::Uuid;
 
 #[cfg(test)]
 mod update_box_office_pricing_tests {
@@ -63,6 +64,184 @@ mod replace_box_office_pricing_tests {
     fn replace_box_office_pricing_org_owner() {
         base::cart::replace_box_office_pricing(Roles::OrgOwner, true);
     }
+}
+
+#[test]
+fn duplicate() {
+    let database = TestDatabase::new();
+    let connection = database.connection.get();
+    let event = database.create_event().with_tickets().with_ticket_pricing().finish();
+
+    let order = database.create_order().quantity(5).for_event(&event).finish();
+    let user = order.user(connection).unwrap();
+    let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
+    let tickets: Vec<Uuid> = order.tickets(None, connection).unwrap().iter().map(|t| t.id).collect();
+    diesel::sql_query(
+        r#"
+        UPDATE orders
+        SET created_at = $2, expires_at = $2
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(order.id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-7).finish())
+    .execute(connection)
+    .unwrap();
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_instances
+        SET reserved_until = $2
+        WHERE id = ANY($1);
+        "#,
+    )
+    .bind::<sql_types::Array<sql_types::Uuid>, _>(tickets)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-7).finish())
+    .execute(connection)
+    .unwrap();
+
+    // Current cart is empty
+    let cart = Order::find_or_create_cart(&user, connection).unwrap();
+    let items = cart.items(&connection).unwrap();
+    assert_eq!(items.len(), 0);
+
+    let test_request = TestRequest::create();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    path.id = order.id;
+    let response = cart::duplicate((database.connection.clone().into(), path, auth_user)).unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // Cart now matches old order for items
+    assert_ne!(cart.id, order.id);
+    assert_eq!(cart.user_id, order.user_id);
+    let order_items = order.items(connection).unwrap();
+    let cart_items = cart.items(connection).unwrap();
+    assert_eq!(order_items.len(), cart_items.len());
+    let order_item = order_items
+        .iter()
+        .find(|i| i.item_type == OrderItemTypes::Tickets)
+        .unwrap();
+    let cart_item = cart_items
+        .iter()
+        .find(|i| i.item_type == OrderItemTypes::Tickets)
+        .unwrap();
+    assert_eq!(order_item.quantity, cart_item.quantity);
+    assert_eq!(order_item.ticket_type_id, cart_item.ticket_type_id);
+}
+
+#[test]
+fn duplicate_fails_no_longer_available() {
+    let database = TestDatabase::new();
+    let connection = database.connection.get();
+    let event = database.create_event().with_tickets().with_ticket_pricing().finish();
+
+    let order = database.create_order().quantity(5).for_event(&event).finish();
+    let user = order.user(connection).unwrap();
+    let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
+    let tickets: Vec<Uuid> = order.tickets(None, connection).unwrap().iter().map(|t| t.id).collect();
+    diesel::sql_query(
+        r#"
+        UPDATE orders
+        SET created_at = $2, expires_at = $2
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(order.id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-7).finish())
+    .execute(connection)
+    .unwrap();
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_instances
+        SET reserved_until = $2
+        WHERE id = ANY($1);
+        "#,
+    )
+    .bind::<sql_types::Array<sql_types::Uuid>, _>(tickets)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-7).finish())
+    .execute(connection)
+    .unwrap();
+
+    // Mark event as deleted to trigger failure to duplicate
+    diesel::sql_query(
+        r#"
+        UPDATE events
+        SET deleted_at = '1999-01-01 0:0:0'
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(event.id)
+    .execute(connection)
+    .unwrap();
+
+    let cart = Order::find_or_create_cart(&user, connection).unwrap();
+    let items = cart.items(&connection).unwrap();
+    assert_eq!(items.len(), 0);
+
+    let test_request = TestRequest::create();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    path.id = order.id;
+    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user)).into();
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+
+    let expected_json = HttpResponse::new(StatusCode::UNPROCESSABLE_ENTITY)
+        .into_builder()
+        .json(json!({
+            "error": "Order is invalid for duplication"
+        }));
+    let expected_text = unwrap_body_to_string(&expected_json).unwrap();
+    let body = unwrap_body_to_string(&response).unwrap();
+    assert_eq!(body, expected_text);
+}
+
+#[test]
+fn duplicate_fails_for_unowned_order() {
+    let database = TestDatabase::new();
+    let connection = database.connection.get();
+    let event = database.create_event().with_tickets().with_ticket_pricing().finish();
+
+    let user = database.create_user().finish();
+    let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
+    let order = database.create_order().quantity(5).for_event(&event).finish();
+    let tickets: Vec<Uuid> = order.tickets(None, connection).unwrap().iter().map(|t| t.id).collect();
+    diesel::sql_query(
+        r#"
+        UPDATE orders
+        SET created_at = $2, expires_at = $2
+        WHERE id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(order.id)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-7).finish())
+    .execute(connection)
+    .unwrap();
+    diesel::sql_query(
+        r#"
+        UPDATE ticket_instances
+        SET reserved_until = $2
+        WHERE id = ANY($1);
+        "#,
+    )
+    .bind::<sql_types::Array<sql_types::Uuid>, _>(tickets)
+    .bind::<sql_types::Timestamp, _>(dates::now().add_days(-7).finish())
+    .execute(connection)
+    .unwrap();
+
+    let cart = Order::find_or_create_cart(&user, connection).unwrap();
+    let items = cart.items(&connection).unwrap();
+    assert_eq!(items.len(), 0);
+
+    let test_request = TestRequest::create();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    path.id = order.id;
+    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user)).into();
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+
+    let expected_json = HttpResponse::new(StatusCode::FORBIDDEN).into_builder().json(json!({
+        "error": "This cart does not belong to you"
+    }));
+    let expected_text = unwrap_body_to_string(&expected_json).unwrap();
+    let body = unwrap_body_to_string(&response).unwrap();
+    assert_eq!(body, expected_text);
 }
 
 #[test]

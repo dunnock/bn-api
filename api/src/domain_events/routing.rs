@@ -55,6 +55,7 @@ impl DomainActionRouter {
                 UpdateGenres => Box::new(UpdateGenresExecutor::new()),
                 ProcessSettlementReport => Box::new(ProcessSettlementReportExecutor::new(conf)),
                 ProcessTransferDrip => Box::new(ProcessTransferDripEventExecutor::new(conf)),
+                RetargetAbandonedOrders => Box::new(RetargetAbandonedOrdersExecutor::new()),
                 SendAutomaticReportEmails => Box::new(SendAutomaticReportEmailsExecutor::new(conf)),
                 SubmitSitemapToSearchEngines => Box::new(SubmitSitemapToSearchEnginesExecutor::new(
                     conf.api_base_url.clone(),
@@ -81,6 +82,9 @@ impl DomainActionRouter {
             .expect("Configuration error");
 
         self.add_executor(RegenerateDripActions, find_executor(RegenerateDripActions))
+            .expect("Configuration error");
+
+        self.add_executor(RetargetAbandonedOrders, find_executor(RetargetAbandonedOrders))
             .expect("Configuration error");
 
         self.add_executor(UpdateGenres, find_executor(UpdateGenres))

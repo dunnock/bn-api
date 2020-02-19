@@ -29,7 +29,6 @@ impl UserDisplayTicketType {
         redemption_code: Option<String>,
         conn: &PgConnection,
     ) -> Result<UserDisplayTicketType, DatabaseError> {
-        let status = ticket_type.status;
         let available = ticket_type.valid_available_ticket_count(conn)?;
 
         let ticket_pricing = match ticket_type
@@ -52,7 +51,7 @@ impl UserDisplayTicketType {
             event_id: ticket_type.event_id,
             name: ticket_type.name.clone(),
             description: ticket_type.description.clone(),
-            status,
+            status: ticket_type.status(box_office_pricing, conn)?,
             start_date: ticket_type.start_date,
             end_date: ticket_type.end_date(conn)?,
             ticket_pricing,
@@ -96,47 +95,31 @@ impl UserDisplayTicketType {
             }
         }
 
-        if ticket_type.status == TicketTypeStatus::Published {
-            if result.available == 0 || result.available < result.increment as u32 {
-                result.status = TicketTypeStatus::SoldOut;
-            } else {
-                if result.ticket_pricing.is_none() {
-                    result.status = TicketTypeStatus::NoActivePricing;
-
-                    let pricings = ticket_type.ticket_pricing(true, conn)?;
-
-                    let min_pricing = pricings.iter().min_by_key(|p| p.start_date);
-                    let max_pricing = pricings.iter().max_by_key(|p| p.end_date);
-
-                    if min_pricing
-                        .map(|p| p.start_date)
-                        .unwrap_or(ticket_type.start_date(conn)?)
-                        > dates::now().finish()
-                    {
-                        result.status = TicketTypeStatus::OnSaleSoon;
-                        result.ticket_pricing = Some(DisplayTicketPricing::from_ticket_pricing(
-                            min_pricing.unwrap(),
-                            fee_schedule,
-                            redemption_code.clone(),
-                            Some(ticket_type.event_id),
-                            box_office_pricing,
-                            conn,
-                        )?)
-                    }
-
-                    if max_pricing.map(|p| p.end_date).unwrap_or(ticket_type.end_date(conn)?) < dates::now().finish() {
-                        result.status = TicketTypeStatus::SaleEnded;
-                        result.ticket_pricing = Some(DisplayTicketPricing::from_ticket_pricing(
-                            max_pricing.unwrap(),
-                            fee_schedule,
-                            redemption_code.clone(),
-                            Some(ticket_type.event_id),
-                            box_office_pricing,
-                            conn,
-                        )?)
-                    }
-                }
+        let ticket_pricings = ticket_type.valid_ticket_pricing(true, conn)?;
+        match result.status {
+            TicketTypeStatus::OnSaleSoon => {
+                let min_pricing = ticket_pricings.iter().min_by_key(|p| p.start_date);
+                result.ticket_pricing = Some(DisplayTicketPricing::from_ticket_pricing(
+                    min_pricing.unwrap(),
+                    fee_schedule,
+                    redemption_code.clone(),
+                    Some(ticket_type.event_id),
+                    box_office_pricing,
+                    conn,
+                )?);
             }
+            TicketTypeStatus::SaleEnded => {
+                let max_pricing = ticket_pricings.iter().max_by_key(|p| p.end_date);
+                result.ticket_pricing = Some(DisplayTicketPricing::from_ticket_pricing(
+                    max_pricing.unwrap(),
+                    fee_schedule,
+                    redemption_code.clone(),
+                    Some(ticket_type.event_id),
+                    box_office_pricing,
+                    conn,
+                )?);
+            }
+            _ => (),
         }
 
         Ok(result)

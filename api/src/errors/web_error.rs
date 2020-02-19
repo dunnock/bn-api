@@ -243,7 +243,10 @@ impl ConvertToWebError for DatabaseError {
             3100 => internal_error("Could not insert record"),
             3200 => internal_error("Could not update record"),
             3300 => internal_error("Could not delete record"),
-            3400 => status_code_and_message(StatusCode::CONFLICT, "Duplicate record exists"),
+            3400 => status_code_and_message(
+                StatusCode::CONFLICT,
+                &self.cause.clone().unwrap_or("Duplicate record exists".to_string()),
+            ),
             4000 => internal_error("Connection error"),
             5000 => internal_error("Internal error"),
             7000 => {

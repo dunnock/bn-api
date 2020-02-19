@@ -230,7 +230,6 @@ fn load_for_event() {
         .finish();
     let ticket_types = &event.ticket_types(true, None, connection).unwrap();
     let event2 = project.create_event().with_ticket_pricing().finish();
-    let ticket_types2 = &event2.ticket_types(true, None, connection).unwrap();
     let hold = project
         .create_hold()
         .with_hold_type(HoldTypes::Discount)
@@ -276,26 +275,26 @@ fn load_for_event() {
         .is_paid()
         .finish();
 
-    let user_tickets = order.tickets(ticket_types[0].id, connection).unwrap();
+    let user_tickets = order.tickets(None, connection).unwrap();
     // Transferred
     let ticket = &user_tickets[0];
     // Redeemed
     let ticket2 = &user_tickets[1];
 
-    let user_tickets = order2.tickets(ticket_types[0].id, connection).unwrap();
+    let user_tickets = order2.tickets(None, connection).unwrap();
     // Refund
     let ticket3 = &user_tickets[0];
     // Refund
     let ticket4 = &user_tickets[1];
 
-    let user_tickets = order3.tickets(ticket_types[0].id, connection).unwrap();
+    let user_tickets = order3.tickets(None, connection).unwrap();
     // Transfer
     let ticket5 = &user_tickets[0];
     // Redeemed
     let ticket6 = &user_tickets[1];
     // Refund
     let ticket7 = &user_tickets[2];
-    let user_tickets = order4.tickets(ticket_types2[0].id, connection).unwrap();
+    let user_tickets = order4.tickets(None, connection).unwrap();
     // Cancelled transfer
     let ticket8 = &user_tickets[0];
 
@@ -520,13 +519,13 @@ fn load_for_order() {
         .is_paid()
         .finish();
 
-    let user_tickets = order.tickets(ticket_types[0].id, connection).unwrap();
+    let user_tickets = order.tickets(None, connection).unwrap();
     // Transferred
     let ticket = &user_tickets[0];
     // Redeemed
     let ticket2 = &user_tickets[1];
 
-    let user_tickets = order2.tickets(ticket_types[0].id, connection).unwrap();
+    let user_tickets = order2.tickets(None, connection).unwrap();
     // Refund
     let ticket3 = &user_tickets[0];
 

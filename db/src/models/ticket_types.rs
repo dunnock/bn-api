@@ -109,6 +109,35 @@ impl TicketType {
             .to_db_error(ErrorCode::QueryError, "Error loading ticket types")
     }
 
+    pub fn status(&self, box_office_pricing: bool, conn: &PgConnection) -> Result<TicketTypeStatus, DatabaseError> {
+        let ticket_pricings = self.valid_ticket_pricing(true, conn)?;
+        let current_ticket_pricing = self.current_ticket_pricing(box_office_pricing, conn).optional()?;
+        let available = self.valid_available_ticket_count(conn)?;
+        let mut status = self.status;
+        let now = Utc::now().naive_utc();
+        if self.status == TicketTypeStatus::Published {
+            if available == 0 || self.increment > available as i32 {
+                status = TicketTypeStatus::SoldOut;
+            } else {
+                if current_ticket_pricing.is_none() {
+                    status = TicketTypeStatus::NoActivePricing;
+                    let min_pricing = ticket_pricings.iter().min_by_key(|p| p.start_date);
+                    let max_pricing = ticket_pricings.iter().max_by_key(|p| p.end_date);
+
+                    if min_pricing.map(|p| p.start_date).unwrap_or(self.start_date(conn)?) > now {
+                        status = TicketTypeStatus::OnSaleSoon;
+                    }
+
+                    if max_pricing.map(|p| p.end_date).unwrap_or(self.end_date(conn)?) < now {
+                        status = TicketTypeStatus::SaleEnded;
+                    }
+                }
+            }
+        }
+
+        Ok(status)
+    }
+
     /// Creates a ticket type. `Event::add_ticket_type` should be used in most scenarios
     pub(crate) fn create(
         event_id: Uuid,

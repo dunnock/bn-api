@@ -463,14 +463,21 @@ impl Event {
 
     pub fn event_payload_data(
         event: &Event,
+        front_end_url: &str,
         data: &mut HashMap<String, serde_json::Value>,
         conn: &PgConnection,
     ) -> Result<(), DatabaseError> {
         let organization = event.organization(conn)?;
         let venue = event.venue(conn)?;
         let localized_times = event.get_all_localized_times(venue.as_ref());
+
+        let event_url = format!("{}/tickets/{}", front_end_url, event.slug(conn)?).to_string();
+
+        data.insert("show_event_url".to_string(), json!(event_url));
         data.insert("show_id".to_string(), json!(event.id));
         data.insert("show_event_name".to_string(), json!(event.name.clone()));
+        data.insert("show_promo_image_url".to_string(), json!(event.promo_image_url.clone()));
+        data.insert("show_cover_image_url".to_string(), json!(event.cover_image_url.clone()));
 
         data.insert(
             "show_start".to_string(),

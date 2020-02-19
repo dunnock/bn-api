@@ -10,23 +10,35 @@ fn create_next_settlement_processing_domain_action() {
     let project = TestProject::new();
     let connection = project.get_connection();
     let organization = project.create_organization().finish();
-    let domain_action = organization
-        .upcoming_settlement_domain_action(connection)
-        .unwrap()
-        .unwrap();
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Organizations),
+        Some(organization.id),
+        DomainActionTypes::ProcessSettlementReport,
+        connection,
+    )
+    .unwrap()
+    .unwrap();
     domain_action.set_done(connection).unwrap();
-    assert!(organization
-        .upcoming_settlement_domain_action(connection)
-        .unwrap()
-        .is_none());
+    assert!(DomainAction::upcoming_domain_action(
+        Some(Tables::Organizations),
+        Some(organization.id),
+        DomainActionTypes::ProcessSettlementReport,
+        connection,
+    )
+    .unwrap()
+    .is_none());
 
     organization
         .create_next_settlement_processing_domain_action(None, connection)
         .unwrap();
-    let domain_action = organization
-        .upcoming_settlement_domain_action(connection)
-        .unwrap()
-        .unwrap();
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Organizations),
+        Some(organization.id),
+        DomainActionTypes::ProcessSettlementReport,
+        connection,
+    )
+    .unwrap()
+    .unwrap();
     assert_eq!(
         domain_action.scheduled_at,
         organization.next_settlement_date(None).unwrap()
@@ -286,20 +298,6 @@ fn next_settlement_date() {
         .unwrap();
     let expected_pt = pt_today.naive_utc() + Duration::days(1);
     assert_eq!(organization.next_settlement_date(Some(1)).unwrap(), expected_pt);
-}
-
-#[test]
-fn upcoming_settlement_domain_action() {
-    let project = TestProject::new();
-    let connection = project.get_connection();
-    let organization = project.create_organization().finish();
-    let upcoming_settlement_domain_action = organization.upcoming_settlement_domain_action(connection).unwrap();
-    assert!(upcoming_settlement_domain_action.is_some());
-
-    // Mark as done
-    upcoming_settlement_domain_action.unwrap().set_done(connection).unwrap();
-    let upcoming_settlement_domain_action = organization.upcoming_settlement_domain_action(connection).unwrap();
-    assert!(upcoming_settlement_domain_action.is_none());
 }
 
 #[test]
@@ -563,10 +561,14 @@ fn update() {
     edited_organization.phone = Some("+27123456789".to_string());
     edited_organization.sendgrid_api_key = Some("A_Test_Key".to_string());
 
-    let settlement_report_job = edited_organization
-        .upcoming_settlement_domain_action(connection)
-        .unwrap()
-        .unwrap();
+    let settlement_report_job = DomainAction::upcoming_domain_action(
+        Some(Tables::Organizations),
+        Some(edited_organization.id),
+        DomainActionTypes::ProcessSettlementReport,
+        connection,
+    )
+    .unwrap()
+    .unwrap();
     let mut changed_attrs: OrganizationEditableAttributes = Default::default();
     changed_attrs.name = Some("Test Org".to_string());
     changed_attrs.address = Some("Test Address".to_string());
@@ -585,10 +587,14 @@ fn update() {
 
     // Same settlement job as the timezone has not changed
     assert_eq!(
-        &updated_organization
-            .upcoming_settlement_domain_action(connection)
-            .unwrap()
-            .unwrap(),
+        &DomainAction::upcoming_domain_action(
+            Some(Tables::Organizations),
+            Some(updated_organization.id),
+            DomainActionTypes::ProcessSettlementReport,
+            connection,
+        )
+        .unwrap()
+        .unwrap(),
         &settlement_report_job
     );
 
@@ -601,10 +607,14 @@ fn update() {
 
     // New settlement report job as old date invalidated, old job is now cancelled on reload
     assert_ne!(
-        &updated_organization
-            .upcoming_settlement_domain_action(connection)
-            .unwrap()
-            .unwrap(),
+        &DomainAction::upcoming_domain_action(
+            Some(Tables::Organizations),
+            Some(updated_organization.id),
+            DomainActionTypes::ProcessSettlementReport,
+            connection,
+        )
+        .unwrap()
+        .unwrap(),
         &settlement_report_job
     );
     let settlement_report_job = DomainAction::find(settlement_report_job.id, connection).unwrap();
@@ -2059,7 +2069,7 @@ fn search_fans() {
 
     // Redeem ticket causing user last_interaction_time to change
     let ticket_type = &event.ticket_types(true, None, connection).unwrap()[0];
-    let ticket = &order5.tickets(ticket_type.id, connection).unwrap()[0];
+    let ticket = &order5.tickets(Some(ticket_type.id), connection).unwrap()[0];
     TicketInstance::redeem_ticket(
         ticket.id,
         ticket.redeem_key.clone().unwrap(),

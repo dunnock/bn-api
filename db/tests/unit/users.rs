@@ -17,6 +17,48 @@ use bigneon_db::utils::errors::ErrorCode;
 use bigneon_db::utils::errors::ErrorCode::ValidationError;
 
 #[test]
+fn is_attending_event() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let organization = project.create_organization().finish();
+    let event = project
+        .create_event()
+        .with_organization(&organization)
+        .with_tickets()
+        .with_ticket_pricing()
+        .finish();
+    let user = project.create_user().finish();
+    let user2 = project.create_user().finish();
+    assert!(!User::is_attending_event(user.id, event.id, connection).unwrap());
+    assert!(!User::is_attending_event(user2.id, event.id, connection).unwrap());
+
+    // Purchase user now has ticket
+    let order = project
+        .create_order()
+        .for_event(&event)
+        .for_user(&user)
+        .is_paid()
+        .quantity(1)
+        .finish();
+    assert!(User::is_attending_event(user.id, event.id, connection).unwrap());
+    assert!(!User::is_attending_event(user2.id, event.id, connection).unwrap());
+
+    // Transfer ticket away, user no longer has a ticket, new user without order is seen as having it
+    let ticket = &order.tickets(None, connection).unwrap()[0];
+    TicketInstance::direct_transfer(
+        &user,
+        &vec![ticket.id],
+        "nowhere",
+        TransferMessageType::Email,
+        user2.id,
+        connection,
+    )
+    .unwrap();
+    assert!(!User::is_attending_event(user.id, event.id, connection).unwrap());
+    assert!(User::is_attending_event(user2.id, event.id, connection).unwrap());
+}
+
+#[test]
 fn new_stub() {
     let first_name = "Penny".to_string();
     let last_name = "Quarter".to_string();
@@ -120,13 +162,11 @@ fn transfer_activity_by_event_tickets() {
         .with_ticket_pricing()
         .with_event_start(dates::now().add_days(1).finish())
         .finish();
-    let ticket_type = &event.ticket_types(true, None, connection).unwrap()[0];
     let event2 = project
         .create_event()
         .with_ticket_pricing()
         .with_event_start(dates::now().add_days(2).finish())
         .finish();
-    let ticket_type2 = &event2.ticket_types(true, None, connection).unwrap()[0];
     let order = project
         .create_order()
         .for_event(&event)
@@ -142,12 +182,12 @@ fn transfer_activity_by_event_tickets() {
         .is_paid()
         .finish();
 
-    let user_tickets = order.tickets(ticket_type.id, connection).unwrap();
+    let user_tickets = order.tickets(None, connection).unwrap();
     let ticket = &user_tickets[0];
     let ticket2 = &user_tickets[1];
     let ticket3 = &user_tickets[2];
 
-    let user_tickets2 = order2.tickets(ticket_type2.id, connection).unwrap();
+    let user_tickets2 = order2.tickets(None, connection).unwrap();
     let ticket4 = &user_tickets2[0];
     let ticket5 = &user_tickets2[1];
     let ticket6 = &user_tickets2[2];
