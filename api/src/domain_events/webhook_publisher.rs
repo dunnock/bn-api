@@ -106,7 +106,7 @@ impl WebhookPublisher {
                 let order = Order::find(main_id, conn)?;
                 let user = order.user(conn)?;
                 let order_id = order.id;
-                Self::order_payload_data(conn, &mut data, order)?;
+                self.order_payload_data(conn, &mut data, order)?;
                 let magic_link_refresh_token =
                     user.create_magic_link_token(&self.token_issuer, Duration::minutes(15))?;
                 let mut custom_data = HashMap::<String, Value>::new();
@@ -124,7 +124,7 @@ impl WebhookPublisher {
             DomainEventTypes::OrderRefund => {
                 let mut data: HashMap<String, serde_json::Value> = HashMap::new();
                 let order = Order::find(main_id, conn)?;
-                Self::order_payload_data(conn, &mut data, order)?;
+                self.order_payload_data(conn, &mut data, order)?;
                 data.insert("webhook_event_type".to_string(), json!("refund_completed"));
                 data.insert("timestamp".to_string(), json!(domain_event.created_at.timestamp()));
                 result.push(data);
@@ -133,11 +133,22 @@ impl WebhookPublisher {
                 let mut data: HashMap<String, serde_json::Value> = HashMap::new();
                 let order = Order::find(main_id, conn)?;
                 let order_has_refunds = order.has_refunds(conn)?;
-                Self::order_payload_data(conn, &mut data, order)?;
+                self.order_payload_data(conn, &mut data, order)?;
 
                 if order_has_refunds {
                     data.insert("webhook_event_type".to_string(), json!("refund_completed"));
                 }
+                data.insert("timestamp".to_string(), json!(domain_event.created_at.timestamp()));
+                result.push(data);
+            }
+            DomainEventTypes::OrderRetargetingEmailTriggered => {
+                let mut data: HashMap<String, serde_json::Value> = HashMap::new();
+                let order = Order::find(main_id, conn)?;
+                if let Some(redemption_code) = order.redemption_code(conn)? {
+                    data.insert("redemption_code".to_string(), json!(redemption_code));
+                }
+                self.order_payload_data(conn, &mut data, order)?;
+                data.insert("webhook_event_type".to_string(), json!("abandoned_cart_email"));
                 data.insert("timestamp".to_string(), json!(domain_event.created_at.timestamp()));
                 result.push(data);
             }
@@ -162,7 +173,7 @@ impl WebhookPublisher {
                     let mut events = transfer.events(conn)?;
                     // TODO: lock down transfers to have only one event
                     if let Some(event) = events.pop() {
-                        Event::event_payload_data(&event, &mut data, conn)?;
+                        Event::event_payload_data(&event, &self.front_end_url, &mut data, conn)?;
                     }
                     let mut recipient_data = data.clone();
                     let mut transferer_data = data;
@@ -200,12 +211,13 @@ impl WebhookPublisher {
     }
 
     fn order_payload_data(
+        &self,
         conn: &PgConnection,
         data: &mut HashMap<String, Value>,
         order: Order,
     ) -> Result<(), DatabaseError> {
         if let Some(event) = order.events(conn)?.pop() {
-            Event::event_payload_data(&event, data, conn)?;
+            Event::event_payload_data(&event, &self.front_end_url, data, conn)?;
         }
         data.insert("webhook_event_type".to_string(), json!("purchase_ticket"));
         data.insert("order_number".to_string(), json!(order.order_number()));
