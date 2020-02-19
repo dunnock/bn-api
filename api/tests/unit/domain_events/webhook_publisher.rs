@@ -124,10 +124,7 @@ fn webhook_payloads() {
         .find(|p| fetch_from_payload::<String>(&p, "webhook_event_type") == "receive_pending_transfer".to_string())
         .clone()
         .unwrap();
-    assert_eq!(
-        fetch_from_payload::<String>(&recipient_payload, "receive_tickets_url"),
-        transfer.receive_url("http://localhost:5432", connection).unwrap()
-    );
+
     assert_eq!(
         fetch_from_payload::<Option<Uuid>>(&recipient_payload, "user_id"),
         transfer.destination_temporary_user_id
