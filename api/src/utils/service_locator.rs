@@ -1,3 +1,4 @@
+use auth::default_token_issuer::DefaultTokenIssuer;
 use bigneon_db::prelude::*;
 use bigneon_db::services::CountryLookup;
 use bigneon_db::utils::errors::DatabaseError;
@@ -17,6 +18,7 @@ pub struct ServiceLocator {
     branch_io_branch_key: String,
     api_keys_encryption_key: String,
     country_lookup_service: CountryLookup,
+    token_issuer: Box<dyn TokenIssuer>,
 }
 
 impl ServiceLocator {
@@ -36,11 +38,16 @@ impl ServiceLocator {
             branch_io_branch_key: config.branch_io_branch_key.clone(),
             api_keys_encryption_key: config.api_keys_encryption_key.clone(),
             country_lookup_service,
+            token_issuer: config.token_issuer.clone(),
         })
     }
 
     pub fn country_lookup_service(&self) -> &CountryLookup {
         &self.country_lookup_service
+    }
+
+    pub fn token_issuer(&self) -> &dyn TokenIssuer {
+        &*self.token_issuer
     }
 
     pub fn create_payment_processor(
