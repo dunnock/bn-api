@@ -1,4 +1,3 @@
-use auth::default_token_issuer::DefaultTokenIssuer;
 use bigneon_db::prelude::*;
 use bigneon_db::services::CountryLookup;
 use bigneon_db::utils::errors::DatabaseError;

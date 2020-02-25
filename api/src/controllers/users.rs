@@ -1,9 +1,8 @@
 use actix_web;
+use actix_web::Responder;
 use actix_web::{http::StatusCode, HttpRequest, HttpResponse, Path, Query};
-use actix_web::{Responder, State};
 use auth::user::User as AuthUser;
 use bigneon_db::prelude::*;
-use chrono::Duration;
 use communications::mailers;
 use controllers::auth;
 use controllers::auth::LoginRequest;

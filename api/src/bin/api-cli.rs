@@ -69,7 +69,7 @@ pub fn main() {
           (@arg site_id: +required "The site_id obtained from Customer.io")
           (@arg api_key: +required "The api key obtained from Customer.io")))
     .subcommand(SubCommand::with_name("version").about("Get the current version"))
-        .get_matches();
+    .get_matches();
 
     match matches.subcommand() {
         ("sync-purchase-metadata", Some(_)) => sync_purchase_metadata(database, service_locator),
