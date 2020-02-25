@@ -14,6 +14,22 @@ use bigneon_db::prelude::*;
 use bigneon_db::utils::errors::ErrorCode::ValidationError;
 
 #[test]
+fn event() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project.create_event().with_ticket_pricing().finish();
+    let user = project.create_user().finish();
+    project
+        .create_order()
+        .for_event(&event)
+        .for_user(&user)
+        .is_paid()
+        .finish();
+    let ticket = TicketInstance::find_for_user(user.id, connection).unwrap().remove(0);
+    assert_eq!(event, ticket.event(connection).unwrap());
+}
+
+#[test]
 fn associate_redeem_key() {
     let project = TestProject::new();
     let connection = project.get_connection();

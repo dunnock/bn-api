@@ -1,6 +1,7 @@
 use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path};
 use bigneon_api::controllers::events::{self, TicketRedeemRequest};
 use bigneon_api::controllers::tickets::{self, ShowTicketResponse};
+use bigneon_api::db::CacheDatabase;
 use bigneon_api::extractors::*;
 use bigneon_api::models::{PathParameters, RedeemTicketPathParameters};
 use bigneon_db::models::*;
@@ -166,6 +167,7 @@ pub fn redeem_ticket(role: Roles, should_test_succeed: bool) {
         Json(request_data),
         auth_user.clone(),
         request.extract_state(),
+        CacheDatabase { inner: None },
     ))
     .into();
 
@@ -183,6 +185,7 @@ pub fn redeem_ticket(role: Roles, should_test_succeed: bool) {
             Json(request_data),
             auth_user,
             request.extract_state(),
+            CacheDatabase { inner: None },
         ))
         .into();
         let ticket = TicketInstance::find(ticket.id, conn).unwrap();

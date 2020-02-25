@@ -36,3 +36,4 @@ pub mod transfers;
 pub mod user_invites;
 pub mod users;
 pub mod venues;
+pub mod websockets;

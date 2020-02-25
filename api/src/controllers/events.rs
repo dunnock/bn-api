@@ -7,24 +7,26 @@ use chrono::Duration;
 use controllers::organizations::DisplayOrganizationUser;
 use controllers::ticket_types;
 use db::Connection;
-use db::ReadonlyConnection;
+use db::{CacheDatabase, ReadonlyConnection};
 use diesel::PgConnection;
 use domain_events::executors::UpdateGenresPayload;
 use errors::*;
 use extractors::*;
-use helpers::application;
+use helpers::*;
 use jwt::{encode, Header};
 use models::*;
+use serde::Serialize;
 use serde_json::Value;
 use serde_with::{self, CommaSeparator};
 use server::AppState;
 use std::collections::HashMap;
 use url::Url;
 use utils::cloudinary::optimize_cloudinary;
+use utils::redis::*;
 use utils::ServiceLocator;
 use uuid::Uuid;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Serialize)]
 pub struct SearchParameters {
     #[serde(default, deserialize_with = "deserialize_unless_blank")]
     query: Option<String>,
@@ -226,6 +228,45 @@ pub fn checkins(
     payload.paging.total = payload.data.len() as u64;
     payload.paging.limit = 100;
     Ok(HttpResponse::Ok().json(&payload))
+}
+
+pub fn index_cached(
+    (state, connection, query, auth_user, cache_database): (
+        State<AppState>,
+        ReadonlyConnection,
+        Query<SearchParameters>,
+        OptionalUser,
+        CacheDatabase,
+    ),
+) -> Result<HttpResponse, BigNeonError> {
+    let search_params = query.clone();
+    let user = auth_user
+        .clone()
+        .into_inner()
+        .and_then(|auth_user| Some(auth_user.user));
+
+    let config = state.config.clone();
+    if user.is_none() {
+        // if there is a error in the cache, the value does not exist
+        let cached_value = cache_database
+            .clone()
+            .inner
+            .clone()
+            .and_then(|conn| caching::get_cached_value(conn, &config, &search_params));
+        if let Some(response) = cached_value {
+            return Ok(response);
+        }
+    }
+    let index_value = index((state, connection, query, auth_user))?;
+
+    if user.is_none() {
+        cache_database
+            .inner
+            .clone()
+            .and_then(|conn| caching::set_cached_value(conn, &config, &index_value, &search_params).ok());
+    }
+
+    return Ok(index_value);
 }
 
 pub fn index(
@@ -623,12 +664,13 @@ pub struct TicketRedeemRequest {
 }
 
 pub fn redeem_ticket(
-    (connection, parameters, redeem_parameters, auth_user, state): (
+    (connection, parameters, redeem_parameters, auth_user, state, cache_database): (
         Connection,
         Path<RedeemTicketPathParameters>,
         Json<TicketRedeemRequest>,
         AuthUser,
         State<AppState>,
+        CacheDatabase,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -660,6 +702,16 @@ pub fn redeem_ticket(
 
                     //Fetch the redeemable again to include the redeemed_by and redeemed_at fields
                     let redeemable = TicketInstance::show_redeemable_ticket(parameters.ticket_instance_id, connection)?;
+
+                    // Publish redeem event for redis pubsub
+                    cache_database
+                        .inner
+                        .clone()
+                        .and_then(|conn| caching::publish(conn, RedisPubSubChannel::TicketRedemptions, messages::TicketRedemption {
+                            ticket_id: ticket.id,
+                            event_id: db_event.id,
+                            redeemer_id: auth_user.id()
+                        }).ok());
 
                     Ok(HttpResponse::Ok().json(redeemable))
                 }

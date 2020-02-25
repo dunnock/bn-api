@@ -47,6 +47,12 @@ fn main() {
                 .default_value("true"),
         )
         .arg(
+            Arg::with_name("process-redis-pubsub")
+                .help("Processes redis pub subs")
+                .short("r")
+                .default_value("true"),
+        )
+        .arg(
             Arg::with_name("run-til-empty")
                 .help("Process all pending domain actions and then exits")
                 .short("b")
@@ -72,6 +78,11 @@ fn main() {
             .unwrap_or("true")
             .parse()
             .expect("Unknown value for `process-http`. Use `true` or `false`"),
+        matches
+            .value_of("process-redis-pubsub")
+            .unwrap_or("true")
+            .parse()
+            .expect("Unknown value for `process-redis-pubsub`. Use `true` or `false`"),
         matches
             .value_of("run-til-empty")
             .unwrap_or("false")

@@ -1,2 +1,2 @@
-pub use self::tickets_received::*;
-mod tickets_received;
+pub use self::tickets::*;
+mod tickets;

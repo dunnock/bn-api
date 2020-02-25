@@ -21,7 +21,12 @@ pub struct Config {
     pub app_name: String,
     pub cube_js: CubeJs,
     pub database_url: String,
+    pub redis_connection_string: Option<String>,
+    pub redis_connection_timeout: u64,
+    pub redis_read_timeout: u64,
+    pub redis_write_timeout: u64,
     pub readonly_database_url: String,
+    pub redis_cache_period: Option<usize>,
     pub domain: String,
     pub email_templates: EmailTemplates,
     pub environment: Environment,
@@ -139,6 +144,11 @@ const APP_NAME: &str = "APP_NAME";
 const API_HOST: &str = "API_HOST";
 const API_PORT: &str = "API_PORT";
 const DATABASE_URL: &str = "DATABASE_URL";
+const REDIS_CONNECTION_STRING: &str = "REDIS_CONNECTION_STRING";
+const REDIS_CONNECTION_TIMEOUT_MILLI: &str = "REDIS_CONNECTION_TIMEOUT_MILLI";
+const REDIS_READ_TIMEOUT_MILLI: &str = "REDIS_READ_TIMEOUT_MILLI";
+const REDIS_WRITE_TIMEOUT_MILLI: &str = "REDIS_WRITE_TIMEOUT_MILLI";
+const REDIS_CACHE_PERIOD_MILLI: &str = "REDIS_CACHE_PERIOD_MILLI";
 const READONLY_DATABASE_URL: &str = "READONLY_DATABASE_URL";
 const DOMAIN: &str = "DOMAIN";
 const EMAIL_TEMPLATES_CUSTOM_BROADCAST: &str = "EMAIL_TEMPLATES_CUSTOM_BROADCAST";
@@ -224,6 +234,35 @@ impl Config {
         dotenv().ok();
 
         let app_name = env::var(&APP_NAME).unwrap_or_else(|_| "Big Neon".to_string());
+
+        let redis_connection_string = match environment {
+            Environment::Test => None,
+            _ => env::var(&REDIS_CONNECTION_STRING).ok(),
+        };
+        let redis_connection_timeout = env::var(&REDIS_CONNECTION_TIMEOUT_MILLI)
+            .ok()
+            .map(|s| {
+                s.parse()
+                    .expect("Not a valid value for redis connection timeout in milliseconds")
+            })
+            .unwrap_or(50);
+        let redis_read_timeout = env::var(&REDIS_READ_TIMEOUT_MILLI)
+            .ok()
+            .map(|s| {
+                s.parse()
+                    .expect("Not a valid value for redis read timeout in milliseconds")
+            })
+            .unwrap_or(50);
+        let redis_write_timeout = env::var(&REDIS_WRITE_TIMEOUT_MILLI)
+            .ok()
+            .map(|s| {
+                s.parse()
+                    .expect("Not a valid value for redis write timeout in milliseconds")
+            })
+            .unwrap_or(50);
+        let redis_cache_period: Option<usize> = env::var(&REDIS_CACHE_PERIOD_MILLI)
+            .map(|p| p.parse().expect(&format!("{} is not a valid usize", ACTIX_WORKERS)))
+            .ok();
 
         let database_url = match environment {
             Environment::Test => get_env_var(TEST_DATABASE_URL),
@@ -389,6 +428,11 @@ impl Config {
             api_port,
             cube_js,
             database_url,
+            redis_connection_string,
+            redis_connection_timeout,
+            redis_read_timeout,
+            redis_write_timeout,
+            redis_cache_period,
             readonly_database_url,
             domain,
             email_templates,

@@ -1,3 +1,4 @@
+use actix::Addr;
 use actix_web::http;
 use actix_web::middleware::cors::Cors;
 use actix_web::{fs::StaticFiles, server, App};
@@ -7,14 +8,20 @@ use db::*;
 use domain_events::DomainActionMonitor;
 use log::Level::Debug;
 use middleware::{AppVersionHeader, BigNeonLogger, DatabaseTransaction, Metatags};
+use models::*;
 use routing;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use utils::redis::*;
 use utils::spotify;
 use utils::ServiceLocator;
+use uuid::Uuid;
 
 // Must be valid JSON
 const LOGGER_FORMAT: &'static str = r#"{"level": "INFO", "target":"bigneon::request", "remote_ip":"%a", "user_agent": "%{User-Agent}i", "request": "%r", "status_code": %s, "response_time": %D, "api_version":"%{x-app-version}o", "client_version": "%{X-API-Client-Version}i" }"#;
 
 pub struct AppState {
+    pub clients: Arc<Mutex<HashMap<Uuid, Vec<Addr<EventWebSocket>>>>>,
     pub config: Config,
     pub database: Database,
     pub database_ro: Database,
@@ -22,12 +29,18 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(config: Config, database: Database, database_ro: Database) -> Result<AppState, DatabaseError> {
+    pub fn new(
+        config: Config,
+        database: Database,
+        database_ro: Database,
+        clients: Arc<Mutex<HashMap<Uuid, Vec<Addr<EventWebSocket>>>>>,
+    ) -> Result<AppState, DatabaseError> {
         Ok(AppState {
             database,
             database_ro,
             service_locator: ServiceLocator::new(&config)?,
             config,
+            clients,
         })
     }
 }
@@ -42,6 +55,7 @@ impl Server {
         process_actions: bool,
         process_events: bool,
         process_http: bool,
+        process_redis_pubsub: bool,
         process_actions_til_empty: bool,
     ) {
         jlog!(Debug, "bigneon_api::server", "Server start requested", {"process_actions": process_actions, "process_events": process_events, "process_http":process_http, "process_actions_til_empty": process_actions_til_empty});
@@ -57,7 +71,7 @@ impl Server {
         }
 
         if process_actions || process_events {
-            domain_action_monitor.start(process_actions, process_events)
+            domain_action_monitor.start(process_actions, process_events);
         }
 
         if config.spotify_auth_token.is_some() {
@@ -70,11 +84,20 @@ impl Server {
 
             let conf = config.clone();
             let static_file_conf = config.clone();
+
+            let clients = Arc::new(Mutex::new(HashMap::new()));
+
+            let mut redis_pubsub_processor =
+                RedisPubSubProcessor::new(config.clone(), database.clone(), clients.clone());
+            if process_redis_pubsub {
+                redis_pubsub_processor.start();
+            }
+
             //            let keep_alive = server::KeepAlive::Tcp(config.http_keep_alive);
             let mut server = server::new({
                 move || {
                     App::with_state(
-                        AppState::new(conf.clone(), database.clone(), database_ro.clone())
+                        AppState::new(conf.clone(), database.clone(), database_ro.clone(), clients.clone())
                             .expect("Expected to generate app state"),
                     )
                         .middleware(BigNeonLogger::new(LOGGER_FORMAT))
@@ -125,7 +148,11 @@ impl Server {
             server.run();
 
             if process_actions || process_events {
-                domain_action_monitor.stop()
+                domain_action_monitor.stop();
+            }
+
+            if process_redis_pubsub {
+                redis_pubsub_processor.stop();
             }
         } else {
             domain_action_monitor.wait_for_end();

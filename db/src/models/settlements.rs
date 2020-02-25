@@ -1,5 +1,6 @@
 use chrono::{Datelike, Duration, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::Tz;
+use dev::times;
 use diesel;
 use diesel::dsl::select;
 use diesel::prelude::*;
@@ -205,19 +206,23 @@ impl Settlement {
             EventStatus::Published,
             conn,
         )?;
-        let events = if self.only_finished_events {
-            ending_events.clone()
-        } else {
-            Event::get_all_events_with_transactions_between(self.organization_id, self.start_time, self.end_time, conn)?
-        };
 
-        // Mark ending events as having been settled
         for event in ending_events {
+            if self.only_finished_events {
+                self.create_entries_from_event_transactions(&event, true, conn)?;
+            }
+            // Mark ending events as having been settled
             event.mark_settled(conn)?;
         }
 
-        for event in events {
-            self.create_entries_from_event_transactions(&event, conn)?;
+        // Attempt to record any transactions from this period (ignoring any events that have not ended if applicable)
+        // Transactions already settled above with the post event settlement will be ignored
+        for event in
+            Event::get_all_events_with_transactions_between(self.organization_id, self.start_time, self.end_time, conn)?
+        {
+            if !self.only_finished_events || event.event_end.unwrap_or(times::infinity()) < self.end_time {
+                self.create_entries_from_event_transactions(&event, false, conn)?;
+            }
         }
 
         Ok(())
@@ -226,17 +231,18 @@ impl Settlement {
     pub fn create_entries_from_event_transactions(
         &self,
         event: &Event,
+        include_all_transactions: bool,
         conn: &PgConnection,
     ) -> Result<(), DatabaseError> {
         select(process_settlement_for_event(
             self.id,
             event.id,
-            if self.only_finished_events {
+            if include_all_transactions {
                 None
             } else {
                 Some(self.start_time)
             },
-            if self.only_finished_events {
+            if include_all_transactions {
                 None
             } else {
                 Some(self.end_time)

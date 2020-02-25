@@ -1121,7 +1121,8 @@ pub fn get_scopes_for_user() {
             "transfer:read",
             "transfer:read-own",
             "user:read",
-            "venue:write"
+            "venue:write",
+            "websocket:initiate"
         ]
     );
 
@@ -1185,7 +1186,8 @@ pub fn get_scopes_for_user() {
             "transfer:read",
             "transfer:read-own",
             "user:read",
-            "venue:write"
+            "venue:write",
+            "websocket:initiate"
         ]
     );
 
@@ -1212,6 +1214,7 @@ pub fn get_scopes_for_user() {
             "redeem:ticket",
             "ticket:read",
             "dashboard:read",
+            "websocket:initiate"
         ]
     );
 
@@ -1234,6 +1237,7 @@ pub fn get_scopes_for_user() {
             "ticket:read",
             "event:view-guests",
             "dashboard:read",
+            "websocket:initiate"
         ]
     );
 
@@ -1274,7 +1278,8 @@ pub fn get_scopes_for_user() {
             "ticket-type:read",
             "ticket-type:write",
             "transfer:cancel",
-            "transfer:read"
+            "transfer:read",
+            "websocket:initiate"
         ]
     );
 
@@ -1297,7 +1302,8 @@ pub fn get_scopes_for_user() {
             "org:read-events",
             "ticket:read",
             "ticket-type:read",
-            "transfer:read"
+            "transfer:read",
+            "websocket:initiate"
         ]
     );
 
@@ -1351,6 +1357,7 @@ pub fn get_scopes_for_user() {
             "transfer:read",
             "transfer:read-own",
             "venue:write",
+            "websocket:initiate"
         ]
     );
 
@@ -1415,7 +1422,8 @@ pub fn get_scopes_for_user() {
             "transfer:read",
             "transfer:read-own",
             "user:read",
-            "venue:write"
+            "venue:write",
+            "websocket:initiate"
         ]
     );
 

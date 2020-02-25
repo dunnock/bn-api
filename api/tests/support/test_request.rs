@@ -6,6 +6,8 @@ use bigneon_api::server::AppState;
 use bigneon_api::utils::spotify;
 use bigneon_db::models::Environment;
 use serde::de::DeserializeOwned;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 pub struct TestRequest {
     pub request: HttpRequest<AppState>,
@@ -30,11 +32,13 @@ impl TestRequest {
             spotify::SINGLETON.set_auth_token(&config.spotify_auth_token.clone().unwrap());
         }
 
+        let clients = Arc::new(Mutex::new(HashMap::new()));
         let test_request = test::TestRequest::with_state(
             AppState::new(
                 config.clone(),
                 Database::from_config(&config),
                 Database::readonly_from_config(&config),
+                clients,
             )
             .expect("Failed to generate app state for testing"),
         );

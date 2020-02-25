@@ -579,6 +579,7 @@ fn current_user_organization_owner() {
             "ticket-type:write",
             "user:read",
             "venue:write",
+            "websocket:initiate",
         ]
         .into_iter()
         .map(|scope| scope.parse::<Scopes>().unwrap())
@@ -658,6 +659,7 @@ fn current_user_organization_member() {
             "ticket-type:read",
             "ticket-type:write",
             "venue:write",
+            "websocket:initiate",
         ]
         .into_iter()
         .map(|scope| scope.parse::<Scopes>().unwrap())

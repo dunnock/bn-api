@@ -69,5 +69,3 @@ describe('OrgAdmin - List broadcasts', function () {
 
 
 });
-
-
