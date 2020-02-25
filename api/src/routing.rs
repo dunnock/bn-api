@@ -326,6 +326,9 @@ pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
     .resource("/reports/{id}", |r| {
         r.method(Method::GET).with(reports::get_report);
     })
+    .resource("/send_download_link", |r| {
+        r.method(Method::POST).with(send_download_link::create);
+    })
     .resource("/slugs", |r| {
         r.method(Method::GET).with(slugs::index);
     })

@@ -22,6 +22,7 @@ pub mod payments;
 pub mod redemption_codes;
 pub mod regions;
 pub mod reports;
+pub mod send_download_link;
 pub mod settlement_adjustments;
 pub mod settlements;
 pub mod sitemap_gen;
