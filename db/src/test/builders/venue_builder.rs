@@ -70,11 +70,18 @@ impl<'a> VenueBuilder<'a> {
     }
 
     pub fn finish(self) -> Venue {
-        let mut venue = Venue::create(&self.name, self.region_id, self.organization_id, self.timezone);
+        let mut venue = Venue::create(&self.name, self.region_id, self.timezone);
         venue.country = self.country;
         venue.city = self.city;
         venue.state = self.state;
         let venue = venue.commit(self.connection).unwrap();
+
+        if let Some(organization_id) = self.organization_id {
+            OrganizationVenue::create(organization_id, venue.id)
+                .commit(self.connection)
+                .unwrap();
+        }
+
         venue.set_privacy(self.is_private, self.connection).unwrap()
     }
 }

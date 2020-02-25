@@ -2,6 +2,8 @@ use actix_web::{HttpResponse, Path, Query};
 use auth::user::User as AuthUser;
 use bigneon_db::models::*;
 use db::Connection;
+
+use diesel::PgConnection;
 use errors::*;
 use extractors::*;
 use models::PathParameters;
@@ -38,13 +40,7 @@ pub fn create(
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let venue = Venue::find(parameters.id, connection)?;
-
-    if let Some(organization_id) = venue.organization_id {
-        let organization = Organization::find(organization_id, connection)?;
-        user.requires_scope_for_organization(Scopes::VenueWrite, &organization, connection)?;
-    } else {
-        user.requires_scope(Scopes::VenueWrite)?;
-    }
+    check_access(&venue, &user, connection)?;
 
     let new_stage = Stage::create(
         parameters.id,
@@ -68,12 +64,7 @@ pub fn update(
     let connection = connection.get();
     let stage = Stage::find(parameters.id, connection)?;
     let venue = Venue::find(stage.venue_id, connection)?;
-    if !venue.is_private || venue.organization_id.is_none() {
-        user.requires_scope(Scopes::VenueWrite)?;
-    } else {
-        let organization = venue.organization(connection)?.unwrap();
-        user.requires_scope_for_organization(Scopes::VenueWrite, &organization, connection)?;
-    }
+    check_access(&venue, &user, connection)?;
 
     let updated_stage = stage.update(stage_parameters.into_inner(), connection)?;
     Ok(HttpResponse::Ok().json(updated_stage))
@@ -85,13 +76,25 @@ pub fn delete(
     let connection = connection.get();
     let stage = Stage::find(parameters.id, connection)?;
     let venue = Venue::find(stage.venue_id, connection)?;
-    if !venue.is_private || venue.organization_id.is_none() {
-        user.requires_scope(Scopes::VenueWrite)?;
-    } else {
-        let organization = venue.organization(connection)?.unwrap();
-        user.requires_scope_for_organization(Scopes::VenueWrite, &organization, connection)?;
-    }
+    check_access(&venue, &user, connection)?;
 
     stage.destroy(connection)?;
     Ok(HttpResponse::Ok().json(json!({})))
+}
+
+fn check_access(venue: &Venue, user: &AuthUser, connection: &PgConnection) -> Result<(), BigNeonError> {
+    let mut has_create_access = false;
+    for organization in venue.organizations(connection)? {
+        has_create_access =
+            has_create_access || user.has_scope_for_organization(Scopes::VenueWrite, &organization, connection)?;
+        if has_create_access {
+            break;
+        }
+    }
+
+    if !venue.is_private || !has_create_access {
+        user.requires_scope(Scopes::VenueWrite)?;
+    }
+
+    Ok(())
 }

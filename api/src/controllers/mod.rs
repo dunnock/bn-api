@@ -15,6 +15,7 @@ pub mod ipns;
 pub mod notes;
 pub mod orders;
 pub mod organization_invites;
+pub mod organization_venues;
 pub mod organizations;
 pub mod password_resets;
 pub mod payment_methods;

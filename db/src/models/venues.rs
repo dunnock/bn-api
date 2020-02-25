@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use diesel::sql_types::Bool;
 use models::users::User;
 use models::*;
-use schema::{organization_users, organizations, venues};
+use schema::{organization_users, organization_venues, organizations, venues};
 use utils::errors::*;
 use uuid::Uuid;
 use validator::Validate;
@@ -16,7 +16,6 @@ use validator::Validate;
 pub struct Venue {
     pub id: Uuid,
     pub region_id: Option<Uuid>,
-    pub organization_id: Option<Uuid>,
     pub is_private: bool,
     pub name: String,
     pub address: String,
@@ -69,7 +68,6 @@ pub struct VenueEditableAttributes {
 pub struct NewVenue {
     pub name: String,
     pub region_id: Option<Uuid>,
-    pub organization_id: Option<Uuid>,
     pub address: String,
     pub city: String,
     pub state: String,
@@ -129,11 +127,10 @@ impl NewVenue {
 }
 
 impl Venue {
-    pub fn create(name: &str, region_id: Option<Uuid>, organization_id: Option<Uuid>, timezone: String) -> NewVenue {
+    pub fn create(name: &str, region_id: Option<Uuid>, timezone: String) -> NewVenue {
         NewVenue {
             name: String::from(name),
             region_id,
-            organization_id,
             timezone,
             ..Default::default()
         }
@@ -184,12 +181,13 @@ impl Venue {
     pub fn all(user: Option<&User>, conn: &PgConnection) -> Result<Vec<Venue>, DatabaseError> {
         let query = match user {
             Some(u) => venues::table
+                .left_join(organization_venues::table.on(venues::id.eq(organization_venues::venue_id)))
                 .left_join(
-                    organization_users::table.on(venues::organization_id
-                        .eq(organization_users::organization_id.nullable())
+                    organization_users::table.on(organization_venues::organization_id
+                        .eq(organization_users::organization_id)
                         .and(organization_users::user_id.eq(u.id))),
                 )
-                .left_join(organizations::table.on(venues::organization_id.eq(organizations::id.nullable())))
+                .left_join(organizations::table.on(organization_venues::organization_id.eq(organizations::id)))
                 .filter(
                     organization_users::user_id
                         .eq(u.id)
@@ -198,11 +196,13 @@ impl Venue {
                 )
                 .order_by(venues::name)
                 .select(venues::all_columns)
+                .distinct()
                 .load(conn),
             None => venues::table
                 .filter(venues::is_private.eq(false))
                 .order_by(venues::name)
                 .select(venues::all_columns)
+                .distinct()
                 .load(conn),
         };
 
@@ -216,40 +216,43 @@ impl Venue {
     ) -> Result<Vec<Venue>, DatabaseError> {
         let query = match user {
             Some(u) => venues::table
+                .inner_join(organization_venues::table.on(organization_venues::venue_id.eq(venues::id)))
                 .left_join(
-                    organization_users::table.on(venues::organization_id
-                        .eq(organization_users::organization_id.nullable())
+                    organization_users::table.on(organization_venues::organization_id
+                        .eq(organization_users::organization_id)
                         .and(organization_users::user_id.eq(u.id))),
                 )
-                .left_join(organizations::table.on(venues::organization_id.eq(organizations::id.nullable())))
+                .left_join(organizations::table.on(organization_venues::organization_id.eq(organizations::id)))
                 .filter(
                     organization_users::user_id
                         .eq(u.id)
                         .or(venues::is_private.eq(false))
                         .or(dsl::sql("TRUE = ").bind::<Bool, _>(u.is_admin())),
                 )
-                .filter(venues::organization_id.eq(organization_id))
+                .filter(organization_venues::organization_id.eq(organization_id))
                 .order_by(venues::name)
                 .select(venues::all_columns)
+                .distinct()
                 .load(conn),
             None => venues::table
+                .inner_join(organization_venues::table.on(organization_venues::venue_id.eq(venues::id)))
                 .filter(venues::is_private.eq(false))
-                .filter(venues::organization_id.eq(organization_id))
+                .filter(organization_venues::organization_id.eq(organization_id))
                 .order_by(venues::name)
                 .select(venues::all_columns)
+                .distinct()
                 .load(conn),
         };
 
         query.to_db_error(ErrorCode::QueryError, "Unable to load all venues")
     }
 
-    pub fn add_to_organization(self, organization_id: &Uuid, conn: &PgConnection) -> Result<Venue, DatabaseError> {
-        //Should I make sure that this venue doesn't already have one here even though there is logic
-        //for that in the bn-api layer?
-        diesel::update(&self)
-            .set(venues::organization_id.eq(organization_id))
-            .get_result(conn)
-            .to_db_error(ErrorCode::UpdateError, "Could not update venue")
+    pub fn add_to_organization(
+        &self,
+        organization_id: Uuid,
+        conn: &PgConnection,
+    ) -> Result<OrganizationVenue, DatabaseError> {
+        OrganizationVenue::create(organization_id, self.id).commit(conn)
     }
 
     pub fn set_privacy(&self, is_private: bool, conn: &PgConnection) -> Result<Venue, DatabaseError> {
@@ -262,11 +265,8 @@ impl Venue {
         )
     }
 
-    pub fn organization(&self, conn: &PgConnection) -> Result<Option<Organization>, DatabaseError> {
-        match self.organization_id {
-            Some(organization_id) => Ok(Some(Organization::find(organization_id, conn)?)),
-            None => Ok(None),
-        }
+    pub fn organizations(&self, conn: &PgConnection) -> Result<Vec<Organization>, DatabaseError> {
+        OrganizationVenue::find_organizations_by_venue(self.id, conn)
     }
 
     pub fn for_display(&self, conn: &PgConnection) -> Result<DisplayVenue, DatabaseError> {

@@ -8,6 +8,7 @@ pub mod holds;
 pub mod notes;
 pub mod orders;
 pub mod organization_invites;
+pub mod organization_venues;
 pub mod organizations;
 pub mod regions;
 pub mod reports;

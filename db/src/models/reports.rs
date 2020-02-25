@@ -24,6 +24,8 @@ pub struct TicketSalesRow {
     pub ticket_type_id: Option<Uuid>,
     #[sql_type = "Nullable<dUuid>"]
     pub hold_id: Option<Uuid>,
+    #[sql_type = "Nullable<Timestamp>"]
+    pub event_start: Option<NaiveDateTime>,
     #[sql_type = "Nullable<Text>"]
     pub ticket_name: Option<String>,
     #[sql_type = "Nullable<Text>"]
@@ -93,6 +95,8 @@ pub struct TicketSalesPerEventFees {
     pub organization_id: Option<Uuid>,
     #[sql_type = "Nullable<dUuid>"]
     pub event_id: Option<Uuid>,
+    #[sql_type = "Nullable<Timestamp>"]
+    pub event_start: Option<NaiveDateTime>,
     #[sql_type = "BigInt"]
     pub per_order_company_online_fees: i64,
     #[sql_type = "BigInt"]
@@ -106,6 +110,7 @@ impl From<TicketSalesPerEventFees> for TicketSalesRow {
         TicketSalesRow {
             organization_id: ticket_sales_per_event_fees.organization_id,
             event_id: ticket_sales_per_event_fees.event_id,
+            event_start: ticket_sales_per_event_fees.event_start,
             per_order_company_online_fees: ticket_sales_per_event_fees.per_order_company_online_fees,
             per_order_client_online_fees: ticket_sales_per_event_fees.per_order_client_online_fees,
             per_order_total_fees_in_cents: ticket_sales_per_event_fees.per_order_total_fees_in_cents,
@@ -119,6 +124,8 @@ pub struct TicketCountRow {
     pub organization_id: Option<Uuid>,
     #[sql_type = "Nullable<dUuid>"]
     pub event_id: Option<Uuid>,
+    #[sql_type = "Nullable<Timestamp>"]
+    pub event_start: Option<NaiveDateTime>,
     #[sql_type = "Nullable<dUuid>"]
     pub ticket_type_id: Option<Uuid>,
     #[sql_type = "Nullable<Text>"]

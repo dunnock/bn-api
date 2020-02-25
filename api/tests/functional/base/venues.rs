@@ -1,7 +1,6 @@
 use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path, Query};
-use bigneon_api::controllers::venues;
+use bigneon_api::controllers::venues::{self, NewVenueData};
 use bigneon_api::extractors::*;
-use bigneon_api::models::AddVenueToOrganizationRequest;
 use bigneon_api::models::PathParameters;
 use bigneon_db::models::*;
 use serde_json;
@@ -9,6 +8,7 @@ use std::collections::HashMap;
 use support;
 use support::database::TestDatabase;
 use support::test_request::TestRequest;
+use uuid::Uuid;
 
 pub fn index(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
@@ -47,45 +47,20 @@ pub fn index(role: Roles, should_succeed: bool) {
 
 pub fn create(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
-    let name = "Venue Example";
-    let region = database.create_region().finish();
-
-    let user = support::create_auth_user(role, None, &database);
-    let json = Json(NewVenue {
-        name: name.to_string(),
-        region_id: Some(region.id),
-        timezone: "America/Los_Angeles".to_string(),
-        ..Default::default()
-    });
-
-    let response: HttpResponse = venues::create((database.connection.into(), json, user)).into();
-
-    if !should_succeed {
-        support::expects_unauthorized(&response);
-        return;
-    }
-    assert_eq!(response.status(), StatusCode::CREATED);
-    let body = support::unwrap_body_to_string(&response).unwrap();
-    let venue: Venue = serde_json::from_str(&body).unwrap();
-    assert_eq!(venue.name, name);
-    assert_eq!(venue.region_id, Some(region.id));
-}
-
-pub fn create_with_organization(role: Roles, should_succeed: bool) {
-    let database = TestDatabase::new();
+    let connection = database.connection.get();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let name = "Venue Example";
-    let json = Json(NewVenue {
+    let json = Json(NewVenueData {
         name: name.to_string(),
-        organization_id: Some(organization.id),
+        organization_ids: vec![organization.id],
         timezone: "America/Los_Angeles".to_string(),
         ..Default::default()
     });
 
-    let response: HttpResponse = venues::create((database.connection.into(), json, auth_user.clone())).into();
+    let response: HttpResponse = venues::create((database.connection.clone().into(), json, auth_user.clone())).into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);
@@ -95,7 +70,15 @@ pub fn create_with_organization(role: Roles, should_succeed: bool) {
     let body = support::unwrap_body_to_string(&response).unwrap();
     let venue: Venue = serde_json::from_str(&body).unwrap();
     assert_eq!(venue.name, name);
-    assert_eq!(venue.organization_id, Some(organization.id));
+    assert_eq!(
+        venue
+            .organizations(connection)
+            .unwrap()
+            .into_iter()
+            .map(|o| o.id)
+            .collect::<Vec<Uuid>>(),
+        vec![organization.id]
+    );
     assert!(venue.is_private);
 }
 
@@ -186,11 +169,11 @@ pub fn show_from_organizations(role: Option<Roles>, should_succeed: bool) {
         .finish();
     let venue = database.create_venue().with_name("Venue 1".to_string()).finish();
     let venue2 = database.create_venue().with_name("Venue 2".to_string()).finish();
-    let venue = venue
-        .add_to_organization(&organization.id, database.connection.get())
+    venue
+        .add_to_organization(organization.id, database.connection.get())
         .unwrap();
-    let venue2 = venue2
-        .add_to_organization(&organization.id, database.connection.get())
+    venue2
+        .add_to_organization(organization.id, database.connection.get())
         .unwrap();
 
     let all_venues = vec![venue, venue2];
@@ -231,31 +214,4 @@ pub fn show_from_organizations(role: Option<Roles>, should_succeed: bool) {
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(expected_json, body);
-}
-
-pub fn add_to_organization(role: Roles, should_succeed: bool) {
-    let database = TestDatabase::new();
-    let user = database.create_user().finish();
-    let venue = database.create_venue().finish();
-    let organization = database.create_organization().finish();
-    let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
-    let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
-    path.id = venue.id;
-
-    let json = Json(AddVenueToOrganizationRequest {
-        organization_id: organization.id,
-    });
-
-    let response: HttpResponse =
-        venues::add_to_organization((database.connection.into(), path, json, auth_user)).into();
-    if !should_succeed {
-        support::expects_unauthorized(&response);
-        return;
-    }
-
-    assert_eq!(response.status(), StatusCode::CREATED);
-    let body = support::unwrap_body_to_string(&response).unwrap();
-    let new_venue: Venue = serde_json::from_str(&body).unwrap();
-    assert_eq!(new_venue.organization_id.unwrap(), organization.id);
 }

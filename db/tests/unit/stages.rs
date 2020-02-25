@@ -6,7 +6,7 @@ fn commit() {
     let project = TestProject::new();
     let name = "Name";
     let connection = project.get_connection();
-    let venue = Venue::create(name.clone(), None, None, "America/Los_Angeles".into())
+    let venue = Venue::create(name.clone(), None, "America/Los_Angeles".into())
         .commit(connection)
         .unwrap();
     let stage_name = "Stage Name".to_string();

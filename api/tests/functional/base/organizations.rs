@@ -362,34 +362,6 @@ pub fn add_user(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn add_venue(role: Roles, should_test_succeed: bool) {
-    let database = TestDatabase::new();
-    let user = database.create_user().finish();
-    let organization = database.create_organization().finish();
-    let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
-    let test_request = TestRequest::create();
-    let name = "Venue";
-    let json = Json(NewVenue {
-        name: name.to_string(),
-        timezone: "America/Los_Angeles".to_string(),
-        ..Default::default()
-    });
-
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
-    path.id = organization.id;
-
-    let response: HttpResponse =
-        organizations::add_venue((database.connection.into(), path, json, auth_user.clone())).into();
-    if should_test_succeed {
-        assert_eq!(response.status(), StatusCode::CREATED);
-        let body = support::unwrap_body_to_string(&response).unwrap();
-        let venue: Venue = serde_json::from_str(&body).unwrap();
-        assert_eq!(venue.name, name);
-    } else {
-        support::expects_unauthorized(&response);
-    }
-}
-
 pub fn add_artist(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();

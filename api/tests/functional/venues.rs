@@ -1,7 +1,7 @@
 use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path, Query};
 use bigneon_api::controllers::venues;
 use bigneon_api::extractors::*;
-use bigneon_api::models::{AddVenueToOrganizationRequest, PathParameters};
+use bigneon_api::models::PathParameters;
 use bigneon_db::models::*;
 use functional::base;
 use serde_json;
@@ -19,8 +19,8 @@ fn index_with_org_linked_and_private_venues() {
     let organization = database.create_organization().finish();
     let auth_user = support::create_auth_user(Roles::User, Some(&organization), &database);
     let venue3 = database.create_venue().with_name("Venue3".to_string()).finish();
-    let venue3 = venue3
-        .add_to_organization(&organization.id, database.connection.get())
+    venue3
+        .add_to_organization(organization.id, database.connection.get())
         .unwrap();
 
     let venue4 = database
@@ -28,8 +28,8 @@ fn index_with_org_linked_and_private_venues() {
         .make_private()
         .with_name("Venue4".to_string())
         .finish();
-    let venue4 = venue4
-        .add_to_organization(&organization.id, database.connection.get())
+    venue4
+        .add_to_organization(organization.id, database.connection.get())
         .unwrap();
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
@@ -159,7 +159,7 @@ mod create_tests {
     use super::*;
     #[test]
     fn create_org_member() {
-        base::venues::create(Roles::OrgMember, false);
+        base::venues::create(Roles::OrgMember, true);
     }
     #[test]
     fn create_admin() {
@@ -171,7 +171,7 @@ mod create_tests {
     }
     #[test]
     fn create_org_owner() {
-        base::venues::create(Roles::OrgOwner, false);
+        base::venues::create(Roles::OrgOwner, true);
     }
     #[test]
     fn create_door_person() {
@@ -187,47 +187,11 @@ mod create_tests {
     }
     #[test]
     fn create_org_admin() {
-        base::venues::create(Roles::OrgAdmin, false);
+        base::venues::create(Roles::OrgAdmin, true);
     }
     #[test]
     fn create_box_office() {
         base::venues::create(Roles::OrgBoxOffice, false);
-    }
-    #[test]
-    fn create_with_organization_org_member() {
-        base::venues::create_with_organization(Roles::OrgMember, true);
-    }
-    #[test]
-    fn create_with_organization_admin() {
-        base::venues::create_with_organization(Roles::Admin, true);
-    }
-    #[test]
-    fn create_with_organization_user() {
-        base::venues::create_with_organization(Roles::User, false);
-    }
-    #[test]
-    fn create_with_organization_org_owner() {
-        base::venues::create_with_organization(Roles::OrgOwner, true);
-    }
-    #[test]
-    fn create_with_organization_door_person() {
-        base::venues::create_with_organization(Roles::DoorPerson, false);
-    }
-    #[test]
-    fn create_with_organization_promoter() {
-        base::venues::create_with_organization(Roles::Promoter, false);
-    }
-    #[test]
-    fn create_with_organization_promoter_read_only() {
-        base::venues::create_with_organization(Roles::PromoterReadOnly, false);
-    }
-    #[test]
-    fn create_with_organization_org_admin() {
-        base::venues::create_with_organization(Roles::OrgAdmin, true);
-    }
-    #[test]
-    fn create_with_organization_box_office() {
-        base::venues::create_with_organization(Roles::OrgBoxOffice, false);
     }
 }
 
@@ -454,11 +418,11 @@ pub fn show_from_organizations_private_venue_same_org() {
         .with_name("Venue 2".to_string())
         .make_private()
         .finish();
-    let venue = venue
-        .add_to_organization(&organization.id, database.connection.get())
+    venue
+        .add_to_organization(organization.id, database.connection.get())
         .unwrap();
-    let venue2 = venue2
-        .add_to_organization(&organization.id, database.connection.get())
+    venue2
+        .add_to_organization(organization.id, database.connection.get())
         .unwrap();
 
     let user2 = database.create_user().finish();
@@ -496,69 +460,4 @@ pub fn show_from_organizations_private_venue_same_org() {
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(expected_json, body);
-}
-
-#[cfg(test)]
-mod add_to_organization_tests {
-    use super::*;
-    #[test]
-    fn add_to_organization_org_member() {
-        base::venues::add_to_organization(Roles::OrgMember, false);
-    }
-    #[test]
-    fn add_to_organization_admin() {
-        base::venues::add_to_organization(Roles::Admin, true);
-    }
-    #[test]
-    fn add_to_organization_user() {
-        base::venues::add_to_organization(Roles::User, false);
-    }
-    #[test]
-    fn add_to_organization_org_owner() {
-        base::venues::add_to_organization(Roles::OrgOwner, false);
-    }
-    #[test]
-    fn add_to_organization_door_person() {
-        base::venues::add_to_organization(Roles::DoorPerson, false);
-    }
-    #[test]
-    fn add_to_organization_promoter() {
-        base::venues::add_to_organization(Roles::Promoter, false);
-    }
-    #[test]
-    fn add_to_organization_promoter_read_only() {
-        base::venues::add_to_organization(Roles::PromoterReadOnly, false);
-    }
-    #[test]
-    fn add_to_organization_org_admin() {
-        base::venues::add_to_organization(Roles::OrgAdmin, false);
-    }
-    #[test]
-    fn add_to_organization_box_office() {
-        base::venues::add_to_organization(Roles::OrgBoxOffice, false);
-    }
-}
-
-#[test]
-pub fn add_to_organization_where_link_already_exists() {
-    let database = TestDatabase::new();
-    let user = database.create_user().finish();
-    let venue = database.create_venue().finish();
-    let organization = database.create_organization().finish();
-    let auth_user = support::create_auth_user_from_user(&user, Roles::Admin, Some(&organization), &database);
-    let venue = venue
-        .add_to_organization(&organization.id, database.connection.get())
-        .unwrap();
-
-    let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
-    path.id = venue.id;
-
-    let json = Json(AddVenueToOrganizationRequest {
-        organization_id: organization.id,
-    });
-
-    let response: HttpResponse =
-        venues::add_to_organization((database.connection.into(), path, json, auth_user)).into();
-    assert_eq!(response.status(), StatusCode::CONFLICT);
 }

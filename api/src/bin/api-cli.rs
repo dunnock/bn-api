@@ -68,7 +68,8 @@ pub fn main() {
           (about: "Creates any missing Customer.io webhooks needed for communications")
           (@arg site_id: +required "The site_id obtained from Customer.io")
           (@arg api_key: +required "The api key obtained from Customer.io")))
-    .get_matches();
+    .subcommand(SubCommand::with_name("version").about("Get the current version"))
+        .get_matches();
 
     match matches.subcommand() {
         ("sync-purchase-metadata", Some(_)) => sync_purchase_metadata(database, service_locator),
@@ -79,6 +80,7 @@ pub fn main() {
         ("backpopulate-temporary-user-data", Some(_)) => backpopulate_temporary_user_data(database),
         ("schedule-missing-domain-actions", Some(_)) => schedule_missing_domain_actions(config, database),
         ("generate-genre-slugs", Some(_)) => generate_genre_slugs(database),
+        ("version", Some(_)) => version(),
         ("update-customer-io-webhooks", Some(args)) => {
             update_customer_io_webhooks(args.value_of("site_id"), args.value_of("api_key"), database)
         }
@@ -86,6 +88,11 @@ pub fn main() {
             eprintln!("Invalid subcommand '{}'", matches.subcommand().0);
         }
     }
+}
+
+fn version() {
+    const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
+    println!("{}", APP_VERSION);
 }
 
 fn generate_genre_slugs(database: Database) {

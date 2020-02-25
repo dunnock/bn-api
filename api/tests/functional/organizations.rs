@@ -248,47 +248,6 @@ mod add_user_tests {
 }
 
 #[cfg(test)]
-mod add_venue_tests {
-    use super::*;
-    #[test]
-    fn add_venue_org_member() {
-        organizations::add_venue(Roles::OrgMember, false);
-    }
-    #[test]
-    fn add_venue_admin() {
-        organizations::add_venue(Roles::Admin, true);
-    }
-    #[test]
-    fn add_venue_user() {
-        organizations::add_venue(Roles::User, false);
-    }
-    #[test]
-    fn add_venue_org_owner() {
-        organizations::add_venue(Roles::OrgOwner, true);
-    }
-    #[test]
-    fn add_venue_door_person() {
-        organizations::add_venue(Roles::DoorPerson, false);
-    }
-    #[test]
-    fn add_venue_promoter() {
-        organizations::add_venue(Roles::Promoter, false);
-    }
-    #[test]
-    fn add_venue_promoter_read_only() {
-        organizations::add_venue(Roles::PromoterReadOnly, false);
-    }
-    #[test]
-    fn add_venue_org_admin() {
-        organizations::add_venue(Roles::OrgAdmin, true);
-    }
-    #[test]
-    fn add_venue_box_office() {
-        organizations::add_venue(Roles::OrgBoxOffice, false);
-    }
-}
-
-#[cfg(test)]
 mod add_artist_tests {
     use super::*;
     #[test]

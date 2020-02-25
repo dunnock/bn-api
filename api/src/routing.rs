@@ -245,6 +245,10 @@ pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
     .resource("/orders/{id}", |r| {
         r.method(Method::GET).with(orders::show);
     })
+    .resource("/organization_venues/{id}", |r| {
+        r.method(Method::GET).with(organization_venues::show);
+        r.method(Method::DELETE).with(organization_venues::destroy);
+    })
     .resource("/organizations/{id}/artists", |r| {
         r.method(Method::GET).with(artists::show_from_organizations);
         r.method(Method::POST).with(organizations::add_artist);
@@ -274,6 +278,10 @@ pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
     .resource("/organizations/{id}/invites/{invite_id}", |r| {
         r.method(Method::DELETE).with(organization_invites::destroy);
     })
+    .resource("/organizations/{id}/organization_venues", |r| {
+        r.method(Method::GET).with(organization_venues::index);
+        r.method(Method::POST).with(organization_venues::create);
+    })
     .resource("/organizations/{id}/settlements", |r| {
         r.method(Method::GET).with(settlements::index);
         r.method(Method::POST).with(settlements::create);
@@ -292,7 +300,6 @@ pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
     })
     .resource("/organizations/{id}/venues", |r| {
         r.method(Method::GET).with(venues::show_from_organizations);
-        r.method(Method::POST).with(organizations::add_venue);
     })
     .resource("/organizations/{id}", |r| {
         r.method(Method::GET).with(organizations::show);
@@ -413,8 +420,9 @@ pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
     .resource("/users/{id}/organizations", |r| {
         r.method(Method::GET).with(users::list_organizations);
     })
-    .resource("/venues/{id}/organizations", |r| {
-        r.method(Method::POST).with(venues::add_to_organization);
+    .resource("/venues/{id}/organization_venues", |r| {
+        r.method(Method::GET).with(organization_venues::index);
+        r.method(Method::POST).with(organization_venues::create);
     })
     .resource("/venues/{id}/stages", |r| {
         r.method(Method::POST).with(stages::create);

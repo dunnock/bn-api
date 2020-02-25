@@ -15,6 +15,7 @@ CREATE OR REPLACE FUNCTION ticket_sales_per_ticket_pricing(start TIMESTAMP, "end
                 event_id                           UUID,
                 ticket_type_id                     UUID,
                 hold_id                            UUID,
+                event_start                        TIMESTAMP,
                 ticket_name                        TEXT,
                 ticket_status                      TEXT,
                 event_name                         TEXT,
@@ -53,6 +54,7 @@ SELECT e.organization_id                                                        
        e.id                                                                                                     AS event_id,
        tt.id                                                                                                    AS ticket_type_id,
        COALESCE(gh.id, c.id)                                                                                    AS hold_id,
+       e.event_start                                                                                            AS event_start,
        CASE WHEN tt.status = 'Cancelled' THEN concat(tt.name, ' (Cancelled)') ELSE tt.name END                  AS ticket_name,
        tt.status                                                                                                AS ticket_status,
        e.name                                                                                                   AS event_name,
@@ -181,7 +183,7 @@ FROM order_items oi
 WHERE oi.ticket_type_id IS NOT NULL
   AND ($1 IS NULL OR o.paid_at >= $1)
   AND ($2 IS NULL OR o.paid_at <= $2)
-GROUP BY e.id, tt.id, tt.name, tt.status, tt.rank, tp.name, tp.price_in_cents, gh.id, gh.name, gh.hold_type, oi_t_fees.client_fee_in_cents,
+GROUP BY e.id, e.event_start, tt.id, tt.name, tt.status, tt.rank, tp.name, tp.price_in_cents, gh.id, gh.name, gh.hold_type, oi_t_fees.client_fee_in_cents,
          gh.discount_in_cents, c.id, c.name, c.redemption_code, oi_promo_code_price.unit_price_in_cents
 ORDER BY e.id, tt.rank, c.redemption_code, (tp.price_in_cents - gh.discount_in_cents) DESC, oi_t_fees.client_fee_in_cents;
 $body$

@@ -10,7 +10,7 @@ use models::scopes;
 use models::*;
 use schema::{
     assets, event_users, events, fee_schedules, order_items, orders, organization_users, organizations, ticket_types,
-    users, venues,
+    users,
 };
 use std::cmp;
 use std::collections::HashMap;
@@ -528,11 +528,7 @@ impl Organization {
     }
 
     pub fn venues(&self, conn: &PgConnection) -> Result<Vec<Venue>, DatabaseError> {
-        venues::table
-            .filter(venues::organization_id.eq(self.id))
-            .order_by(venues::name)
-            .get_results(conn)
-            .to_db_error(ErrorCode::QueryError, "Could not retrieve venues")
+        OrganizationVenue::find_venues_by_organization(self.id, conn)
     }
 
     pub fn has_fan(&self, user: &User, conn: &PgConnection) -> Result<bool, DatabaseError> {

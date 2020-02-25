@@ -4,7 +4,8 @@ use bigneon_db::models::*;
 use db::Connection;
 use errors::*;
 use extractors::*;
-use models::{AddVenueToOrganizationRequest, PathParameters};
+use models::PathParameters;
+use uuid::Uuid;
 
 pub fn index(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, OptionalUser),
@@ -52,23 +53,61 @@ pub fn show_from_organizations(
     )))
 }
 
-pub fn create((connection, new_venue, user): (Connection, Json<NewVenue>, User)) -> Result<HttpResponse, BigNeonError> {
+#[derive(Serialize, Deserialize, Default, PartialEq, Debug, Clone)]
+pub struct NewVenueData {
+    pub name: String,
+    pub region_id: Option<Uuid>,
+    pub address: String,
+    pub city: String,
+    pub state: String,
+    pub country: String,
+    pub postal_code: String,
+    pub phone: Option<String>,
+    pub promo_image_url: Option<String>,
+    pub google_place_id: Option<String>,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
+    pub timezone: String,
+    pub organization_ids: Vec<Uuid>,
+}
+
+impl From<NewVenueData> for NewVenue {
+    fn from(v: NewVenueData) -> NewVenue {
+        NewVenue {
+            name: v.name,
+            region_id: v.region_id,
+            address: v.address,
+            city: v.city,
+            state: v.state,
+            country: v.country,
+            postal_code: v.postal_code,
+            phone: v.phone,
+            promo_image_url: v.promo_image_url,
+            google_place_id: v.google_place_id,
+            latitude: v.latitude,
+            longitude: v.longitude,
+            timezone: v.timezone,
+        }
+    }
+}
+
+pub fn create(
+    (connection, new_venue, user): (Connection, Json<NewVenueData>, User),
+) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
 
-    if let Some(organization_id) = new_venue.organization_id {
-        let organization = Organization::find(organization_id, connection)?;
+    let org_ids = new_venue.organization_ids.clone();
+    for org_id in org_ids.iter() {
+        let organization = Organization::find(*org_id, connection)?;
         user.requires_scope_for_organization(Scopes::VenueWrite, &organization, connection)?;
-    } else {
-        user.requires_scope(Scopes::VenueWrite)?;
     }
-
-    let mut venue = new_venue.commit(connection)?;
-
+    let venue: NewVenue = NewVenue::from(new_venue.into_inner());
+    let mut venue: Venue = venue.commit(connection)?;
     // New venues belonging to an organization start private
-    if venue.organization_id.is_some() {
-        venue = venue.set_privacy(true, connection)?;
+    venue = venue.set_privacy(true, connection)?;
+    for org_id in org_ids.iter() {
+        OrganizationVenue::create(*org_id, venue.id).commit(connection)?;
     }
-
     Ok(HttpResponse::Created().json(&venue))
 }
 
@@ -93,33 +132,22 @@ pub fn update(
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let venue = Venue::find(parameters.id, connection)?;
-    if !venue.is_private || venue.organization_id.is_none() {
+    if !venue.is_private {
         user.requires_scope(Scopes::VenueWrite)?;
     } else {
-        let organization = venue.organization(connection)?.unwrap();
-        user.requires_scope_for_organization(Scopes::VenueWrite, &organization, connection)?;
+        let mut eligible_for_updating = false;
+        for organization in venue.organizations(connection)? {
+            eligible_for_updating = user.has_scope_for_organization(Scopes::VenueWrite, &organization, connection)?;
+            if eligible_for_updating {
+                break;
+            }
+        }
+
+        if !eligible_for_updating {
+            user.requires_scope(Scopes::VenueWrite)?;
+        }
     }
 
     let updated_venue = venue.update(venue_parameters.into_inner(), connection)?;
     Ok(HttpResponse::Ok().json(updated_venue))
-}
-
-pub fn add_to_organization(
-    (connection, parameters, add_request, user): (
-        Connection,
-        Path<PathParameters>,
-        Json<AddVenueToOrganizationRequest>,
-        User,
-    ),
-) -> Result<HttpResponse, BigNeonError> {
-    let connection = connection.get();
-    user.requires_scope(Scopes::OrgAdmin)?;
-    let venue = Venue::find(parameters.id, &*connection)?;
-    let add_request = add_request.into_inner();
-    if venue.organization_id.is_some() {
-        Ok(HttpResponse::Conflict().json(json!({"error": "An error has occurred"})))
-    } else {
-        let venue = venue.add_to_organization(&add_request.organization_id, connection)?;
-        Ok(HttpResponse::Created().json(&venue))
-    }
 }

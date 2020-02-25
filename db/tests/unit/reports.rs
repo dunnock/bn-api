@@ -399,6 +399,7 @@ fn ticket_count_report() {
     let expected_counts = vec![TicketCountRow {
         organization_id: Some(event.organization_id),
         event_id: Some(event.id),
+        event_start: event.event_start,
         ticket_type_id: Some(ticket_type.id),
         ticket_name: Some(ticket_type.name.clone()),
         ticket_status: Some(ticket_type.status.to_string()),
@@ -442,6 +443,7 @@ fn ticket_count_report() {
             event_id: Some(event.id),
             ticket_type_id: Some(ticket_type.id),
             hold_id: Some(hold.id),
+            event_start: event.event_start,
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
             event_name: Some(event.name.clone()),
@@ -475,6 +477,7 @@ fn ticket_count_report() {
             event_id: Some(event.id),
             ticket_type_id: Some(ticket_type.id),
             hold_id: Some(hold.id),
+            event_start: event.event_start,
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
             event_name: Some(event.name.clone()),
@@ -505,6 +508,7 @@ fn ticket_count_report() {
             event_id: Some(event.id),
             ticket_type_id: Some(ticket_type.id),
             hold_id: Some(comp.id),
+            event_start: event.event_start,
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
             event_name: Some(event.name.clone()),
@@ -530,6 +534,7 @@ fn ticket_count_report() {
             event_id: Some(event.id),
             ticket_type_id: Some(ticket_type.id),
             hold_id: Some(code.id),
+            event_start: event.event_start,
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
             event_name: Some(event.name.clone()),
@@ -560,6 +565,7 @@ fn ticket_count_report() {
         Some(&TicketSalesRow {
             organization_id: Some(event.organization_id),
             event_id: Some(event.id),
+            event_start: event.event_start,
             ticket_type_id: Some(ticket_type.id),
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
@@ -592,6 +598,7 @@ fn ticket_count_report() {
         Some(&TicketSalesRow {
             organization_id: Some(event.organization_id),
             event_id: Some(event.id),
+            event_start: event.event_start,
             ticket_type_id: Some(ticket_type.id),
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
@@ -623,6 +630,7 @@ fn ticket_count_report() {
         Some(&TicketSalesRow {
             organization_id: Some(event.organization_id),
             event_id: Some(event.id),
+            event_start: event.event_start,
             ticket_type_id: Some(ticket_type.id),
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
@@ -654,6 +662,7 @@ fn ticket_count_report() {
             .find(|s| s.promo_redemption_code == None && s.hold_id == None && s.ticket_type_id == None),
         Some(&TicketSalesRow {
             organization_id: Some(event.organization_id),
+            event_start: event.event_start,
             event_id: Some(event.id),
             per_order_company_online_fees: 500,
             per_order_client_online_fees: 750,
@@ -671,6 +680,7 @@ fn ticket_count_report() {
         Some(&TicketCountRow {
             organization_id: Some(event.organization_id),
             event_id: Some(event.id),
+            event_start: event.event_start,
             ticket_type_id: Some(ticket_type.id),
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
@@ -706,6 +716,7 @@ fn ticket_count_report() {
         Some(&TicketCountRow {
             organization_id: Some(event2.organization_id),
             event_id: Some(event2.id),
+            event_start: event2.event_start,
             ticket_type_id: Some(ticket_type2.id),
             ticket_name: Some(ticket_type2.name.clone()),
             ticket_status: Some(ticket_type2.status.to_string()),
@@ -748,6 +759,7 @@ fn ticket_count_report() {
             event_id: Some(event.id),
             ticket_type_id: Some(ticket_type.id),
             hold_id: Some(hold.id),
+            event_start: event.event_start,
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
             event_name: Some(event.name.clone()),
@@ -781,6 +793,7 @@ fn ticket_count_report() {
             event_id: Some(event.id),
             ticket_type_id: Some(ticket_type.id),
             hold_id: Some(hold.id),
+            event_start: event.event_start,
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
             event_name: Some(event.name.clone()),
@@ -811,6 +824,7 @@ fn ticket_count_report() {
             event_id: Some(event.id),
             ticket_type_id: Some(ticket_type.id),
             hold_id: Some(comp.id),
+            event_start: event.event_start,
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
             event_name: Some(event.name.clone()),
@@ -836,6 +850,7 @@ fn ticket_count_report() {
             event_id: Some(event.id),
             ticket_type_id: Some(ticket_type.id),
             hold_id: Some(code.id),
+            event_start: event.event_start,
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
             event_name: Some(event.name.clone()),
@@ -866,6 +881,7 @@ fn ticket_count_report() {
         Some(&TicketSalesRow {
             organization_id: Some(event.organization_id),
             event_id: Some(event.id),
+            event_start: event.event_start,
             ticket_type_id: Some(ticket_type.id),
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
@@ -898,6 +914,7 @@ fn ticket_count_report() {
         Some(&TicketSalesRow {
             organization_id: Some(event.organization_id),
             event_id: Some(event.id),
+            event_start: event.event_start,
             ticket_type_id: Some(ticket_type.id),
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
@@ -929,6 +946,7 @@ fn ticket_count_report() {
         Some(&TicketSalesRow {
             organization_id: Some(event.organization_id),
             event_id: Some(event.id),
+            event_start: event.event_start,
             ticket_type_id: Some(ticket_type.id),
             ticket_name: Some(ticket_type.name.clone()),
             ticket_status: Some(ticket_type.status.to_string()),
@@ -958,6 +976,7 @@ fn ticket_count_report() {
         Some(&TicketSalesRow {
             organization_id: Some(event2.organization_id),
             event_id: Some(event2.id),
+            event_start: event2.event_start,
             ticket_type_id: Some(ticket_type2.id),
             ticket_name: Some(ticket_type2.name.clone()),
             ticket_status: Some(ticket_type2.status.to_string()),
@@ -986,6 +1005,7 @@ fn ticket_count_report() {
         Some(&TicketSalesRow {
             organization_id: Some(event.organization_id),
             event_id: Some(event.id),
+            event_start: event.event_start,
             per_order_company_online_fees: 500,
             per_order_client_online_fees: 750,
             per_order_total_fees_in_cents: 1250,
@@ -1001,6 +1021,7 @@ fn ticket_count_report() {
         Some(&TicketSalesRow {
             organization_id: Some(event2.organization_id),
             event_id: Some(event2.id),
+            event_start: event2.event_start,
             per_order_company_online_fees: 100,
             per_order_client_online_fees: 150,
             per_order_total_fees_in_cents: 250,

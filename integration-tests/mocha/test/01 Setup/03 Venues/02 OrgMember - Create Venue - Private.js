@@ -39,7 +39,7 @@ let requestBody = `{
 	"address": "1 street street",
 	"city": "City",
 	"country": "Country",
-	"organization_id": "{{last_org_id}}",
+	"organization_ids": ["{{last_org_id}}"],
 	"phone": "5555555555",
 	"google_place_id": null,
 	"state": "California",
@@ -82,4 +82,4 @@ describe('OrgMember - Create Venue - Private', function () {
 
 });
 
-            
+

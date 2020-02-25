@@ -453,6 +453,16 @@ table! {
 }
 
 table! {
+    organization_venues (id) {
+        id -> Uuid,
+        organization_id -> Uuid,
+        venue_id -> Uuid,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+table! {
     organizations (id) {
         id -> Uuid,
         name -> Text,
@@ -811,7 +821,6 @@ table! {
     venues (id) {
         id -> Uuid,
         region_id -> Nullable<Uuid>,
-        organization_id -> Nullable<Uuid>,
         is_private -> Bool,
         name -> Text,
         address -> Text,
@@ -889,6 +898,8 @@ joinable!(organization_interactions -> users (user_id));
 joinable!(organization_invites -> organizations (organization_id));
 joinable!(organization_users -> organizations (organization_id));
 joinable!(organization_users -> users (user_id));
+joinable!(organization_venues -> organizations (organization_id));
+joinable!(organization_venues -> venues (venue_id));
 joinable!(organizations -> fee_schedules (fee_schedule_id));
 joinable!(payment_methods -> users (user_id));
 joinable!(payments -> orders (order_id));
@@ -921,7 +932,6 @@ joinable!(transfer_tickets -> ticket_instances (ticket_instance_id));
 joinable!(transfer_tickets -> transfers (transfer_id));
 joinable!(user_genres -> genres (genre_id));
 joinable!(user_genres -> users (user_id));
-joinable!(venues -> organizations (organization_id));
 joinable!(venues -> regions (region_id));
 joinable!(wallets -> organizations (organization_id));
 joinable!(wallets -> users (user_id));
@@ -955,6 +965,7 @@ allow_tables_to_appear_in_same_query!(
     organization_interactions,
     organization_invites,
     organization_users,
+    organization_venues,
     organizations,
     payment_methods,
     payments,

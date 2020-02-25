@@ -12,6 +12,7 @@ CREATE OR REPLACE FUNCTION ticket_count_per_ticket_type(event_id UUID, organizat
     (
         organization_id                      UUID,
         event_id                             UUID,
+        event_start                          TIMESTAMP,
         ticket_type_id                       UUID,
         ticket_name                          TEXT,
         ticket_status                        TEXT,
@@ -45,6 +46,7 @@ AS
 $body$
 SELECT o.id                                                                                      AS organization_id,
        e.id                                                                                      AS event_id,
+       e.event_start                                                                             AS event_start,
        tt.id                                                                                     AS ticket_type_id,
        CASE WHEN tt.status = 'Cancelled' THEN concat(tt.name, ' (Cancelled)') ELSE tt.name END   AS ticket_name,
        tt.status                                                                                 AS ticket_status,
@@ -150,7 +152,7 @@ FROM ticket_instances ti
          LEFT JOIN (SELECT tt.id, tt.name, tt.status FROM ticket_types tt WHERE $3 LIKE '%ticket_type%') AS tt
                    ON tt.id = a.ticket_type_id
          LEFT JOIN ticket_types tt2 ON a.ticket_type_id = tt2.id
-         LEFT JOIN (SELECT e.id, e.organization_id, e.name
+         LEFT JOIN (SELECT e.id, e.organization_id, e.name, e.event_start
                     FROM events e
                     WHERE $3 SIMILAR TO '%event%|%ticket_type%') AS e ON (e.id = tt2.event_id)
          LEFT JOIN events e2 ON (e2.id = tt2.event_id)
@@ -161,7 +163,7 @@ WHERE ($1 IS NULL OR e2.id = $1)
   AND ($2 IS NULL OR e2.organization_id = $2)
   AND (tt2.deleted_at IS NULL)
   AND (e2.deleted_at IS NULL)
-GROUP BY e.id, e.name, o.id, o.name, tt2.rank, tt.id, tt.name, tt.status
+GROUP BY e.id, e.event_start, e.name, o.id, o.name, tt2.rank, tt.id, tt.name, tt.status
 ORDER BY e.id, e.name, o.id, o.name, tt2.rank;
 $body$
     LANGUAGE SQL;

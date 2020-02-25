@@ -201,19 +201,6 @@ pub fn update(
     Ok(HttpResponse::Ok().json(&updated_organization))
 }
 
-pub fn add_venue(
-    (connection, parameters, new_venue, user): (Connection, Path<PathParameters>, Json<NewVenue>, User),
-) -> Result<HttpResponse, BigNeonError> {
-    let connection = connection.get();
-    let organization = Organization::find(parameters.id, connection)?;
-    user.requires_scope_for_organization(Scopes::OrgWrite, &organization, connection)?;
-
-    let mut new_venue = new_venue.into_inner();
-    new_venue.organization_id = Some(parameters.id);
-    let venue = new_venue.commit(connection)?;
-    Ok(HttpResponse::Created().json(&venue))
-}
-
 pub fn add_artist(
     (connection, parameters, new_artist, user): (Connection, Path<PathParameters>, Json<NewArtist>, User),
 ) -> Result<HttpResponse, BigNeonError> {

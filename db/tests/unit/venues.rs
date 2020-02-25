@@ -7,7 +7,7 @@ fn commit() {
     let project = TestProject::new();
     let connection = project.get_connection();
     let name = "Name";
-    let venue = Venue::create(name.clone(), None, None, "America/Los_Angeles".into())
+    let venue = Venue::create(name.clone(), None, "America/Los_Angeles".into())
         .commit(connection)
         .unwrap();
 
@@ -62,7 +62,7 @@ fn commit() {
 fn new_venue_with_validation_errors() {
     let project = TestProject::new();
     let name = "Name";
-    let venue = Venue::create(name.clone(), None, None, "".into());
+    let venue = Venue::create(name.clone(), None, "".into());
     let result = venue.commit(project.get_connection());
     match result {
         Ok(_) => {
@@ -222,12 +222,12 @@ fn all() {
         .with_name("Venue3".to_string())
         .make_private()
         .finish();
-    let venue3 = venue3.add_to_organization(&organization.id, conn);
+    venue3.add_to_organization(organization.id, conn).unwrap();
     let user = project.create_user().finish();
     let _org_user = organization
         .add_user(user.id, vec![Roles::OrgMember], Vec::new(), conn)
         .unwrap();
-    all_venues.push(venue3.unwrap());
+    all_venues.push(venue3);
     let all_found_venues = Venue::all(Some(&user), conn).unwrap();
     assert_eq!(all_venues, all_found_venues);
     let all_found_venues = Venue::all(Some(&User::find(user.id, conn).unwrap()), conn).unwrap();
@@ -307,12 +307,13 @@ fn find_for_organization() {
 }
 
 #[test]
-fn organization() {
+fn organizations() {
     let project = TestProject::new();
+    let connection = project.get_connection();
     let organization = project.create_organization().finish();
     let venue = project.create_venue().with_organization(&organization).finish();
     let venue2 = project.create_venue().finish();
 
-    assert_eq!(Ok(Some(organization)), venue.organization(project.get_connection()));
-    assert_eq!(Ok(None), venue2.organization(project.get_connection()));
+    assert_eq!(Ok(vec![organization]), venue.organizations(connection));
+    assert_eq!(Ok(Vec::new()), venue2.organizations(connection));
 }

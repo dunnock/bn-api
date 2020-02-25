@@ -12,6 +12,7 @@ mod holds;
 mod notes;
 mod orders;
 mod organization_invites;
+mod organization_venues;
 mod organizations;
 mod password_resets;
 mod payment_methods;
