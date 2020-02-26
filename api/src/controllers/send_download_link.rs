@@ -34,7 +34,9 @@ pub fn create(
             &link
         ),
         None,
-        None,
+        Some(CommAddress::from(
+            state.config.communication_default_source_phone.clone(),
+        )),
         CommAddress::from(data.into_inner().phone),
         None,
         None,
