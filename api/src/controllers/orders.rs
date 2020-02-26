@@ -86,7 +86,7 @@ pub fn show(
         let token_issuer = state.service_locator.token_issuer();
         let user = DbUser::find(purchased_for_user_id, connection)?;
         let refresh_token = user.create_magic_link_token(token_issuer, Duration::minutes(60))?;
-        let fallback_url = format!("{}?refresh_token={}", &state.config.front_end_url, refresh_token);
+        let fallback_url = format!("{}/send-download-link?refresh_token={}", &state.config.front_end_url, refresh_token);
         let mut data = HashMap::new();
         data.insert("order_id".to_string(), json!(order_id));
         let link = linker.create_with_custom_data(&fallback_url, data)?;
