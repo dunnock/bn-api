@@ -80,45 +80,46 @@ impl DomainActionMonitor {
         let mut domain_event_publishers = DomainEventPublisher::find_all(connection)?;
 
         if domain_event_publishers.len() == 0 {
-            //            jlog!(Debug, "bigneon::domain_events", "No event publishers found", {});
             return Ok(0);
         };
         let mut events_published = 0;
-        let domain_events = DomainEvent::find_after_seq(
-            domain_event_publishers[0].last_domain_event_seq.unwrap_or(-1),
-            500,
-            connection,
-        )?;
-        for event in domain_events {
-            conn.begin_transaction()?;
-            let mut did_publish = false;
-            for publisher in domain_event_publishers
-                .iter_mut()
-                .filter(|p| p.last_domain_event_seq.unwrap_or(-1) < event.seq)
-            {
-                if publisher.event_types.contains(&event.event_type)
-                    && (publisher.organization_id.is_none() || publisher.organization_id == event.organization_id)
+        let mut last_seq = domain_event_publishers[0].last_domain_event_seq.unwrap_or(-1);
+        loop {
+            let domain_events = DomainEvent::find_after_seq(last_seq, 500, connection)?;
+            if domain_events.len() == 0 {
+                break;
+            }
+            last_seq = domain_events.last().map(|x| x.seq).unwrap_or(last_seq);
+            for event in domain_events {
+                conn.begin_transaction()?;
+                let mut did_publish = false;
+                for publisher in domain_event_publishers
+                    .iter_mut()
+                    .filter(|p| p.last_domain_event_seq.unwrap_or(-1) < event.seq)
                 {
-                    if publisher.claim_for_publishing(&event, connection)? {
-                        jlog!(Info, "bigneon::domain_events", "Publishing event", {"publisher_id": publisher.id, "event_type": &event.event_type, "organization_id": event.organization_id, "event": &event});
+                    if publisher.event_types.contains(&event.event_type)
+                        && (publisher.organization_id.is_none() || publisher.organization_id == event.organization_id)
+                    {
+                        if publisher.claim_for_publishing(&event, connection)? {
+                            jlog!(Info, "bigneon::domain_events", "Publishing event", {"publisher_id": publisher.id, "event_type": &event.event_type, "organization_id": event.organization_id, "event": &event});
 
-                        webhook_publisher.publish(&publisher, &event, connection)?;
-                        publisher.update_last_domain_event_seq(event.seq, connection)?;
-                        did_publish = true;
-                    } else {
-                        // Another processor is already working on this event.
-                        // So move onto next event publisher
-                        // At a later stage, we should check out an event publisher using
-                        // checkout columns so that each thread only runs one publisher
+                            webhook_publisher.publish(&publisher, &event, connection)?;
+                            publisher.update_last_domain_event_seq(event.seq, connection)?;
+                            did_publish = true;
+                        } else {
+                            // Another processor is already working on this event.
+                            // So move onto next event publisher
+                            // At a later stage, we should check out an event publisher using
+                            // checkout columns so that each thread only runs one publisher
+                        }
                     }
                 }
+                if did_publish {
+                    events_published += 1;
+                }
+                conn.commit_transaction()?;
             }
-            if did_publish {
-                events_published += 1;
-            }
-            conn.commit_transaction()?;
         }
-
         Ok(events_published)
     }
 
