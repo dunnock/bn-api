@@ -238,6 +238,7 @@ fn create_post_event_entries() {
     let order_item = items.iter().find(|i| i.ticket_type_id == Some(ticket_type.id)).unwrap();
     let tickets = TicketInstance::find_for_order_item(order_item.id, connection).unwrap();
     let ticket = &tickets[0];
+    let ticket2 = &tickets[1];
     let refund_items = vec![RefundItemRequest {
         order_item_id: order_item.id,
         ticket_instance_id: Some(ticket.id),
@@ -360,6 +361,57 @@ fn create_post_event_entries() {
     assert_eq!(event_fee_entry.online_sold_quantity, 0);
     assert_eq!(event_fee_entry.fee_sold_quantity, 5);
     assert_eq!(event_fee_entry.total_sales_in_cents, 750);
+
+    // Refund comes in after post event has been settled, included in next settlement report
+    // even though event has already settled
+    let refund_items = vec![RefundItemRequest {
+        order_item_id: order_item.id,
+        ticket_instance_id: Some(ticket2.id),
+    }];
+    order.refund(&refund_items, user.id, None, false, connection).unwrap();
+
+    let settlement = Settlement::create(
+        organization.id,
+        dates::now().add_days(-7).finish(),
+        dates::now().add_minutes(1).finish(),
+        SettlementStatus::PendingSettlement,
+        None,
+        true,
+    )
+    .commit(None, connection)
+    .unwrap();
+    let past_event = Event::find(past_event.id, connection).unwrap();
+    assert!(past_event.settled_at.is_some());
+    let past_event_2 = Event::find(past_event_2.id, connection).unwrap();
+    assert!(past_event_2.settled_at.is_none());
+
+    let display_settlement = settlement.clone().for_display(connection).unwrap();
+    assert_eq!(display_settlement.event_entries.len(), 1);
+    assert_eq!(
+        display_settlement.event_entries[0].event,
+        past_event.for_display(connection).unwrap()
+    );
+    let event_entries = &display_settlement.event_entries[0].entries;
+    assert_eq!(event_entries.len(), 1);
+
+    let ticket_type_entry = event_entries
+        .clone()
+        .into_iter()
+        .find(|e| e.settlement_entry_type == SettlementEntryTypes::TicketType && e.face_value_in_cents == 150)
+        .unwrap();
+    let ticket_type = &past_event.ticket_types(true, None, connection).unwrap()[0];
+    assert_eq!(ticket_type_entry.settlement_id, settlement.id);
+    assert_eq!(ticket_type_entry.event_id, past_event.id);
+    assert_eq!(ticket_type_entry.ticket_type_id, Some(ticket_type.id));
+    assert_eq!(ticket_type_entry.face_value_in_cents, 150);
+    assert_eq!(ticket_type_entry.revenue_share_value_in_cents, 30);
+    assert_eq!(ticket_type_entry.online_sold_quantity, -1);
+    assert_eq!(ticket_type_entry.fee_sold_quantity, -1);
+    assert_eq!(
+        ticket_type_entry.total_sales_in_cents,
+        ticket_type_entry.online_sold_quantity * ticket_type_entry.face_value_in_cents
+            + ticket_type_entry.fee_sold_quantity * ticket_type_entry.revenue_share_value_in_cents
+    );
 }
 
 #[test]

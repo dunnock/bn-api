@@ -273,6 +273,53 @@ fn mark_settled() {
 }
 
 #[test]
+fn find_organization_users() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let organization_owner = project.create_user().finish();
+    let organization_user = project.create_user().finish();
+    let organization2_owner = project.create_user().finish();
+    let user = project.create_user().finish();
+    let admin = project
+        .create_user()
+        .finish()
+        .add_role(Roles::Admin, connection)
+        .unwrap();
+    let organization = project
+        .create_organization()
+        .with_member(&organization_owner, Roles::OrgOwner)
+        .with_member(&organization_user, Roles::OrgMember)
+        .finish();
+    let organization2 = project
+        .create_organization()
+        .with_member(&organization2_owner, Roles::OrgOwner)
+        .finish();
+    let event = project
+        .create_event()
+        .with_ticket_pricing()
+        .with_organization(&organization)
+        .finish();
+    let event2 = project
+        .create_event()
+        .with_ticket_pricing()
+        .with_organization(&organization2)
+        .finish();
+    let organization_users = Event::find_organization_users(event.id, connection).unwrap();
+    assert!(organization_users.contains(&organization_owner));
+    assert!(organization_users.contains(&organization_user));
+    assert!(organization_users.contains(&admin));
+    assert!(!organization_users.contains(&organization2_owner));
+    assert!(!organization_users.contains(&user));
+
+    let organization_users = Event::find_organization_users(event2.id, connection).unwrap();
+    assert!(!organization_users.contains(&organization_owner));
+    assert!(!organization_users.contains(&organization_user));
+    assert!(organization_users.contains(&admin));
+    assert!(organization_users.contains(&organization2_owner));
+    assert!(!organization_users.contains(&user));
+}
+
+#[test]
 fn get_all_events_with_transactions_between() {
     let project = TestProject::new();
     let connection = project.get_connection();

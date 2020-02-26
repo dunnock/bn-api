@@ -10,6 +10,7 @@ use globee::GlobeeError;
 use jwt::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 use payments::PaymentProcessorError;
 use r2d2;
+use redis::RedisError;
 use reqwest::header::ToStrError as ReqwestToStrError;
 use reqwest::Error as ReqwestError;
 use serde_json::Error as SerdeError;
@@ -100,6 +101,13 @@ impl ConvertToWebError for BranchError {
 impl ConvertToWebError for NotFoundError {
     fn to_response(&self) -> HttpResponse {
         not_found()
+    }
+}
+
+impl ConvertToWebError for RedisError {
+    fn to_response(&self) -> HttpResponse {
+        error!("Redis error: {}", self);
+        internal_error("Internal error")
     }
 }
 

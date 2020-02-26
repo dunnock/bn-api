@@ -1,6 +1,6 @@
 [package]
 name = "bigneon_api"
-version = "1.9.15"
+version = "1.9.16"
 authors = ["CjS77"]
 license = "BSD-3"
 repository = "https://github.com/big-neon/bn-api/"
@@ -17,6 +17,7 @@ branch_rs = {path="../branch_rs"}
 chrono = {version = "0.4", features = ["serde"]}
 clap = "2.32"
 customer_io= {path="../customer_io"}
+cache= {path="../cache"}
 diesel="1.4.2"
 dotenv = "0.13"
 # Pulling from github as dependency fix merged into master has yet to be released
@@ -32,6 +33,7 @@ logging = {path="../logging"}
 macros = {path="../macros"}
 phonenumber = "0.2.3"
 r2d2 = "0.8"
+redis = "0.13"
 regex = "1"
 reqwest="0.9.22"
 serde = "1.0"

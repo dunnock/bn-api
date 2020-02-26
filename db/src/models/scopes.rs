@@ -77,6 +77,7 @@ pub enum Scopes {
     UserRead,
     UserDelete,
     VenueWrite,
+    WebSocketInitiate,
 }
 
 impl Serialize for Scopes {
@@ -161,6 +162,7 @@ impl fmt::Display for Scopes {
             Scopes::UserRead => "user:read",
             Scopes::UserDelete => "user:delete",
             Scopes::VenueWrite => "venue:write",
+            Scopes::WebSocketInitiate => "websocket:initiate",
         };
         write!(f, "{}", s)
     }
@@ -241,6 +243,7 @@ impl FromStr for Scopes {
             "user:read" => Scopes::UserRead,
             "user:delete" => Scopes::UserDelete,
             "venue:write" => Scopes::VenueWrite,
+            "websocket:initiate" => Scopes::WebSocketInitiate,
             _ => {
                 return Err(EnumParseError {
                     message: "Could not parse value".to_string(),
@@ -287,6 +290,7 @@ fn get_scopes_for_role(role: Roles) -> Vec<Scopes> {
                 Scopes::CodeRead,
                 Scopes::OrderRead,
                 Scopes::DashboardRead,
+                Scopes::WebSocketInitiate,
             ];
             roles
         }
@@ -319,6 +323,7 @@ fn get_scopes_for_role(role: Roles) -> Vec<Scopes> {
                 Scopes::TicketRead,
                 Scopes::TicketTypeRead,
                 Scopes::TransferRead,
+                Scopes::WebSocketInitiate,
             ];
             roles
         }
@@ -337,6 +342,7 @@ fn get_scopes_for_role(role: Roles) -> Vec<Scopes> {
                 Scopes::HoldWrite,
                 // Scopes::OrderRefund,
                 Scopes::TransferCancel,
+                Scopes::WebSocketInitiate,
             ];
             roles.extend(get_scopes_for_role(Roles::PromoterReadOnly));
             roles
@@ -379,6 +385,7 @@ fn get_scopes_for_role(role: Roles) -> Vec<Scopes> {
                 Scopes::TransferRead,
                 Scopes::TransferCancel,
                 Scopes::VenueWrite,
+                Scopes::WebSocketInitiate,
             ];
             roles.extend(get_scopes_for_role(Roles::User));
             roles
@@ -495,6 +502,7 @@ fn get_scopes_for_role_test() {
             Scopes::TransferReadOwn,
             Scopes::UserRead,
             Scopes::VenueWrite,
+            Scopes::WebSocketInitiate,
             Scopes::OrgReadEvents
         ],
         res
@@ -569,6 +577,7 @@ fn get_scopes_test() {
             "transfer:read",
             "user:read",
             "venue:write",
+            "websocket:initiate",
         ],
         res
     );
@@ -647,6 +656,7 @@ fn get_scopes_test() {
             "user:read",
             "user:delete",
             "venue:write",
+            "websocket:initiate",
         ],
         res
     );
@@ -726,6 +736,7 @@ fn get_scopes_test() {
             "user:read",
             "user:delete",
             "venue:write",
+            "websocket:initiate",
         ],
         res
     );
@@ -804,6 +815,7 @@ fn get_scopes_test() {
             "user:delete",
             "user:read",
             "venue:write",
+            "websocket:initiate",
         ],
         res
     );

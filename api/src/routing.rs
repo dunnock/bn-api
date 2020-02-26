@@ -76,7 +76,7 @@ pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
         r.method(Method::DELETE).with(event_report_subscribers::destroy);
     })
     .resource("/events", |r| {
-        r.method(Method::GET).with(events::index);
+        r.method(Method::GET).with(events::index_cached);
         r.method(Method::POST).with(events::create);
     })
     .resource("/events/checkins", |r| {
@@ -165,6 +165,9 @@ pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
     })
     .resource("/events/{id}/users/{user_id}", |r| {
         r.method(Method::DELETE).with(events::remove_user);
+    })
+    .resource("/events/{id}/websockets", |r| {
+        r.method(Method::GET).with(websockets::initate);
     })
     .resource("/external/facebook/pages", |r| {
         r.method(Method::GET).with(external::facebook::pages)

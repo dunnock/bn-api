@@ -418,6 +418,20 @@ impl Event {
             .to_db_error(ErrorCode::UpdateError, "Could not mark event as having been settled")
     }
 
+    pub fn find_organization_users(event_id: Uuid, conn: &PgConnection) -> Result<Vec<User>, DatabaseError> {
+        let mut users: Vec<User> = events::table
+            .inner_join(organization_users::table.on(organization_users::organization_id.eq(events::organization_id)))
+            .inner_join(users::table.on(organization_users::user_id.eq(users::id)))
+            .filter(events::id.eq(event_id))
+            .select(users::all_columns)
+            .get_results(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not retrieve organization users for event")?;
+        let mut admins = User::admins(conn)?;
+        users.append(&mut admins);
+
+        Ok(users)
+    }
+
     pub fn get_all_events_with_transactions_between(
         organization_id: Uuid,
         start: NaiveDateTime,

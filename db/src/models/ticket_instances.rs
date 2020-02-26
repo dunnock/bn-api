@@ -54,6 +54,17 @@ pub struct UpdateTicketInstanceAttributes {
 }
 
 impl TicketInstance {
+    pub fn event(&self, conn: &PgConnection) -> Result<Event, DatabaseError> {
+        ticket_instances::table
+            .inner_join(assets::table.on(assets::id.eq(ticket_instances::asset_id)))
+            .inner_join(ticket_types::table.on(ticket_types::id.eq(assets::ticket_type_id)))
+            .inner_join(events::table.on(events::id.eq(ticket_types::event_id)))
+            .filter(ticket_instances::id.eq(self.id))
+            .select(events::all_columns)
+            .first(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not load event for ticket instance")
+    }
+
     pub fn parse_ticket_number(id: Uuid) -> String {
         let id_string = id.to_string();
         id_string[id_string.len() - TICKET_NUMBER_LENGTH..].to_string()

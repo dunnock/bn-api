@@ -11,7 +11,8 @@ members = [
     "stripe",
     "logging",
     "macros",
-    "customer_io"
+    "customer_io",
+    "cache"
 ]
 
 [patch.crates-io]

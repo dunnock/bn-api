@@ -6,7 +6,9 @@
 // Unused results is more often than not an error
 #![deny(unused_must_use)]
 #![cfg_attr(not(debug_assertions), deny(unused_extern_crates))]
+extern crate actix;
 extern crate actix_web;
+#[macro_use]
 extern crate bigneon_db;
 extern crate branch_rs;
 extern crate chrono;
@@ -29,6 +31,7 @@ extern crate logging;
 extern crate macros;
 extern crate phonenumber;
 extern crate r2d2;
+extern crate redis;
 extern crate regex;
 extern crate reqwest;
 extern crate serde;
@@ -46,6 +49,7 @@ extern crate uuid;
 extern crate validator;
 #[macro_use]
 extern crate validator_derive;
+extern crate cache;
 extern crate sitemap;
 
 pub mod auth;

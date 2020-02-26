@@ -177,6 +177,13 @@ impl User {
         )
     }
 
+    pub fn admins(conn: &PgConnection) -> Result<Vec<User>, DatabaseError> {
+        users::table
+            .filter(users::role.overlaps_with(vec![Roles::Admin, Roles::Super]))
+            .load(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not load admin users")
+    }
+
     pub fn genres(&self, conn: &PgConnection) -> Result<Vec<String>, DatabaseError> {
         genres::table
             .inner_join(user_genres::table.on(user_genres::genre_id.eq(genres::id)))

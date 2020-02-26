@@ -9,9 +9,8 @@ use std::str;
 use std::str::FromStr;
 use utils::errors::EnumParseError;
 
-macro_rules! string_enum {
+macro_rules! define_enum {
     ($name:ident [$($value:ident),+]) => {
-
         #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Debug, Eq, Hash, FromSqlRow, AsExpression)]
         #[sql_type = "Text"]
         pub enum $name {
@@ -20,18 +19,13 @@ macro_rules! string_enum {
             )*
         }
 
-        impl Ord for $name {
-            fn cmp(&self, other: &$name) -> Ordering {
-                self.to_string().cmp(&other.to_string())
-            }
-        }
+        sql_transform_enum!{ $name[$($value), +] }
+        string_enum!{ $name[$($value), +] }
+    }
+}
 
-        impl PartialOrd  for $name {
-             fn partial_cmp(&self, other: &$name) -> Option<Ordering> {
-                 Some(self.cmp(&other))
-             }
-        }
-
+macro_rules! sql_transform_enum {
+    ($name:ident [$($value:ident),+]) => {
         impl ToSql<Text, Pg> for $name {
             fn to_sql<W: Write>(&self, out: &mut Output<W, Pg>) -> serialize::Result {
                 match *self {
@@ -48,6 +42,23 @@ macro_rules! string_enum {
                 let s = str::from_utf8(not_none!(bytes))?;
                 s.parse().map_err(|_| format!("Unrecognized enum variant:{}", s).into())
             }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! string_enum {
+    ($name:ident [$($value:ident),+]) => {
+        impl Ord for $name {
+            fn cmp(&self, other: &$name) -> Ordering {
+                self.to_string().cmp(&other.to_string())
+            }
+        }
+
+        impl PartialOrd  for $name {
+             fn partial_cmp(&self, other: &$name) -> Option<Ordering> {
+                 Some(self.cmp(&other))
+             }
         }
 
         impl fmt::Display for $name {
@@ -81,15 +92,15 @@ macro_rules! string_enum {
     }
 }
 
-string_enum! { ActivityType [Purchase, Transfer, CheckIn,Refund, Note]}
-string_enum! { AssetStatus [Unsynced] }
-string_enum! { BroadcastAudience [ PeopleAtTheEvent, TicketHolders  ]}
-string_enum! { CartItemStatus [CodeExpired, HoldExpired, TicketNullified, TicketNotReserved, Valid] }
-string_enum! { CheckInSource [GuestList, Scanned] }
-string_enum! { CodeTypes [Access, Discount] }
-string_enum! { CommunicationChannelType [Email, Sms, Push, Webhook]}
-string_enum! { CommunicationType [EmailTemplate, Sms, Push, Webhook]}
-string_enum! { DomainEventTypes [
+define_enum! { ActivityType [Purchase, Transfer, CheckIn, Refund, Note]}
+define_enum! { AssetStatus [Unsynced] }
+define_enum! { BroadcastAudience [ PeopleAtTheEvent, TicketHolders, OrganizationMembers ]}
+define_enum! { CartItemStatus [CodeExpired, HoldExpired, TicketNullified, TicketNotReserved, Valid] }
+define_enum! { CheckInSource [GuestList, Scanned] }
+define_enum! { CodeTypes [Access, Discount] }
+define_enum! { CommunicationChannelType [Email, Sms, Push, Webhook]}
+define_enum! { CommunicationType [EmailTemplate, Sms, Push, Webhook]}
+define_enum! { DomainEventTypes [
     CodeCreated,
     CodeDeleted,
     CodeUpdated,
@@ -163,7 +174,7 @@ string_enum! { DomainEventTypes [
     TicketTypeSoldOut,
     TicketTypeUpdated
 ]}
-string_enum! { DomainActionTypes [
+define_enum! { DomainActionTypes [
     BroadcastPushNotification,
     // Email/SMS/Push Communication
     Communication,
@@ -177,50 +188,50 @@ string_enum! { DomainActionTypes [
     SubmitSitemapToSearchEngines,
     UpdateGenres
 ]}
-string_enum! { BroadcastStatus [Pending, InProgress, Completed, Cancelled]}
-string_enum! { BroadcastChannel [PushNotification, Email]}
-string_enum! { BroadcastType [Custom, LastCall]}
-string_enum! { DomainActionStatus [Pending, RetriesExceeded, Errored, Success, Cancelled]}
-string_enum! { EmailProvider [Sendgrid, CustomerIo]}
-string_enum! { Environment [Development, Production, Staging, Test]}
-string_enum! { EventStatus [Draft,Closed,Published,Offline]}
-string_enum! { EventSearchSortField [ Name, EventStart]}
-string_enum! { EventOverrideStatus [PurchaseTickets,SoldOut,OnSaleSoon,TicketsAtTheDoor,Free,Rescheduled,Cancelled,OffSale,Ended]}
-string_enum! { EventTypes [ Music, Conference, Art, Culinary, Comedy, Sports, Tech, Other]}
-string_enum! { ExternalPaymentType [Cash, CreditCard, Voucher]}
-string_enum! { FanSortField [FirstName, LastName, Email, Phone, OrganizationId, UserCreated, Orders, FirstOrder, LastOrder, Revenue, FirstInteracted, LastInteracted] }
-string_enum! { HistoryType [Purchase]}
-string_enum! { HoldTypes [Discount, Comp] }
-string_enum! { OrderStatus [Cancelled, Draft, Paid, PendingPayment] }
-string_enum! { OrderItemTypes [Tickets, PerUnitFees, EventFees, Discount, CreditCardFees]}
-string_enum! { OrderTypes [Cart, BackOffice] }
-string_enum! { PaymentMethods [CreditCard, External, Free, Provider] }
-string_enum! { PaymentProviders [External, Globee, Free, Stripe] }
-string_enum! { PaymentStatus [Authorized, Completed, Requested, Refunded, Unpaid, PendingConfirmation, Cancelled, Draft, Unknown, PendingIpn] }
-string_enum! { PastOrUpcoming [Past,Upcoming]}
-string_enum! { Platforms [Web, App, BoxOffice]}
-string_enum! { ReportTypes [TicketCounts]}
-string_enum! { Roles [Admin, DoorPerson, OrgAdmin, OrgBoxOffice, OrgMember, OrgOwner, PrismIntegration, Promoter, PromoterReadOnly, User, Super] }
-string_enum! { SettlementStatus[PendingSettlement, RequiresAudit, SettledInFull] }
-string_enum! { SettlementTypes [Rolling, PostEvent]}
-string_enum! { SettlementAdjustmentTypes [ManualCredit, ManualDeduction, Chargeback]}
-string_enum! { SettlementEntryTypes [EventFees, TicketType]}
-string_enum! { SlugTypes[ Event, Organization, Venue, City, Genre, CityGenre ] }
-string_enum! { SortingDir[ Asc, Desc ] }
-string_enum! { SourceOrDestination [Destination,Source]}
-string_enum! { Tables [
+define_enum! { BroadcastStatus [Pending, InProgress, Completed, Cancelled]}
+define_enum! { BroadcastChannel [PushNotification, Email]}
+define_enum! { BroadcastType [Custom, LastCall]}
+define_enum! { DomainActionStatus [Pending, RetriesExceeded, Errored, Success, Cancelled]}
+define_enum! { EmailProvider [Sendgrid, CustomerIo]}
+define_enum! { Environment [Development, Production, Staging, Test]}
+define_enum! { EventStatus [Draft,Closed,Published,Offline]}
+define_enum! { EventSearchSortField [ Name, EventStart]}
+define_enum! { EventOverrideStatus [PurchaseTickets,SoldOut,OnSaleSoon,TicketsAtTheDoor,Free,Rescheduled,Cancelled,OffSale,Ended]}
+define_enum! { EventTypes [ Music, Conference, Art, Culinary, Comedy, Sports, Tech, Other]}
+define_enum! { ExternalPaymentType [Cash, CreditCard, Voucher]}
+define_enum! { FanSortField [FirstName, LastName, Email, Phone, OrganizationId, UserCreated, Orders, FirstOrder, LastOrder, Revenue, FirstInteracted, LastInteracted] }
+define_enum! { HistoryType [Purchase]}
+define_enum! { HoldTypes [Discount, Comp] }
+define_enum! { OrderStatus [Cancelled, Draft, Paid, PendingPayment] }
+define_enum! { OrderItemTypes [Tickets, PerUnitFees, EventFees, Discount, CreditCardFees]}
+define_enum! { OrderTypes [Cart, BackOffice] }
+define_enum! { PaymentMethods [CreditCard, External, Free, Provider] }
+define_enum! { PaymentProviders [External, Globee, Free, Stripe] }
+define_enum! { PaymentStatus [Authorized, Completed, Requested, Refunded, Unpaid, PendingConfirmation, Cancelled, Draft, Unknown, PendingIpn] }
+define_enum! { PastOrUpcoming [Past,Upcoming]}
+define_enum! { Platforms [Web, App, BoxOffice]}
+define_enum! { ReportTypes [TicketCounts]}
+define_enum! { Roles [Admin, DoorPerson, OrgAdmin, OrgBoxOffice, OrgMember, OrgOwner, PrismIntegration, Promoter, PromoterReadOnly, User, Super] }
+define_enum! { SettlementStatus[PendingSettlement, RequiresAudit, SettledInFull] }
+define_enum! { SettlementTypes [Rolling, PostEvent]}
+define_enum! { SettlementAdjustmentTypes [ManualCredit, ManualDeduction, Chargeback]}
+define_enum! { SettlementEntryTypes [EventFees, TicketType]}
+define_enum! { SlugTypes[ Event, Organization, Venue, City, Genre, CityGenre ] }
+define_enum! { SortingDir[ Asc, Desc ] }
+define_enum! { SourceOrDestination [Destination,Source]}
+define_enum! { Tables [
     Artists, Broadcasts, Codes, DomainEventPublishers, Events, EventArtists, EventReportSubscribers, ExternalLogins, FeeSchedules,
     Holds, Orders, Organizations, Notes, Payments, PaymentMethods, PushNotificationTokens, TemporaryUsers, TicketInstances, TicketTypes,
     TicketPricing, Transfers, Users, Venues, Genres
 ] }
-string_enum! { TicketInstanceStatus [Available, Reserved, Purchased, Redeemed, Nullified]}
-string_enum! { TicketPricingStatus [Published, Deleted, Default] }
-string_enum! { TicketTypeEndDateType [DoorTime, EventEnd, EventStart, Manual] }
-string_enum! { TicketTypeStatus [NoActivePricing, Published, SoldOut, OnSaleSoon, SaleEnded, Cancelled, Deleted] }
-string_enum! { TicketTypeVisibility [ Always, Hidden, WhenAvailable ]}
-string_enum! { TransferMessageType [Email, Phone] }
-string_enum! { TransferStatus [Pending, Cancelled, Completed, EventEnded] }
-string_enum! { WebhookAdapters [CustomerIo]}
+define_enum! { TicketInstanceStatus [Available, Reserved, Purchased, Redeemed, Nullified]}
+define_enum! { TicketPricingStatus [Published, Deleted, Default] }
+define_enum! { TicketTypeEndDateType [DoorTime, EventEnd, EventStart, Manual] }
+define_enum! { TicketTypeStatus [NoActivePricing, Published, SoldOut, OnSaleSoon, SaleEnded, Cancelled, Deleted] }
+define_enum! { TicketTypeVisibility [ Always, Hidden, WhenAvailable ]}
+define_enum! { TransferMessageType [Email, Phone] }
+define_enum! { TransferStatus [Pending, Cancelled, Completed, EventEnded] }
+define_enum! { WebhookAdapters [CustomerIo]}
 
 impl Roles {
     pub fn get_event_limited_roles() -> Vec<Roles> {
