@@ -666,7 +666,7 @@ pub struct TicketRedeemRequest {
 pub fn redeem_ticket(
     (connection, parameters, redeem_parameters, auth_user, state, cache_database): (
         Connection,
-        Path<RedeemTicketPathParameters>,
+        Path<PathParameters>,
         Json<TicketRedeemRequest>,
         AuthUser,
         State<AppState>,
@@ -674,11 +674,12 @@ pub fn redeem_ticket(
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
-    let ticket = TicketInstance::find_for_processing(parameters.ticket_instance_id, parameters.id, connection)?;
-    let db_event = Event::find(ticket.event_id, connection)?;
+    let db_event = Event::find(parameters.id, connection)?;
     let organization = db_event.organization(connection)?;
     auth_user.requires_scope_for_organization_event(Scopes::RedeemTicket, &organization, &db_event, connection)?;
-    let redeemable = TicketInstance::show_redeemable_ticket(parameters.ticket_instance_id, connection)?;
+    let ticket =
+        TicketInstance::find_by_event_id_redeem_key(parameters.id, redeem_parameters.redeem_key.clone(), connection)?;
+    let redeemable = TicketInstance::show_redeemable_ticket(ticket.id, connection)?;
 
     let result = TicketInstance::redeem_ticket(
         ticket.id,
@@ -701,7 +702,7 @@ pub fn redeem_ticket(
                     )?;
 
                     //Fetch the redeemable again to include the redeemed_by and redeemed_at fields
-                    let redeemable = TicketInstance::show_redeemable_ticket(parameters.ticket_instance_id, connection)?;
+                    let redeemable = TicketInstance::show_redeemable_ticket(ticket.id, connection)?;
 
                     // Publish redeem event for redis pubsub
                     cache_database
@@ -715,7 +716,7 @@ pub fn redeem_ticket(
 
                     Ok(HttpResponse::Ok().json(redeemable))
                 }
-                None => Ok(HttpResponse::BadRequest().json(json!({ "error": "Could not complete this checkout because the asset has not been assigned on the blockchain.".to_string()}))),
+                None => Ok(HttpResponse::BadRequest().json(json!({ "error": "Could not redeem because the asset has not been assigned on the blockchain.".to_string()}))),
             }
         }
         RedeemResults::TicketTransferInProcess => {

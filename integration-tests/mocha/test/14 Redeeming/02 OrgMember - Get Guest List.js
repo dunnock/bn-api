@@ -9,10 +9,8 @@ const baseUrl = supertest(pm.environment.get('server'));
 
 const apiEndPoint = '/events/{{last_event_id}}/guests?query=';
 
-
 var response;
 var responseBody;
-
 
 const post = async function (request_body) {
     return baseUrl
@@ -36,7 +34,6 @@ const get = async function (request_body) {
 
 let requestBody = ``;
 
-
 describe('OrgMember - Get Guest List', function () {
     before(async function () {
         response = await get(requestBody);
@@ -52,8 +49,6 @@ describe('OrgMember - Get Guest List', function () {
 
     after(async function () {
         // add after methods
-
-
     });
 
     it("should be 200", function () {
@@ -63,13 +58,16 @@ describe('OrgMember - Get Guest List', function () {
 
     it("guests should be present", function () {
 
-        let json = JSON.parse(responseBody)
+        let json = JSON.parse(responseBody);
         expect(json.data.length).to.be.greaterThan(6);
-        pm.environment.set("last_ticket_instance_id", json.data[0].id);
-        pm.environment.set("last_ticket_instance_redeem_key", json.data[0].redeem_key);
+
+        // Make sure last ticket instance is not set to be transferred
+        for (i = 0; i < json.data.length; i++) {
+          if (json.data[i].transfer_id == null) {
+            pm.environment.set("last_ticket_instance_id", json.data[i].id);
+            pm.environment.set("last_ticket_instance_redeem_key", json.data[i].redeem_key);
+            break;
+          }
+        }
     });
-
-
 });
-
-            

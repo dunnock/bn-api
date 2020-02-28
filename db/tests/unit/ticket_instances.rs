@@ -30,6 +30,123 @@ fn event() {
 }
 
 #[test]
+fn find_by_event_id_redeem_key() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project.create_event().with_ticket_pricing().finish();
+    let event2 = project.create_event().with_ticket_pricing().finish();
+    let user = project.create_user().finish();
+    project
+        .create_order()
+        .for_event(&event)
+        .for_user(&user)
+        .is_paid()
+        .finish();
+    let user2 = project.create_user().finish();
+    project
+        .create_order()
+        .for_event(&event2)
+        .for_user(&user2)
+        .is_paid()
+        .finish();
+    let tickets = TicketInstance::find_for_user(user.id, connection).unwrap();
+    let ticket = &tickets[0];
+    let ticket2 = &tickets[1];
+    let tickets2 = TicketInstance::find_for_user(user2.id, connection).unwrap();
+    let ticket3 = &tickets2[0];
+    let ticket4 = &tickets2[1];
+
+    // Valid lookups of tickets by event
+    assert_eq!(
+        TicketInstance::find_by_event_id_redeem_key(event.id, ticket.redeem_key.clone().unwrap(), connection),
+        Ok(ticket.clone())
+    );
+    assert_eq!(
+        TicketInstance::find_by_event_id_redeem_key(event.id, ticket2.redeem_key.clone().unwrap(), connection),
+        Ok(ticket2.clone())
+    );
+    assert_eq!(
+        TicketInstance::find_by_event_id_redeem_key(event2.id, ticket3.redeem_key.clone().unwrap(), connection),
+        Ok(ticket3.clone())
+    );
+    assert_eq!(
+        TicketInstance::find_by_event_id_redeem_key(event2.id, ticket4.redeem_key.clone().unwrap(), connection),
+        Ok(ticket4.clone())
+    );
+
+    // Invalid events for tickets
+    assert!(
+        TicketInstance::find_by_event_id_redeem_key(event2.id, ticket.redeem_key.clone().unwrap(), connection).is_err()
+    );
+    assert!(
+        TicketInstance::find_by_event_id_redeem_key(event2.id, ticket2.redeem_key.clone().unwrap(), connection)
+            .is_err()
+    );
+    assert!(
+        TicketInstance::find_by_event_id_redeem_key(event.id, ticket3.redeem_key.clone().unwrap(), connection).is_err()
+    );
+    assert!(
+        TicketInstance::find_by_event_id_redeem_key(event.id, ticket4.redeem_key.clone().unwrap(), connection).is_err()
+    );
+
+    // Invalid redeem key for event
+    assert!(TicketInstance::find_by_event_id_redeem_key(event.id, Uuid::new_v4().to_string(), connection).is_err());
+}
+
+#[test]
+fn redeem_key_unique_per_event() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project.create_event().with_ticket_pricing().finish();
+    let event2 = project.create_event().with_ticket_pricing().finish();
+    let user = project.create_user().finish();
+    project
+        .create_order()
+        .for_event(&event)
+        .for_user(&user)
+        .is_paid()
+        .finish();
+    let user2 = project.create_user().finish();
+    project
+        .create_order()
+        .for_event(&event2)
+        .for_user(&user2)
+        .is_paid()
+        .finish();
+    let tickets = TicketInstance::find_for_user(user.id, connection).unwrap();
+    let tickets2 = TicketInstance::find_for_user(user2.id, connection).unwrap();
+
+    // Redeem key is unique for given ticket
+    assert!(TicketInstance::redeem_key_unique_per_event(
+        tickets[0].id,
+        tickets[0].redeem_key.clone().unwrap(),
+        connection
+    )
+    .unwrap());
+
+    // Different ticket for that event returns false as redeem key is not unique
+    assert!(!TicketInstance::redeem_key_unique_per_event(
+        tickets[1].id,
+        tickets[0].redeem_key.clone().unwrap(),
+        connection
+    )
+    .unwrap());
+
+    // Redeem key is unique for unused redeem key
+    assert!(
+        TicketInstance::redeem_key_unique_per_event(tickets[0].id, Uuid::new_v4().to_string(), connection).unwrap()
+    );
+
+    // Different event ticket can use existing redeem key
+    assert!(TicketInstance::redeem_key_unique_per_event(
+        tickets2[1].id,
+        tickets[0].redeem_key.clone().unwrap(),
+        connection
+    )
+    .unwrap());
+}
+
+#[test]
 fn associate_redeem_key() {
     let project = TestProject::new();
     let connection = project.get_connection();

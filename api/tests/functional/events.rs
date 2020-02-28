@@ -2080,6 +2080,48 @@ mod export_event_data_tests {
     }
 }
 
+#[cfg(test)]
+mod redeem_ticket {
+    use super::*;
+
+    #[test]
+    fn redeem_ticket_org_member() {
+        base::events::redeem_ticket(Roles::OrgMember, true);
+    }
+    #[test]
+    fn redeem_ticket_admin() {
+        base::events::redeem_ticket(Roles::Admin, true);
+    }
+    #[test]
+    fn redeem_ticket_user() {
+        base::events::redeem_ticket(Roles::User, false);
+    }
+    #[test]
+    fn redeem_ticket_org_owner() {
+        base::events::redeem_ticket(Roles::OrgOwner, true);
+    }
+    #[test]
+    fn redeem_ticket_door_person() {
+        base::events::redeem_ticket(Roles::DoorPerson, true);
+    }
+    #[test]
+    fn redeem_ticket_promoter() {
+        base::events::redeem_ticket(Roles::Promoter, false);
+    }
+    #[test]
+    fn redeem_ticket_promoter_read_only() {
+        base::events::redeem_ticket(Roles::PromoterReadOnly, false);
+    }
+    #[test]
+    fn redeem_ticket_org_admin() {
+        base::events::redeem_ticket(Roles::OrgAdmin, true);
+    }
+    #[test]
+    fn redeem_ticket_box_office() {
+        base::events::redeem_ticket(Roles::OrgBoxOffice, true);
+    }
+}
+
 #[test]
 pub fn delete_fails_has_ticket_in_cart() {
     let database = TestDatabase::new();
