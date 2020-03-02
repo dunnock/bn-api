@@ -85,11 +85,11 @@ pub fn resend(
         return Ok(HttpResponse::Ok().finish());
     }
     let mut extra_data = HashMap::new();
-    extra_data.insert("first_name".to_string(), json!(user.first_name.clone()));
+    extra_data.insert("download_app_link".to_string(), json!(link));
 
     Communication::new(
         CommunicationType::EmailTemplate,
-        "".to_string(),
+        "Your link has arrived!".to_string(),
         None,
         Some(CommAddress::from(
             state.config.communication_default_source_email.clone(),

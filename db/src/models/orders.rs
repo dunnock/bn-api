@@ -132,7 +132,7 @@ struct MatchData<'a> {
 }
 
 impl Order {
-    pub fn retarget_abandoned_carts(conn: &PgConnection) -> Result<(Vec<Order>), DatabaseError> {
+    pub fn retarget_abandoned_carts(conn: &PgConnection) -> Result<Vec<Order>, DatabaseError> {
         let now = Utc::now().naive_utc();
         let beginning_of_current_hour =
             NaiveDate::from_ymd(now.year(), now.month(), now.day()).and_hms(now.hour(), 0, 0);
