@@ -94,6 +94,7 @@ pub struct EmailTemplates {
     pub org_invite: EmailTemplate,
     pub password_reset: EmailTemplate,
     pub ticket_count_report: EmailTemplate,
+    pub resend_download_link: EmailTemplate,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -155,6 +156,7 @@ const EMAIL_TEMPLATES_CUSTOM_BROADCAST: &str = "EMAIL_TEMPLATES_CUSTOM_BROADCAST
 const EMAIL_TEMPLATES_ORG_INVITE: &str = "EMAIL_TEMPLATES_ORG_INVITE";
 const EMAIL_TEMPLATES_PASSWORD_RESET: &str = "EMAIL_TEMPLATES_PASSWORD_RESET";
 const EMAIL_TEMPLATES_TICKET_COUNT_REPORT: &str = "EMAIL_TEMPLATES_TICKET_COUNT_REPORT";
+const EMAIL_TEMPLATES_RESEND_DOWNLOAD_LINK: &str = " EMAIL_TEMPLATES_RESEND_DOWNLOAD_LINK";
 const ENVIRONMENT: &str = "ENVIRONMENT";
 const FACEBOOK_APP_ID: &str = "FACEBOOK_APP_ID";
 const FACEBOOK_APP_SECRET: &str = "FACEBOOK_APP_SECRET";
@@ -338,6 +340,7 @@ impl Config {
             org_invite: get_env_var(EMAIL_TEMPLATES_ORG_INVITE).parse().unwrap(),
             password_reset: get_env_var(EMAIL_TEMPLATES_PASSWORD_RESET).parse().unwrap(),
             ticket_count_report: get_env_var(EMAIL_TEMPLATES_TICKET_COUNT_REPORT).parse().unwrap(),
+            resend_download_link: get_env_var(EMAIL_TEMPLATES_RESEND_DOWNLOAD_LINK).parse().unwrap(),
         };
 
         let customer_io_base_url = get_env_var(CUSTOMER_IO_BASE_URL);
