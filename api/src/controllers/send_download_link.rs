@@ -4,7 +4,7 @@ use bigneon_db::prelude::*;
 use chrono::Duration;
 use db::Connection;
 use errors::BigNeonError;
-use extractors::{Json, OptionalUser};
+use extractors::Json;
 use server::AppState;
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -55,19 +55,11 @@ pub fn create(
 }
 
 pub fn resend(
-    (state, connection, auth_user, data): (
-        State<AppState>,
-        Connection,
-        OptionalUser,
-        Json<ResendDownloadLinkRequest>,
-    ),
+    (state, connection, data): (State<AppState>, Connection, Json<ResendDownloadLinkRequest>),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = connection.get();
-    let user = if let Some(user) = auth_user.0 {
-        user.user
-    } else {
-        User::find(data.user_id, conn)?
-    };
+
+    let user = User::find(data.user_id, conn)?;
 
     let token = user.create_magic_link_token(state.service_locator.token_issuer(), Duration::minutes(120))?;
     let linker = state.service_locator.create_deep_linker()?;
@@ -75,7 +67,7 @@ pub fn resend(
     link_data.insert("refresh_token".to_string(), json!(&token));
     let link = linker.create_with_custom_data(
         &format!(
-            "/send_download_link/{}?refresh_token={}",
+            "{}/send-download-link?refresh_token={}",
             &state.config.front_end_url, &token
         ),
         link_data,
