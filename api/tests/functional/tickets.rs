@@ -399,48 +399,6 @@ mod show_other_user_ticket_tests {
 }
 
 #[cfg(test)]
-mod redeem_ticket {
-    use super::*;
-
-    #[test]
-    fn redeem_ticket_org_member() {
-        base::tickets::redeem_ticket(Roles::OrgMember, true);
-    }
-    #[test]
-    fn redeem_ticket_admin() {
-        base::tickets::redeem_ticket(Roles::Admin, true);
-    }
-    #[test]
-    fn redeem_ticket_user() {
-        base::tickets::redeem_ticket(Roles::User, false);
-    }
-    #[test]
-    fn redeem_ticket_org_owner() {
-        base::tickets::redeem_ticket(Roles::OrgOwner, true);
-    }
-    #[test]
-    fn redeem_ticket_door_person() {
-        base::tickets::redeem_ticket(Roles::DoorPerson, true);
-    }
-    #[test]
-    fn redeem_ticket_promoter() {
-        base::tickets::redeem_ticket(Roles::Promoter, false);
-    }
-    #[test]
-    fn redeem_ticket_promoter_read_only() {
-        base::tickets::redeem_ticket(Roles::PromoterReadOnly, false);
-    }
-    #[test]
-    fn redeem_ticket_org_admin() {
-        base::tickets::redeem_ticket(Roles::OrgAdmin, true);
-    }
-    #[test]
-    fn redeem_ticket_box_office() {
-        base::tickets::redeem_ticket(Roles::OrgBoxOffice, true);
-    }
-}
-
-#[cfg(test)]
 mod show_redeem_key {
     use super::*;
 

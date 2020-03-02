@@ -65,6 +65,35 @@ impl TicketInstance {
             .to_db_error(ErrorCode::QueryError, "Could not load event for ticket instance")
     }
 
+    pub fn redeem_key_unique_per_event(
+        id: Uuid,
+        redeem_key: String,
+        conn: &PgConnection,
+    ) -> Result<bool, DatabaseError> {
+        let event_id: Uuid = ticket_types::table
+            .inner_join(assets::table.on(ticket_types::id.eq(assets::ticket_type_id)))
+            .inner_join(ticket_instances::table.on(assets::id.eq(ticket_instances::asset_id)))
+            .filter(ticket_instances::id.eq(id))
+            .select(ticket_types::event_id)
+            .get_result(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not get event_id for ticket instance")?;
+
+        select(exists(
+            ticket_instances::table
+                .inner_join(assets::table.on(assets::id.eq(ticket_instances::asset_id)))
+                .inner_join(ticket_types::table.on(ticket_types::id.eq(assets::ticket_type_id)))
+                .filter(ticket_instances::id.ne(id))
+                .filter(ticket_instances::redeem_key.eq(redeem_key))
+                .filter(ticket_types::event_id.eq(event_id)),
+        ))
+        .get_result(conn)
+        .to_db_error(
+            ErrorCode::QueryError,
+            "Could not confirm if redeem key is unique per event",
+        )
+        .map(|exists: bool| !exists)
+    }
+
     pub fn parse_ticket_number(id: Uuid) -> String {
         let id_string = id.to_string();
         id_string[id_string.len() - TICKET_NUMBER_LENGTH..].to_string()
@@ -217,6 +246,22 @@ impl TicketInstance {
             None => None,
         };
         Ok((event, user, ticket_intermediary.into()))
+    }
+
+    pub fn find_by_event_id_redeem_key(
+        event_id: Uuid,
+        redeem_key: String,
+        conn: &PgConnection,
+    ) -> Result<TicketInstance, DatabaseError> {
+        ticket_instances::table
+            .inner_join(assets::table.on(ticket_instances::asset_id.eq(assets::id)))
+            .inner_join(order_items::table.on(ticket_instances::order_item_id.eq(order_items::id.nullable())))
+            .inner_join(ticket_types::table.on(assets::ticket_type_id.eq(ticket_types::id)))
+            .filter(ticket_types::event_id.eq(event_id))
+            .filter(ticket_instances::redeem_key.eq(redeem_key))
+            .select(ticket_instances::all_columns)
+            .get_result(conn)
+            .to_db_error(ErrorCode::QueryError, "Unable to load ticket")
     }
 
     pub fn find_for_processing(
@@ -762,7 +807,13 @@ impl TicketInstance {
     }
 
     pub fn associate_redeem_key(&self, conn: &PgConnection) -> Result<String, DatabaseError> {
-        let key = generate_redeem_key(9);
+        let mut key = generate_redeem_key(9);
+        loop {
+            if TicketInstance::redeem_key_unique_per_event(self.id, key.clone(), conn)? {
+                break;
+            }
+            key = generate_redeem_key(9);
+        }
 
         diesel::update(self)
             .set(ticket_instances::redeem_key.eq(key.clone()))
