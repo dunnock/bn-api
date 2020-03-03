@@ -136,12 +136,8 @@ pub fn token_refresh(
         return application::unauthorized_with_message("Token can not be used to refresh", None, None);
     }
 
-    let response = TokenResponse::create_from_refresh_token(
-        &*state.config.token_issuer,
-        state.config.jwt_expiry_time,
-        user.id,
-        refresh_request.refresh_token.clone(),
-    )?;
+    let response =
+        TokenResponse::create_from_refresh_token(&*state.config.token_issuer, state.config.jwt_expiry_time, user.id)?;
 
     Ok(HttpResponse::Ok().json(response))
 }

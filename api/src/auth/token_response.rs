@@ -39,7 +39,7 @@ impl TokenResponse {
     ) -> Result<Self, BigNeonError> {
         Ok(TokenResponse {
             access_token: token_issuer.issue(user.id, expires)?,
-            refresh_token: token_issuer.issue_with_limited_scopes(user.id, vec![Scopes::TokenRefresh], expires)?,
+            refresh_token: token_issuer.issue_with_limited_scopes(user.id, vec![Scopes::TokenRefresh], expires * 60)?,
         })
     }
 
@@ -47,11 +47,10 @@ impl TokenResponse {
         token_issuer: &dyn TokenIssuer,
         expires: Duration,
         user_id: Uuid,
-        signed_refresh_token: String,
     ) -> Result<Self, BigNeonError> {
         Ok(TokenResponse {
             access_token: token_issuer.issue(user_id, expires)?,
-            refresh_token: signed_refresh_token,
+            refresh_token: token_issuer.issue_with_limited_scopes(user_id, vec![Scopes::TokenRefresh], expires * 60)?,
         })
     }
 }

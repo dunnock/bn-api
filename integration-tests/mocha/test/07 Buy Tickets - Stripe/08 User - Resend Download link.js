@@ -25,7 +25,8 @@ const post = async function (request_body) {
 };
 
 
-let requestBody = ``;
+let requestBody = `{
+"user_id": "{{last_user_id}}" }`;
 
 describe('User - Resend Download link', function () {
     before(async function () {
