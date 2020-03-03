@@ -14,6 +14,7 @@ env: &env
     EMAIL_TEMPLATES_CUSTOM_BROADCAST: "CustomerIo:not-a-real-value"
     EMAIL_TEMPLATES_ORG_INVITE: "Sendgrid:d-19ea07c6169e4fe887b6527ef16cb1ea"
     EMAIL_TEMPLATES_PASSWORD_RESET: "Sendgrid:d-193ea5665fc54c8ca19c6325c8e46703"
+    EMAIL_TEMPLATES_RESEND_DOWNLOAD_LINK: "CustomerIo:TEMPLATE_ID"
     # Globee will not allow a localhost url
     FRONT_END_URL: "https://ci-test.notreal.bigneon.com"
     BUILD_DIR: "api"
@@ -316,6 +317,6 @@ services:
 
 ---
 kind: signature
-hmac: fbafc0a4e5a826d164f637f67edb13faf4ae2b349df66eb217ee982b6eaf2989
+hmac: e634538f203338f780d9c88a1ba8c2c0f8a54c2de71844adc9984f9f3d83a3db
 
 ...
