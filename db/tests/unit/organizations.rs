@@ -203,7 +203,8 @@ fn next_settlement_date() {
     let organization = project.create_organization().finish();
 
     let pt_timezone: Tz = "America/Los_Angeles".parse().unwrap();
-    let now = pt_timezone.from_utc_datetime(&Utc::now().naive_utc());
+    let pt_now = pt_timezone.from_utc_datetime(&Utc::now().naive_utc());
+    let now = pt_now;
     let pt_today = pt_timezone.ymd(now.year(), now.month(), now.day()).and_hms(0, 0, 0);
     let next_period_date = now + Duration::days(7 - pt_today.naive_local().weekday().num_days_from_monday() as i64);
     let expected_pt = pt_timezone
@@ -216,7 +217,8 @@ fn next_settlement_date() {
         .naive_utc();
 
     let sa_timezone: Tz = "Africa/Johannesburg".parse().unwrap();
-    let now = sa_timezone.from_utc_datetime(&Utc::now().naive_utc());
+    let sa_now = sa_timezone.from_utc_datetime(&Utc::now().naive_utc());
+    let now = sa_now;
     let sa_today = sa_timezone.ymd(now.year(), now.month(), now.day()).and_hms(0, 0, 0);
     let next_period_date = now + Duration::days(7 - sa_today.naive_local().weekday().num_days_from_monday() as i64);
     let expected_sa = sa_timezone
@@ -291,7 +293,7 @@ fn next_settlement_date() {
     assert_eq!(organization.next_settlement_date(None).unwrap(), expected_pt);
 
     // Using a passed in settlement period
-    let next_period_date = now + Duration::days(1);
+    let next_period_date = pt_now + Duration::days(1);
     let expected_pt = pt_timezone
         .ymd(
             next_period_date.year(),
