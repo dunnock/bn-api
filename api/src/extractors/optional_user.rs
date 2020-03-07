@@ -3,20 +3,24 @@ use actix_web::{FromRequest, HttpRequest};
 use crate::auth::user::User;
 use crate::server::AppState;
 use uuid::Uuid;
+use futures::future::ok;
+use std::future::Future;
+use std::pin::Pin;
 
 #[derive(Clone)]
 pub struct OptionalUser(pub Option<User>);
 
-impl FromRequest<AppState> for OptionalUser {
+impl FromRequest for OptionalUser {
     type Config = ();
-    type Result = Result<OptionalUser, Error>;
+    type Error = Error;
+    type Future = Pin<Box<dyn Future<Output = Result<OptionalUser, Error>>>>;
 
-    fn from_request(req: &HttpRequest<AppState>, cfg: &Self::Config) -> Self::Result {
+    fn from_request(req: &HttpRequest, cfg: &Self::Config) -> Self::Future {
         // If auth header exists pass authorization errors back to client
         if let Some(_auth_header) = req.headers().get("Authorization") {
             return User::from_request(req, cfg).map(|u| OptionalUser(Some(u)));
         }
-        Ok(OptionalUser(None))
+        Box::pin(ok(OptionalUser(None)))
     }
 }
 
