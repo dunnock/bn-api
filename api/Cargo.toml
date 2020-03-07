@@ -6,10 +6,12 @@ license = "BSD-3"
 repository = "https://github.com/big-neon/bn-api/"
 description = "Big Neon unified API server"
 documentation = "https://github.com/big-neon/docs"
+edition = "2018"
 
 [dependencies]
-actix = "0.7"
-actix-web = "=0.7.18"
+actix = "0.9"
+actix-web = "2.0"
+actix-cors = "0.2"
 bigneon_db = { path = "../db" }
 bigneon_http = { path = "../http" }
 bigneon_caching_derive = { path = "../http/caching_derive" }
@@ -23,7 +25,7 @@ dotenv = "0.13"
 # Pulling from github as dependency fix merged into master has yet to be released
 expo-server-sdk = { git = "https://github.com/expo/expo-server-sdk-rust", rev="a4334d2d7243ac5e0ecb77478bb42774bbd9af54" }
 facebook = { path="../facebook"}
-futures = "0.1"
+futures = "0.3"
 globee={path="../globee"}
 itertools = "0.7"
 jsonwebtoken = "5"
@@ -42,7 +44,7 @@ serde_json = "1.0"
 serde_with = "0.2"
 stripe = {path="../stripe"}
 tari-client= {path="../tari-client"}
-tokio = "0.1"
+tokio = "0.2"
 # TODO move this to the bigneon org? Currently just testing this lib, so if we
 # are still using it in a few months, fork it into /bigneon
 twilio= { git = "https://github.com/mikethetike/twilio-rs", rev="8a746caed756c3cfe57e082084fda8be3170721a"}

@@ -13,6 +13,7 @@ use globee::GlobeeError;
 use redis::RedisError;
 use reqwest;
 use reqwest::header::ToStrError as ReqwestToStrError;
+use actix_web::http::header::ToStrError;
 use serde_json::Error as SerdeError;
 use std::error::Error;
 use std::fmt;
@@ -58,6 +59,7 @@ error_conversion!(std::io::Error);
 error_conversion!(sitemap::Error);
 error_conversion!(reqwest::Error);
 error_conversion!(url::ParseError);
+error_conversion!(ToStrError);
 
 impl fmt::Display for BigNeonError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
