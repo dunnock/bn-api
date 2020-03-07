@@ -1,11 +1,11 @@
 use bigneon_db::models::*;
-use config::Config;
-use errors::{ApplicationError, BigNeonError};
+use crate::config::Config;
+use crate::errors::{ApplicationError, BigNeonError};
 use log::Level::Debug;
 use serde_json::Value;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
-use utils::webhook_adapters::WebhookAdapter;
+use crate::utils::webhook_adapters::WebhookAdapter;
 
 pub struct CustomerIoWebhookAdapter {
     site_id: String,

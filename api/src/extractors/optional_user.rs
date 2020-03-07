@@ -1,7 +1,7 @@
 use actix_web::error::*;
 use actix_web::{FromRequest, HttpRequest};
-use auth::user::User;
-use server::AppState;
+use crate::auth::user::User;
+use crate::server::AppState;
 use uuid::Uuid;
 
 #[derive(Clone)]

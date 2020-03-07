@@ -3,12 +3,12 @@ use bigneon_api::controllers::venues;
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
 use bigneon_db::models::*;
-use functional::base;
+use crate::functional::base;
 use serde_json;
 use std::collections::HashMap;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 
 #[test]
 fn index_with_org_linked_and_private_venues() {

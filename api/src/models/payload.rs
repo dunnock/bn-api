@@ -3,7 +3,7 @@ use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use actix_web::{Error, Responder};
 use bigneon_db::models::Payload;
-use errors::BigNeonError;
+use crate::errors::BigNeonError;
 use serde::Serialize;
 
 #[derive(Debug)]

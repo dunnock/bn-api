@@ -1,7 +1,7 @@
 use bigneon_db::prelude::*;
 use chrono::prelude::*;
-use db::Connection;
-use errors::BigNeonError;
+use crate::db::Connection;
+use crate::errors::BigNeonError;
 use futures::Async;
 use futures::Future;
 

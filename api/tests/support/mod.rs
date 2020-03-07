@@ -8,8 +8,8 @@ use serde::Deserialize;
 use serde_json;
 use std::collections::HashMap;
 use std::str;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 use uuid::Uuid;
 use validator::ValidationError;
 

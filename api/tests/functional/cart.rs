@@ -13,15 +13,15 @@ use chrono::Duration;
 use diesel;
 use diesel::prelude::*;
 use diesel::sql_types;
-use functional::base;
+use crate::functional::base;
 use globee::Customer;
 use globee::Email;
 use globee::GlobeeIpnRequest;
 use globee::PaymentDetails;
 use serde_json;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
-use support::{self, *};
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
+use crate::support::{self, *};
 use uuid::Uuid;
 
 #[cfg(test)]

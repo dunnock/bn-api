@@ -1,9 +1,9 @@
 use actix_web::{http::StatusCode, HttpResponse, Json};
 use bigneon_api::controllers::user_invites::{self, UserInviteRequest};
 use bigneon_db::models::Roles;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 use uuid::Uuid;
 
 #[test]

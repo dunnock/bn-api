@@ -3,7 +3,7 @@ use bigneon_db::dev::times;
 use bigneon_db::prelude::*;
 use chrono::prelude::*;
 use chrono::Duration;
-use support::database::TestDatabase;
+use crate::support::database::TestDatabase;
 
 #[test]
 fn from_ticket_type() {

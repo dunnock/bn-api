@@ -6,10 +6,10 @@ use bigneon_db::models::*;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono::NaiveDateTime;
-use functional::base;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::functional::base;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 
 #[cfg(test)]
 mod show_tests {

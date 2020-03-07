@@ -7,9 +7,9 @@ use chrono::prelude::*;
 use chrono::Duration;
 use chrono::NaiveDateTime;
 use serde_json;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 
 pub fn show(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();

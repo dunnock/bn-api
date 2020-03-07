@@ -1,21 +1,21 @@
 use actix_web;
 use actix_web::Responder;
 use actix_web::{http::StatusCode, HttpRequest, HttpResponse, Path, Query};
-use auth::user::User as AuthUser;
+use crate::auth::user::User as AuthUser;
 use bigneon_db::prelude::*;
-use communications::mailers;
-use controllers::auth;
-use controllers::auth::LoginRequest;
-use db::Connection;
+use crate::communications::mailers;
+use crate::controllers::auth;
+use crate::controllers::auth::LoginRequest;
+use crate::db::Connection;
 use diesel::PgConnection;
-use errors::*;
-use extractors::*;
-use helpers::application;
-use models::*;
-use server::AppState;
+use crate::errors::*;
+use crate::extractors::*;
+use crate::helpers::application;
+use crate::models::*;
+use crate::server::AppState;
 use std::collections::HashMap;
 use std::str;
-use utils::google_recaptcha;
+use crate::utils::google_recaptcha;
 use uuid::Uuid;
 
 #[derive(Deserialize)]

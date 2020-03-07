@@ -5,10 +5,10 @@ use bigneon_api::models::*;
 use bigneon_db::models::*;
 use serde_json;
 use std::collections::HashMap;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
-use support::unwrap_body_to_string;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
+use crate::support::unwrap_body_to_string;
 
 pub fn show(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();

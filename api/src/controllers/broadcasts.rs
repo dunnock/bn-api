@@ -1,14 +1,14 @@
 use actix_web::Path;
 use actix_web::{HttpResponse, Query};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::models::enums::{BroadcastAudience, BroadcastChannel, BroadcastType};
 use bigneon_db::models::scopes::Scopes;
 use bigneon_db::models::{Broadcast, BroadcastEditableAttributes, Organization, PagingParameters};
 use chrono::NaiveDateTime;
-use db::Connection;
-use errors::BigNeonError;
-use extractors::Json;
-use models::{PathParameters, WebPayload};
+use crate::db::Connection;
+use crate::errors::BigNeonError;
+use crate::extractors::Json;
+use crate::models::{PathParameters, WebPayload};
 use reqwest::StatusCode;
 use uuid::Uuid;
 

@@ -8,10 +8,10 @@ use bigneon_api::controllers::tickets::{self, SearchParameters, ShowTicketRespon
 use bigneon_api::extractors::*;
 use bigneon_api::models::{OptionalPathParameters, PathParameters};
 use bigneon_db::prelude::*;
-use functional::base;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::functional::base;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 
 #[test]
 pub fn index() {

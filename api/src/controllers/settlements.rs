@@ -1,12 +1,12 @@
 use actix_web::{http::StatusCode, HttpResponse, Path, Query};
-use auth::user::User as AuthUser;
+use crate::auth::user::User as AuthUser;
 use bigneon_db::models::*;
 use chrono::prelude::*;
-use db::Connection;
-use errors::*;
-use extractors::*;
-use helpers::application;
-use models::{PathParameters, WebPayload};
+use crate::db::Connection;
+use crate::errors::*;
+use crate::extractors::*;
+use crate::helpers::application;
+use crate::models::{PathParameters, WebPayload};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct NewSettlementRequest {

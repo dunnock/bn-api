@@ -2,10 +2,10 @@ use actix_web::Error;
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use actix_web::Responder;
-use auth::{claims::AccessToken, claims::RefreshToken};
+use crate::auth::{claims::AccessToken, claims::RefreshToken};
 use bigneon_db::models::User;
-use errors::BigNeonError;
-use jwt::{encode, Header};
+use crate::errors::BigNeonError;
+use crate::jwt::{encode, Header};
 use serde_json;
 use uuid::Uuid;
 

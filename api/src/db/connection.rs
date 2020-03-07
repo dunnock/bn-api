@@ -1,11 +1,11 @@
 use actix_web::{FromRequest, HttpRequest, Result};
-use db::*;
+use crate::db::*;
 use diesel;
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
 use diesel::PgConnection;
-use errors::BigNeonError;
-use server::AppState;
+use crate::errors::BigNeonError;
+use crate::server::AppState;
 use std::sync::Arc;
 
 pub struct Connection {

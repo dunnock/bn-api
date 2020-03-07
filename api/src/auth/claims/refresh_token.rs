@@ -1,4 +1,4 @@
-use errors::BigNeonError;
+use crate::errors::BigNeonError;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 

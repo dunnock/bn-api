@@ -4,12 +4,12 @@ use bigneon_api::errors::BigNeonError;
 use bigneon_api::models::*;
 use bigneon_db::prelude::*;
 use chrono::prelude::*;
-use functional::base;
+use crate::functional::base;
 use serde_json::Value;
 use std::collections::HashMap;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 use uuid::Uuid;
 
 #[cfg(test)]

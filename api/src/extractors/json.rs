@@ -6,7 +6,7 @@ use actix_web::error::{Error, InternalError, JsonPayloadError};
 use actix_web::{FromRequest, HttpRequest, HttpResponse};
 use futures::Future;
 use serde::de::DeserializeOwned;
-use server::AppState;
+use crate::server::AppState;
 use std::ops::Deref;
 
 const LIMIT_DEFAULT: usize = 262_144; // 256Kb

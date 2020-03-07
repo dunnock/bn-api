@@ -1,7 +1,7 @@
 use bigneon_db::models::*;
-use config::Config;
+use crate::config::Config;
 use diesel::pg::PgConnection;
-use errors::*;
+use crate::errors::*;
 
 pub fn invite_user_to_organization_email(
     config: &Config,

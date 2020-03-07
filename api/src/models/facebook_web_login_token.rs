@@ -1,4 +1,4 @@
-use utils::serializers::default_as_false;
+use crate::utils::serializers::default_as_false;
 
 #[derive(Deserialize, Default)]
 pub struct FacebookWebLoginToken {

@@ -4,8 +4,8 @@ use bigneon_api::extractors::*;
 use bigneon_api::models::*;
 use bigneon_db::models::*;
 use chrono::prelude::*;
-use support;
-use support::database::TestDatabase;
+use crate::support;
+use crate::support::database::TestDatabase;
 
 pub fn update_box_office_pricing(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();

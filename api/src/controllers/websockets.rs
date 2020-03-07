@@ -1,10 +1,10 @@
 use actix_web::{ws, HttpRequest, HttpResponse, Path};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::prelude::*;
-use db::Connection;
-use errors::*;
-use models::*;
-use server::AppState;
+use crate::db::Connection;
+use crate::errors::*;
+use crate::models::*;
+use crate::server::AppState;
 
 pub fn initate(
     (conn, path, request, user): (Connection, Path<PathParameters>, HttpRequest<AppState>, User),

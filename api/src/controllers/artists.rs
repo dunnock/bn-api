@@ -1,13 +1,13 @@
 use actix_web::{http::StatusCode, HttpResponse, Path, Query};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::models::*;
-use db::Connection;
-use domain_events::executors::UpdateGenresPayload;
-use errors::*;
-use extractors::*;
-use helpers::application;
-use models::{CreateArtistRequest, PathParameters, UpdateArtistRequest, WebPayload};
-use utils::spotify;
+use crate::db::Connection;
+use crate::domain_events::executors::UpdateGenresPayload;
+use crate::errors::*;
+use crate::extractors::*;
+use crate::helpers::application;
+use crate::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest, WebPayload};
+use crate::utils::spotify;
 
 pub fn search(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, OptionalUser),

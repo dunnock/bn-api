@@ -1,8 +1,8 @@
 use actix_web::{HttpResponse, State};
-use db::Connection;
-use errors::BigNeonError;
-use server::AppState;
-use utils::gen_sitemap;
+use crate::db::Connection;
+use crate::errors::BigNeonError;
+use crate::server::AppState;
+use crate::utils::gen_sitemap;
 
 pub fn index((connection, state): (Connection, State<AppState>)) -> Result<HttpResponse, BigNeonError> {
     let conn = connection.get();

@@ -5,9 +5,9 @@ use bigneon_api::models::PathParameters;
 use bigneon_db::models::*;
 use serde_json;
 use std::collections::HashMap;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 use uuid::Uuid;
 
 pub fn index(role: Roles, should_succeed: bool) {

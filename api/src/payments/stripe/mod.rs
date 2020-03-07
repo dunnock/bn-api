@@ -1,5 +1,5 @@
 use bigneon_db::models::PaymentProviders;
-use payments::*;
+use crate::payments::*;
 use stripe::StripeClient;
 use stripe::StripeError;
 

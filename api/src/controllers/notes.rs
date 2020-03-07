@@ -1,12 +1,12 @@
 use actix_web::Path;
 use actix_web::{HttpResponse, Query};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::prelude::*;
-use db::Connection;
-use errors::*;
-use extractors::Json;
-use helpers::application;
-use models::*;
+use crate::db::Connection;
+use crate::errors::*;
+use crate::extractors::Json;
+use crate::helpers::application;
+use crate::models::*;
 use reqwest::StatusCode;
 
 #[derive(Deserialize, Serialize)]

@@ -2,7 +2,7 @@ use reqwest;
 use serde_json;
 use std::collections::HashMap;
 
-use errors::ApplicationError;
+use crate::errors::ApplicationError;
 
 const GOOGLE_RECAPTCHA_SITE_VERIFY_URL: &str = "https://www.google.com/recaptcha/api/siteverify";
 

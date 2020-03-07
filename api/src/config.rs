@@ -1,7 +1,7 @@
 use bigneon_db::models::{EmailProvider, Environment};
 use bigneon_db::utils::errors::EnumParseError;
 use dotenv::dotenv;
-use errors::{ApplicationError, BigNeonError};
+use crate::errors::{ApplicationError, BigNeonError};
 use itertools::Itertools;
 use std::env;
 use std::fmt;

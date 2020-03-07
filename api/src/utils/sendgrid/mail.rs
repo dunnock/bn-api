@@ -1,7 +1,7 @@
 use bigneon_db::models::*;
-use errors::*;
+use crate::errors::*;
 use futures::future::Either;
-use reqwest::async::Client as AsyncClient;
+use reqwest::r#async::Client as AsyncClient;
 use reqwest::Client;
 use serde_json;
 use std::collections::HashMap;

@@ -1,8 +1,8 @@
 use bigneon_db::dev::HoldBuilder;
 use bigneon_db::prelude::*;
 use chrono::prelude::*;
-use functional::base;
-use support::database::TestDatabase;
+use crate::functional::base;
+use crate::support::database::TestDatabase;
 
 #[test]
 pub fn ticket_counts_report() {

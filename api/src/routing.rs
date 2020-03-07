@@ -1,8 +1,8 @@
 use actix_web::middleware::cors::CorsBuilder;
 use actix_web::{http::Method, App, HttpResponse};
-use controllers::*;
-use middleware::{CacheResource, CacheUsersBy};
-use server::AppState;
+use crate::controllers::*;
+use crate::middleware::{CacheResource, CacheUsersBy};
+use crate::server::AppState;
 
 pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
     // Please try to keep in alphabetical order

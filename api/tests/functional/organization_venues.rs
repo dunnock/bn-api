@@ -1,5 +1,5 @@
 use bigneon_db::models::*;
-use functional::base;
+use crate::functional::base;
 
 #[cfg(test)]
 mod show_tests {

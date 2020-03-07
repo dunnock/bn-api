@@ -1,5 +1,5 @@
-use errors::*;
-use reqwest::async::Client as AsyncClient;
+use crate::errors::*;
+use reqwest::r#async::Client as AsyncClient;
 use reqwest::Client;
 use serde_json;
 use std::convert::From;

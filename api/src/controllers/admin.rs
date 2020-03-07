@@ -1,10 +1,10 @@
 use actix_web::{http::StatusCode, HttpResponse, Query};
-use auth::user::{User as AuthUser, User};
+use crate::auth::user::{User as AuthUser, User};
 use bigneon_db::models::{DomainAction, Report, Scopes};
 use bigneon_db::prelude::{DisplayOrder, Event, Order, Paging, PagingParameters, Payload};
-use db::Connection;
-use errors::*;
-use models::WebPayload;
+use crate::db::Connection;
+use crate::errors::*;
+use crate::models::WebPayload;
 
 pub fn admin_ticket_count((connection, user): (Connection, AuthUser)) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();

@@ -1,11 +1,11 @@
 use actix_web::{http::StatusCode, HttpResponse, Path, Query};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::models::*;
-use db::Connection;
-use errors::*;
-use extractors::*;
-use models::PathParameters;
-use models::WebPayload;
+use crate::db::Connection;
+use crate::errors::*;
+use crate::extractors::*;
+use crate::models::PathParameters;
+use crate::models::WebPayload;
 
 pub fn index(
     (connection, query_parameters): (Connection, Query<PagingParameters>),

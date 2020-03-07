@@ -1,16 +1,16 @@
 use actix_web::{http::StatusCode, HttpResponse, Path, Query, State};
-use auth::user::User as AuthUser;
+use crate::auth::user::User as AuthUser;
 use bigneon_db::models::*;
 use bigneon_db::utils::errors::DatabaseError;
 use bigneon_db::utils::errors::Optional;
-use communications::mailers;
-use db::Connection;
+use crate::communications::mailers;
+use crate::db::Connection;
 use diesel::pg::PgConnection;
-use errors::*;
-use extractors::*;
-use helpers::application;
-use models::{OrganizationInvitePathParameters, PathParameters, WebPayload};
-use server::AppState;
+use crate::errors::*;
+use crate::extractors::*;
+use crate::helpers::application;
+use crate::models::{OrganizationInvitePathParameters, PathParameters, WebPayload};
+use crate::server::AppState;
 use uuid::Uuid;
 
 #[derive(Deserialize)]

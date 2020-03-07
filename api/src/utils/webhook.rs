@@ -1,11 +1,11 @@
 use bigneon_db::prelude::*;
-use config::Config;
+use crate::config::Config;
 use diesel::PgConnection;
-use errors::*;
+use crate::errors::*;
 use serde_json;
 use std::collections::HashMap;
 use tokio::prelude::*;
-use utils::webhook_adapters::{CustomerIoWebhookAdapter, NullAdapter, WebhookAdapter};
+use crate::utils::webhook_adapters::{CustomerIoWebhookAdapter, NullAdapter, WebhookAdapter};
 use uuid::Uuid;
 
 pub fn send_webhook_async(

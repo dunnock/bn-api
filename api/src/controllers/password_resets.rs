@@ -1,14 +1,14 @@
 use actix_web::{HttpResponse, State};
-use auth::TokenResponse;
+use crate::auth::TokenResponse;
 use bigneon_db::models::concerns::users::password_resetable::*;
 use bigneon_db::models::User;
 use bigneon_db::utils::errors::Optional;
-use communications::mailers;
-use db::Connection;
-use errors::*;
-use extractors::*;
-use helpers::application;
-use server::AppState;
+use crate::communications::mailers;
+use crate::db::Connection;
+use crate::errors::*;
+use crate::extractors::*;
+use crate::helpers::application;
+use crate::server::AppState;
 use uuid::Uuid;
 
 #[derive(Deserialize)]

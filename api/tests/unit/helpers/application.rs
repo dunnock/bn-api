@@ -1,6 +1,6 @@
 use actix_web::HttpResponse;
 use bigneon_api::helpers::application;
-use support;
+use crate::support;
 
 #[test]
 fn unauthorized() {

@@ -4,9 +4,9 @@ use bigneon_api::extractors::*;
 use bigneon_api::models::UserDisplayTicketType;
 use bigneon_db::prelude::*;
 use serde_json;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 
 #[test]
 fn show_hold() {

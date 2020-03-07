@@ -1,10 +1,10 @@
 use actix_web::{http::StatusCode, HttpResponse, Path};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::models::*;
-use db::Connection;
-use errors::BigNeonError;
-use extractors::*;
-use models::{PathParameters, WebPayload, WebResult};
+use crate::db::Connection;
+use crate::errors::BigNeonError;
+use crate::extractors::*;
+use crate::models::{PathParameters, WebPayload, WebResult};
 
 #[derive(Deserialize, Serialize)]
 pub struct NewEventReportSubscriberRequest {

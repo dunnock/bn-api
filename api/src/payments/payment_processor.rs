@@ -1,6 +1,6 @@
 use bigneon_db::models::PaymentProviders;
 use chrono::NaiveDateTime;
-use payments::*;
+use crate::payments::*;
 use uuid::Uuid;
 
 pub enum PaymentProcessorBehavior {

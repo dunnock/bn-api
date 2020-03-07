@@ -1,5 +1,5 @@
 use branch_rs::prelude::*;
-use errors::*;
+use crate::errors::*;
 
 pub trait DeepLinker {
     fn create_deep_link(&self, raw_link: &str) -> Result<String, BigNeonError>;

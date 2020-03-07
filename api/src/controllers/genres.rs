@@ -1,7 +1,7 @@
 use actix_web::HttpResponse;
 use bigneon_db::models::*;
-use db::Connection;
-use errors::*;
+use crate::db::Connection;
+use crate::errors::*;
 use uuid::Uuid;
 
 pub fn index(connection: Connection) -> Result<HttpResponse, BigNeonError> {

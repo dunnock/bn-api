@@ -2,7 +2,7 @@ use bigneon_db::dev::times;
 use bigneon_db::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::PgConnection;
-use models::DisplayTicketPricing;
+use crate::models::DisplayTicketPricing;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]

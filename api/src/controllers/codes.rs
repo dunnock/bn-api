@@ -1,15 +1,15 @@
 use actix_web::{HttpResponse, Path, State};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::dev::times;
 use bigneon_db::models::*;
 use chrono::prelude::*;
-use db::Connection;
-use errors::{ApplicationError, BigNeonError};
-use extractors::*;
-use helpers::application;
-use models::PathParameters;
+use crate::db::Connection;
+use crate::errors::{ApplicationError, BigNeonError};
+use crate::extractors::*;
+use crate::helpers::application;
+use crate::models::PathParameters;
 use serde_with::rust::double_option;
-use server::AppState;
+use crate::server::AppState;
 use uuid::Uuid;
 
 #[derive(Deserialize, Serialize)]

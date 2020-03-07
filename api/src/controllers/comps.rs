@@ -1,12 +1,12 @@
 use actix_web::{http::StatusCode, HttpResponse, Path, Query};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::models::*;
 use chrono::prelude::*;
-use controllers::holds::UpdateHoldRequest;
-use db::Connection;
-use errors::BigNeonError;
-use extractors::*;
-use models::{PathParameters, WebPayload, WebResult};
+use crate::controllers::holds::UpdateHoldRequest;
+use crate::db::Connection;
+use crate::errors::BigNeonError;
+use crate::extractors::*;
+use crate::models::{PathParameters, WebPayload, WebResult};
 
 pub fn index(
     (conn, path, query_parameters, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),

@@ -4,9 +4,9 @@ use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
 use bigneon_db::models::{Roles, Stage, StageEditableAttributes};
 use serde_json;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 
 pub fn create(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();

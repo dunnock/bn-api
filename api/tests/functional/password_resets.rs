@@ -8,11 +8,11 @@ use bigneon_db::models::User;
 use chrono::{Duration, Utc};
 use diesel;
 use diesel::prelude::*;
-use jwt::{decode, Validation};
+use crate::jwt::{decode, Validation};
 use serde_json;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 use uuid::Uuid;
 
 #[test]

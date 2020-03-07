@@ -1,7 +1,7 @@
 mod customer_io;
 mod null_adapter;
 
-use errors::BigNeonError;
+use crate::errors::BigNeonError;
 use serde_json::Value;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;

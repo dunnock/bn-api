@@ -1,8 +1,8 @@
 use actix_web::HttpResponse;
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::models::ForDisplay;
-use db::Connection;
-use errors::*;
+use crate::db::Connection;
+use crate::errors::*;
 
 pub fn index((connection, auth_user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();

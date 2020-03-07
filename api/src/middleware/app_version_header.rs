@@ -3,7 +3,7 @@ use actix_web::http::HttpTryFrom;
 use actix_web::middleware::{Middleware, Response};
 use actix_web::{HttpRequest, HttpResponse, Result};
 
-use server::AppState;
+use crate::server::AppState;
 
 const SEMVER_HEADER_NAME: &'static str = "X-App-Version";
 const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");

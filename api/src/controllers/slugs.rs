@@ -1,14 +1,14 @@
 use actix_web::{HttpResponse, Path, Query, State};
-use auth::user::User as AuthUser;
+use crate::auth::user::User as AuthUser;
 use bigneon_db::prelude::*;
-use controllers::events::{self, *};
-use db::{Connection, ReadonlyConnection};
-use errors::*;
-use extractors::*;
-use helpers::application;
-use models::*;
+use crate::controllers::events::{self, *};
+use crate::db::{Connection, ReadonlyConnection};
+use crate::errors::*;
+use crate::extractors::*;
+use crate::helpers::application;
+use crate::models::*;
 use reqwest::StatusCode;
-use server::AppState;
+use crate::server::AppState;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub struct CityData {

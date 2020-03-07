@@ -2,8 +2,8 @@ use bigneon_api::controllers::genres;
 use bigneon_api::controllers::genres::GenreListItem;
 use bigneon_db::models::Genre;
 use serde_json;
-use support;
-use support::database::TestDatabase;
+use crate::support;
+use crate::support::database::TestDatabase;
 
 #[test]
 fn index() {

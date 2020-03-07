@@ -1,6 +1,6 @@
 use bigneon_db::models::*;
 use diesel::pg::PgConnection;
-use errors::*;
+use crate::errors::*;
 use itertools::Itertools;
 
 pub fn tickets_received(to_user: &User, from_user: &User, conn: &PgConnection) -> Result<(), BigNeonError> {

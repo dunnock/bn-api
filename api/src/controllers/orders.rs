@@ -1,22 +1,22 @@
 use actix_web::{http::StatusCode, HttpResponse, Path, Query, State};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::models::User as DbUser;
 use bigneon_db::models::*;
-use communications::mailers;
-use communications::smsers;
-use db::Connection;
+use crate::communications::mailers;
+use crate::communications::smsers;
+use crate::db::Connection;
 use diesel::pg::PgConnection;
 use diesel::Connection as DieselConnection;
-use errors::BigNeonError;
-use extractors::*;
-use helpers::application;
+use crate::errors::BigNeonError;
+use crate::extractors::*;
+use crate::helpers::application;
 use log::Level::Debug;
-use models::*;
+use crate::models::*;
 use phonenumber::PhoneNumber;
-use server::AppState;
+use crate::server::AppState;
 use std::cmp;
 use std::collections::HashMap;
-use utils::serializers::default_as_false;
+use crate::utils::serializers::default_as_false;
 use uuid::Uuid;
 
 pub fn index(

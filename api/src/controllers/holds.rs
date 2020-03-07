@@ -1,15 +1,15 @@
 use actix_web::{http::StatusCode, HttpResponse, Path, Query, State};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::models::*;
 use chrono::prelude::*;
-use db::Connection;
-use errors::BigNeonError;
-use extractors::*;
-use helpers::application;
+use crate::db::Connection;
+use crate::errors::BigNeonError;
+use crate::extractors::*;
+use crate::helpers::application;
 use log::Level::Warn;
-use models::{PathParameters, WebPayload};
+use crate::models::{PathParameters, WebPayload};
 use serde_with::rust::double_option;
-use server::AppState;
+use crate::server::AppState;
 use std::error::Error;
 use uuid::Uuid;
 

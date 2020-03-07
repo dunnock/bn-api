@@ -2,9 +2,9 @@ use actix_web::State;
 use bigneon_db::prelude::*;
 use chrono::prelude::*;
 use diesel::PgConnection;
-use server::AppState;
+use crate::server::AppState;
 use std::collections::HashMap;
-use utils::cloudinary::optimize_cloudinary;
+use crate::utils::cloudinary::optimize_cloudinary;
 use uuid::Uuid;
 
 #[derive(Debug, PartialEq, Serialize)]

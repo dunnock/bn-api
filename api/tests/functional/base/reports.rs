@@ -9,9 +9,9 @@ use chrono::Duration;
 use diesel;
 use diesel::prelude::*;
 use serde_json;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 
 pub fn box_office_sales_summary(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();

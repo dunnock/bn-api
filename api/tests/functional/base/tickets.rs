@@ -5,9 +5,9 @@ use bigneon_api::models::PathParameters;
 use bigneon_db::models::*;
 use bigneon_db::utils::dates;
 use serde_json;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 
 pub fn show_other_user_ticket(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();

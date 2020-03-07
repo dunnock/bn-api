@@ -1,7 +1,7 @@
 use actix_web::{FromRequest, HttpRequest, Result};
 use cache::RedisCacheConnection;
-use errors::BigNeonError;
-use server::AppState;
+use crate::errors::BigNeonError;
+use crate::server::AppState;
 
 #[derive(Debug, Clone)]
 pub struct CacheDatabase {

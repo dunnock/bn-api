@@ -1,13 +1,13 @@
 use bigneon_db::prelude::*;
 use bigneon_db::services::CountryLookup;
 use bigneon_db::utils::errors::DatabaseError;
-use config::Config;
-use errors::*;
-use payments::globee::GlobeePaymentProcessor;
-use payments::stripe::StripePaymentProcessor;
-use payments::PaymentProcessor;
-use utils::deep_linker::BranchDeepLinker;
-use utils::deep_linker::DeepLinker;
+use crate::config::Config;
+use crate::errors::*;
+use crate::payments::globee::GlobeePaymentProcessor;
+use crate::payments::stripe::StripePaymentProcessor;
+use crate::payments::PaymentProcessor;
+use crate::utils::deep_linker::BranchDeepLinker;
+use crate::utils::deep_linker::DeepLinker;
 
 pub struct ServiceLocator {
     stripe_secret_key: String,

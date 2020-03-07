@@ -2,10 +2,10 @@ use actix_web::{http::header, HttpRequest, HttpResponse, Query, State};
 use bigneon_db::models::analytics::PageView;
 use bigneon_db::prelude::*;
 use chrono::prelude::*;
-use db::Connection;
-use errors::BigNeonError;
+use crate::db::Connection;
+use crate::errors::BigNeonError;
 use itertools::Itertools;
-use server::AppState;
+use crate::server::AppState;
 use url::Url;
 use uuid::Uuid;
 

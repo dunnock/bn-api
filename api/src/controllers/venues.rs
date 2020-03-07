@@ -1,10 +1,10 @@
 use actix_web::{HttpResponse, Path, Query};
-use auth::user::User;
+use crate::auth::user::User;
 use bigneon_db::models::*;
-use db::Connection;
-use errors::*;
-use extractors::*;
-use models::PathParameters;
+use crate::db::Connection;
+use crate::errors::*;
+use crate::extractors::*;
+use crate::models::PathParameters;
 use uuid::Uuid;
 
 pub fn index(

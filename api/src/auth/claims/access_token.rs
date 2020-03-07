@@ -1,4 +1,4 @@
-use errors::BigNeonError;
+use crate::errors::BigNeonError;
 use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;

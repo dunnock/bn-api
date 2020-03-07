@@ -2,7 +2,7 @@ use bigneon_api::communications::mailers;
 use bigneon_api::config::Config;
 use bigneon_db::models::concerns::users::password_resetable::PasswordResetable;
 use bigneon_db::models::{CommAddress, Environment};
-use support::database::TestDatabase;
+use crate::support::database::TestDatabase;
 
 #[test]
 fn password_reset_email() {
