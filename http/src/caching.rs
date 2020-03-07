@@ -17,7 +17,7 @@ impl CacheHeaders {
         &self.1
     }
 
-    pub fn into_response_json<T, P: Serialize>(self, req: &HttpRequest<T>, payload: &P) -> HttpResponse {
+    pub fn into_response_json<P: Serialize>(self, req: &HttpRequest, payload: &P) -> HttpResponse {
         let (is_stale, mut builder) = self.into_response_builder(req);
 
         if is_stale {
@@ -29,7 +29,7 @@ impl CacheHeaders {
 
     /// Returns a HTTP 200 for stale requests, otherwise an HTTP 304 (NotModified) for
     /// requests where If-None-Match headers weakly match the ETag
-    pub fn into_response_builder<T>(self, req: &HttpRequest<T>) -> (bool, HttpResponseBuilder) {
+    pub fn into_response_builder(self, req: &HttpRequest) -> (bool, HttpResponseBuilder) {
         let is_stale = self.is_stale(req);
         let mut builder = if is_stale {
             HttpResponse::Ok()
@@ -48,7 +48,7 @@ impl CacheHeaders {
         }
     }
 
-    pub fn is_stale<T>(&self, req: &HttpRequest<T>) -> bool {
+    pub fn is_stale(&self, req: &HttpRequest) -> bool {
         let if_none_match: Result<header::IfNoneMatch, _> = header::Header::parse(req);
         let if_none_match = if_none_match.ok();
 
@@ -106,7 +106,7 @@ mod test {
             Some(ETag(EntityTag::weak("abcd123".to_string()))),
         );
 
-        let test_request = test::TestRequest::with_state(State::new()).finish();
+        let test_request = test::TestRequest::get().data(State::new()).to_http_request();
 
         assert!(subject.is_stale(&test_request));
     }
@@ -120,7 +120,7 @@ mod test {
         );
 
         let hdr = header::IfNoneMatch::Any;
-        let test_request = test::TestRequest::with_hdr(hdr).finish();
+        let test_request = test::TestRequest::with_hdr(hdr).to_http_request();
 
         assert!(subject.is_stale(&test_request));
     }
@@ -134,7 +134,7 @@ mod test {
         );
 
         let hdr = header::IfNoneMatch::Items(vec![EntityTag::weak("abcd124".to_string())]);
-        let test_request = test::TestRequest::with_hdr(hdr).finish();
+        let test_request = test::TestRequest::with_hdr(hdr).to_http_request();
 
         assert!(subject.is_stale(&test_request));
     }
@@ -148,7 +148,7 @@ mod test {
         );
 
         let hdr = header::IfNoneMatch::Items(vec![EntityTag::weak("abcd123".to_string())]);
-        let test_request = test::TestRequest::with_hdr(hdr).finish();
+        let test_request = test::TestRequest::with_hdr(hdr).to_http_request();
 
         assert!(!subject.is_stale(&test_request));
     }
@@ -162,7 +162,7 @@ mod test {
         );
 
         let hdr = header::IfNoneMatch::Items(vec![EntityTag::weak("abcd123".to_string())]);
-        let test_request = test::TestRequest::with_hdr(hdr).finish();
+        let test_request = test::TestRequest::with_hdr(hdr).to_http_request();
 
         let (is_stale, mut builder) = subject.into_response_builder(&test_request);
         let resp = builder.finish();
@@ -170,14 +170,14 @@ mod test {
 
         assert_eq!(resp.status().as_u16(), 304);
 
-        let mut headers = resp.headers().clone();
+        let headers = resp.headers().clone();
 
-        let cache_control_header = headers.entry("Cache-Control");
-        assert!(cache_control_header.is_ok());
+        let cache_control_header = headers.get("Cache-Control");
+        assert!(cache_control_header.is_some());
 
-        let mut headers = resp.headers().clone();
-        let etag_header = headers.entry("ETag");
-        assert!(etag_header.is_ok());
+        let headers = resp.headers().clone();
+        let etag_header = headers.get("ETag");
+        assert!(etag_header.is_some());
     }
 
     #[test]
@@ -189,7 +189,7 @@ mod test {
         );
 
         let hdr = header::IfNoneMatch::Items(vec![EntityTag::weak("abcd124".to_string())]);
-        let test_request = test::TestRequest::with_hdr(hdr).finish();
+        let test_request = test::TestRequest::with_hdr(hdr).to_http_request();
 
         let (is_stale, mut builder) = subject.into_response_builder(&test_request);
         let resp = builder.finish();
@@ -197,13 +197,13 @@ mod test {
 
         assert_eq!(resp.status().as_u16(), 200u16);
 
-        let mut headers = resp.headers().clone();
+        let headers = resp.headers().clone();
 
-        let cache_control_header = headers.entry("Cache-Control");
-        assert!(cache_control_header.is_ok());
+        let cache_control_header = headers.get("Cache-Control");
+        assert!(cache_control_header.is_some());
 
-        let mut headers = resp.headers().clone();
-        let etag_header = headers.entry("ETag");
-        assert!(etag_header.is_ok());
+        let headers = resp.headers().clone();
+        let etag_header = headers.get("ETag");
+        assert!(etag_header.is_some());
     }
 }

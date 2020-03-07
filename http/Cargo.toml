@@ -4,7 +4,7 @@ version = "0.1.1"
 authors = ["Stan <sdbondi@users.noreply.github.com>"]
 
 [dependencies]
-actix-web = "0.7"
+actix-web = "2.0"
 ring = "0.13"
 serde = "1.0"
 
