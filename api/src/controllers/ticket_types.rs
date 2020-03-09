@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Path, Query, State};
+use actix_web::{HttpResponse, web::{Path, Query, Data}};
 use crate::auth::user::User;
 use bigneon_db::dev::times;
 use bigneon_db::models::*;
@@ -132,7 +132,7 @@ pub fn create(
         Path<PathParameters>,
         Json<CreateTicketTypeRequest>,
         User,
-        State<AppState>,
+        Data<AppState>,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -157,7 +157,7 @@ pub fn create_multiple(
         Path<PathParameters>,
         Json<CreateMultipleTicketTypeRequest>,
         User,
-        State<AppState>,
+        Data<AppState>,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -201,7 +201,7 @@ pub fn index(
 }
 
 pub fn cancel(
-    (connection, path, user, state): (Connection, Path<EventTicketPathParameters>, User, State<AppState>),
+    (connection, path, user, state): (Connection, Path<EventTicketPathParameters>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let event = Event::find(path.event_id, connection)?;
@@ -246,7 +246,7 @@ pub fn update(
         Path<EventTicketPathParameters>,
         Json<UpdateTicketTypeRequest>,
         User,
-        State<AppState>,
+        Data<AppState>,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -404,7 +404,7 @@ pub fn update(
 }
 
 fn nullify_tickets(
-    state: State<AppState>,
+    state: Data<AppState>,
     organization: Organization,
     ticket_type: &TicketType,
     quantity: u32,
@@ -448,7 +448,7 @@ fn nullify_tickets(
 pub(crate) fn create_ticket_type_blockchain_assets(
     event: &Event,
     ticket_types: &[TicketType],
-    state: &State<AppState>,
+    state: &Data<AppState>,
     connection: &PgConnection,
 ) -> Result<(), BigNeonError> {
     //Retrieve default wallet
@@ -480,7 +480,7 @@ fn create_ticket_types(
     organization: &Organization,
     user: &User,
     data: Vec<CreateTicketTypeRequest>,
-    state: &State<AppState>,
+    state: &Data<AppState>,
     connection: &PgConnection,
 ) -> Result<Vec<DisplayCreatedTicket>, BigNeonError> {
     //Check that any requested ticket capacity is less than max_instances_per_ticket_type

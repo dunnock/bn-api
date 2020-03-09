@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpResponse, Path};
+use actix_web::{http::StatusCode, HttpResponse, web::Path};
 use crate::auth::user::User;
 use bigneon_db::models::*;
 use crate::db::Connection;

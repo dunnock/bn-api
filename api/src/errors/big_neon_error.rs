@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpResponse, ResponseError};
+use actix_web::{http::StatusCode, HttpResponse, error::ResponseError};
 use bigneon_db::utils::errors::*;
 use branch_rs::BranchError;
 use chrono;
@@ -60,6 +60,7 @@ error_conversion!(sitemap::Error);
 error_conversion!(reqwest::Error);
 error_conversion!(url::ParseError);
 error_conversion!(ToStrError);
+error_conversion!(actix_web::Error);
 
 impl fmt::Display for BigNeonError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

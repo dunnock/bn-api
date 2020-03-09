@@ -1,8 +1,6 @@
 use crate::db::Connection;
 use actix_web::HttpResponse;
-use actix_web::Path;
-use actix_web::Query;
-use actix_web::State;
+use actix_web::web::{Path, Query, Data};
 use bigneon_db::prelude::*;
 use crate::errors::*;
 use crate::extractors::OptionalUser;
@@ -28,7 +26,7 @@ pub fn callback(
         Query<QueryParams>,
         Path<PathParams>,
         Connection,
-        State<AppState>,
+        Data<AppState>,
         OptionalUser,
     ),
 ) -> Result<HttpResponse, BigNeonError> {

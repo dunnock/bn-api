@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Path, State};
+use actix_web::{HttpResponse, web::{Path, Data}};
 use crate::auth::user::User;
 use bigneon_db::dev::times;
 use bigneon_db::models::*;
@@ -90,7 +90,7 @@ pub fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Res
 }
 
 pub fn link(
-    (conn, path, user, state): (Connection, Path<PathParameters>, User, State<AppState>),
+    (conn, path, user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let code = Code::find(path.id, conn)?;

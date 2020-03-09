@@ -1,4 +1,4 @@
-use actix_web::{http, http::StatusCode, Body::Binary, HttpResponse, Responder};
+use actix_web::{http, http::{StatusCode}, body::Body, HttpResponse, Responder};
 use crate::auth::user::User as AuthUser;
 use crate::errors::*;
 use serde_json::{self, Value};
@@ -59,7 +59,7 @@ pub fn redirect(url: &str) -> Result<HttpResponse, BigNeonError> {
 
 pub fn unwrap_body_to_string(response: &HttpResponse) -> Result<&str, &'static str> {
     match response.body() {
-        Binary(binary) => match str::from_utf8(binary.as_ref()) {
+        Body::Bytes(binary) => match str::from_utf8(binary.as_ref()) {
             Ok(value) => Ok(value),
             Err(_) => Err("Unable to unwrap body"),
         },

@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpResponse, Path, Query, State};
+use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
 use crate::auth::user::User;
 use bigneon_db::models::User as DbUser;
 use bigneon_db::models::*;
@@ -73,7 +73,7 @@ pub fn show((conn, path, auth_user): (Connection, Path<PathParameters>, User)) -
 }
 
 pub fn resend_confirmation(
-    (conn, path, auth_user, state): (Connection, Path<PathParameters>, User, State<AppState>),
+    (conn, path, auth_user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();
     let order = Order::find(path.id, connection)?;
@@ -148,7 +148,7 @@ pub fn refund(
         Path<PathParameters>,
         Json<RefundAttributes>,
         User,
-        State<AppState>,
+        Data<AppState>,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     let refund_attributes = json.into_inner();
@@ -454,7 +454,7 @@ pub fn send_box_office_instructions(
         Path<PathParameters>,
         Json<SendBoxOfficeInstructionsRequest>,
         User,
-        State<AppState>,
+        Data<AppState>,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();

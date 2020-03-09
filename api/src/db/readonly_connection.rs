@@ -1,12 +1,14 @@
 use actix_web::{FromRequest, HttpRequest, Result};
+use actix_web::error::ErrorServiceUnavailable;
 use crate::db::*;
 use diesel;
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
 use diesel::PgConnection;
 use crate::errors::BigNeonError;
-use crate::server::AppState;
+use crate::server::GetAppState;
 use std::sync::Arc;
+use futures::future::{Ready, ok};
 
 pub struct ReadonlyConnection {
     inner: Arc<ConnectionType>,
@@ -71,15 +73,16 @@ impl Clone for ReadonlyConnection {
     }
 }
 
-impl FromRequest<AppState> for ReadonlyConnection {
+impl FromRequest for ReadonlyConnection {
     type Config = ();
-    type Result = Result<ReadonlyConnection, BigNeonError>;
+    type Error = BigNeonError;
+    type Future = Ready<Result<ReadonlyConnection, Self::Error>>;
 
-    fn from_request(request: &HttpRequest<AppState>, _config: &Self::Config) -> Self::Result {
+    fn from_request(request: &HttpRequest, _config: &Self::Config) -> Self::Future {
         if let Some(connection) = request.extensions().get::<ReadonlyConnection>() {
-            return Ok(connection.clone());
+            return ok(connection.clone());
         }
-
+        // should be moved to web::block, but would require Connection to be Sync
         let connection = request.state().database_ro.get_ro_connection()?;
         {
             let connection_object = connection.get();
@@ -89,6 +92,6 @@ impl FromRequest<AppState> for ReadonlyConnection {
         }
 
         request.extensions_mut().insert(connection.clone());
-        Ok(connection)
+        ok(connection)
     }
 }

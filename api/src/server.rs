@@ -1,7 +1,7 @@
 use actix::Addr;
 use actix_web::http;
-use actix_web::middleware::cors::Cors;
-use actix_web::{fs::StaticFiles, server, App};
+use actix_cors::Cors;
+use actix_web::{fs::StaticFiles, server, App, HttpRequest};
 use bigneon_db::utils::errors::DatabaseError;
 use crate::config::Config;
 use crate::db::*;
@@ -42,6 +42,17 @@ impl AppState {
             config,
             clients,
         })
+    }
+}
+
+
+// actix:0.7 back compatibility
+pub(crate) trait GetAppState {
+    fn state(&self) -> &AppState;
+}
+impl GetAppState for HttpRequest {
+    fn state(&self) -> &AppState {
+        self.app_data().expect("critical: AppState not configured for App")
     }
 }
 
@@ -96,10 +107,12 @@ impl Server {
             //            let keep_alive = server::KeepAlive::Tcp(config.http_keep_alive);
             let mut server = server::new({
                 move || {
-                    App::with_state(
-                        AppState::new(conf.clone(), database.clone(), database_ro.clone(), clients.clone())
-                            .expect("Expected to generate app state"),
-                    )
+                    App::new()
+                        .app_data(
+                            AppState::new(conf.clone(), database.clone(), database_ro.clone(), clients.clone())
+                                .expect("Expected to generate app state"),
+                        )
+                        .app_data(conf.clone())
                         .middleware(BigNeonLogger::new(LOGGER_FORMAT))
                         .middleware(DatabaseTransaction::new())
                         .middleware(AppVersionHeader::new())

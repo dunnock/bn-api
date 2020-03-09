@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Path, State};
+use actix_web::{HttpResponse, web::{Path, Data}};
 use crate::auth::user::User;
 use bigneon_db::models::TicketType as Dbticket_types;
 use bigneon_db::models::User as DbUser;
@@ -225,7 +225,7 @@ pub fn checkout(
         Connection,
         Json<CheckoutCartRequest>,
         User,
-        State<AppState>,
+        Data<AppState>,
         RequestInfo,
     ),
 ) -> Result<HttpResponse, BigNeonError> {

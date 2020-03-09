@@ -1,4 +1,4 @@
-use actix_web::{http::header, HttpRequest, HttpResponse, Query, State};
+use actix_web::{http::header, HttpRequest, HttpResponse, web::{Query, Data}};
 use bigneon_db::models::analytics::PageView;
 use bigneon_db::prelude::*;
 use chrono::prelude::*;
@@ -35,9 +35,9 @@ pub struct PageViewTrackingData {
 
 pub fn track(
     (state, query, request, connection): (
-        State<AppState>,
+        Data<AppState>,
         Query<PageViewTrackingData>,
-        HttpRequest<AppState>,
+        HttpRequest,
         Connection,
     ),
 ) -> Result<HttpResponse, BigNeonError> {

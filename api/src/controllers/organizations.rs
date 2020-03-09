@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpResponse, Path, Query, State};
+use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
 use crate::auth::user::User;
 use bigneon_db::models::*;
 use chrono::NaiveDateTime;
@@ -100,7 +100,7 @@ pub fn index_for_all_orgs(
 }
 
 pub fn show(
-    (state, connection, parameters, user): (State<AppState>, Connection, Path<PathParameters>, User),
+    (state, connection, parameters, user): (Data<AppState>, Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let mut organization = Organization::find(parameters.id, connection)?;
@@ -112,7 +112,7 @@ pub fn show(
 }
 
 pub fn create(
-    (state, connection, new_organization, user): (State<AppState>, Connection, Json<NewOrganizationRequest>, User),
+    (state, connection, new_organization, user): (Data<AppState>, Connection, Json<NewOrganizationRequest>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     user.requires_scope(Scopes::OrgAdmin)?;
     let connection = connection.get();
@@ -169,7 +169,7 @@ pub fn create(
 
 pub fn update(
     (state, connection, parameters, organization_parameters, user): (
-        State<AppState>,
+        Data<AppState>,
         Connection,
         Path<PathParameters>,
         Json<OrganizationEditableAttributes>,

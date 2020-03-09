@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Json, State};
+use actix_web::{HttpResponse, web::{Json, Data}};
 use crate::auth::user::User as AuthUser;
 use bigneon_db::models::concerns::users::password_resetable::PasswordResetable;
 use bigneon_db::models::User;
@@ -18,7 +18,7 @@ pub struct UserInviteRequest {
 }
 
 pub fn create(
-    (state, connection, parameters, auth_user): (State<AppState>, Connection, Json<UserInviteRequest>, AuthUser),
+    (state, connection, parameters, auth_user): (Data<AppState>, Connection, Json<UserInviteRequest>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let email = parameters.email.trim().to_lowercase();

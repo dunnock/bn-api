@@ -1,5 +1,4 @@
-use actix_web::State;
-use actix_web::{HttpResponse, Path, Query};
+use actix_web::{HttpResponse, web::{Path, Query, Data}};
 use crate::auth::user::User;
 use bigneon_db::models::User as DbUser;
 use bigneon_db::prelude::*;
@@ -133,7 +132,7 @@ pub fn show_redeemable_ticket(
 }
 
 pub fn send_via_email_or_phone(
-    (connection, send_tickets_request, auth_user, state): (Connection, Json<SendTicketsRequest>, User, State<AppState>),
+    (connection, send_tickets_request, auth_user, state): (Connection, Json<SendTicketsRequest>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     auth_user.requires_scope(Scopes::TicketTransfer)?;
     let connection = connection.get();
@@ -255,7 +254,7 @@ pub fn receive_transfer(
         Connection,
         Json<TransferAuthorization>,
         User,
-        State<AppState>,
+        Data<AppState>,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     auth_user.requires_scope(Scopes::TicketTransfer)?;

@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpResponse, Query};
+use actix_web::{http::StatusCode, HttpResponse, web::Query};
 use crate::auth::user::{User as AuthUser, User};
 use bigneon_db::models::{DomainAction, Report, Scopes};
 use bigneon_db::prelude::{DisplayOrder, Event, Order, Paging, PagingParameters, Payload};

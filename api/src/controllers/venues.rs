@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Path, Query};
+use actix_web::{HttpResponse, web::{Path, Query}};
 use crate::auth::user::User;
 use bigneon_db::models::*;
 use crate::db::Connection;

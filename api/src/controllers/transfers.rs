@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpResponse, Path, Query, State};
+use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
 use crate::auth::user::User;
 use bigneon_db::models::{User as DbUser, *};
 use chrono::prelude::*;
@@ -117,7 +117,7 @@ pub fn activity(
 }
 
 pub fn cancel(
-    (connection, path, auth_user, state): (Connection, Path<PathParameters>, User, State<AppState>),
+    (connection, path, auth_user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let transfer = Transfer::find(path.id, connection)?;
