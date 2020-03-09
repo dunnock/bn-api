@@ -11,7 +11,7 @@ use crate::payments::PaymentProcessorBehavior;
 use crate::payments::RedirectToPaymentPageBehavior;
 use crate::server::AppState;
 use crate::utils::ServiceLocator;
-use actix_web::{HttpResponse, Path, State};
+use actix_web::{HttpResponse, web::{Path, Data}};
 use bigneon_db::models::TicketType as Dbticket_types;
 use bigneon_db::models::User as DbUser;
 use bigneon_db::models::*;
@@ -225,7 +225,7 @@ pub fn checkout(
         Connection,
         Json<CheckoutCartRequest>,
         User,
-        State<AppState>,
+        Data<AppState>,
         RequestInfo,
     ),
 ) -> Result<HttpResponse, BigNeonError> {

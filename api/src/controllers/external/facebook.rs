@@ -6,7 +6,7 @@ use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::FacebookWebLoginToken;
 use crate::server::AppState;
-use actix_web::{HttpResponse, State};
+use actix_web::{HttpResponse, web::Data};
 use bigneon_db::prelude::*;
 use bigneon_db::validators::{append_validation_error, create_validation_error};
 use facebook::error::FacebookError;
@@ -31,7 +31,7 @@ struct FacebookGraphResponse {
 // TODO: Not covered by tests
 pub fn web_login(
     (state, connection, auth_token, auth_user): (
-        State<AppState>,
+        Data<AppState>,
         Connection,
         Json<FacebookWebLoginToken>,
         OptionalUser,
@@ -144,7 +144,7 @@ pub fn web_login(
 }
 
 pub fn request_manage_page_access(
-    (_connection, state, user): (Connection, State<AppState>, AuthUser),
+    (_connection, state, user): (Connection, Data<AppState>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     // TODO Sign/encrypt the user id passed through so that we can verify it has not been spoofed
     let redirect_url = FacebookClient::get_login_url(
@@ -233,7 +233,7 @@ pub fn disconnect((connection, user): (Connection, AuthUser)) -> Result<HttpResp
 }
 
 pub fn create_event(
-    (connection, user, data, state): (Connection, AuthUser, Json<CreateFacebookEvent>, State<AppState>),
+    (connection, user, data, state): (Connection, AuthUser, Json<CreateFacebookEvent>, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = connection.get();
     let config = &state.config;

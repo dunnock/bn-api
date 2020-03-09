@@ -4,7 +4,7 @@ use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::PathParameters;
-use actix_web::{HttpResponse, Path};
+use actix_web::{HttpResponse, web::Path};
 use bigneon_db::models::*;
 
 pub fn index(

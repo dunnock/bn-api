@@ -11,12 +11,13 @@ use crate::server::AppState;
 use crate::utils::google_recaptcha;
 use actix_web;
 use actix_web::Responder;
-use actix_web::{http::StatusCode, HttpRequest, HttpResponse, Path, Query};
+use actix_web::{http::StatusCode, HttpRequest, HttpResponse, web::{Path, Query, Data}};
 use bigneon_db::prelude::*;
 use diesel::PgConnection;
 use std::collections::HashMap;
 use std::str;
 use uuid::Uuid;
+use futures::future::{Ready, ok};
 
 #[derive(Deserialize)]
 pub struct SearchUserByEmail {
@@ -36,12 +37,12 @@ pub struct CurrentUser {
 }
 
 impl Responder for CurrentUser {
-    type Item = HttpResponse;
+    type Future = Ready<Result<HttpResponse, actix_web::Error>>;
     type Error = actix_web::Error;
 
-    fn respond_to<S>(self, _req: &HttpRequest<S>) -> Result<HttpResponse, actix_web::Error> {
+    fn respond_to<S>(self, _req: &HttpRequest) -> Self::Future {
         let body = serde_json::to_string(&self)?;
-        Ok(HttpResponse::new(StatusCode::OK)
+        ok(HttpResponse::new(StatusCode::OK)
             .into_builder()
             .content_type("application/json")
             .body(body))
@@ -263,9 +264,8 @@ pub fn remove_push_notification_token(
 }
 
 pub fn register(
-    (http_request, connection, parameters): (HttpRequest<AppState>, Connection, Json<RegisterRequest>),
+    (http_request, connection, parameters, state): (HttpRequest, Connection, Json<RegisterRequest>, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
-    let state = http_request.state();
     let connection_info = http_request.connection_info();
     let remote_ip = connection_info.remote();
     let mut log_data = HashMap::new();
@@ -296,14 +296,14 @@ pub fn register(
 }
 
 pub fn register_and_login(
-    (http_request, connection, parameters, request_info): (
-        HttpRequest<AppState>,
+    (http_request, connection, parameters, request_info, state): (
+        HttpRequest,
         Connection,
         Json<RegisterRequest>,
         RequestInfo,
+        Data<AppState>
     ),
 ) -> Result<HttpResponse, BigNeonError> {
-    let state = http_request.state();
     let connection_info = http_request.connection_info();
     let remote_ip = connection_info.remote();
     let mut log_data = HashMap::new();

@@ -4,8 +4,7 @@ use crate::errors::*;
 use crate::extractors::Json;
 use crate::helpers::application;
 use crate::models::*;
-use actix_web::Path;
-use actix_web::{HttpResponse, Query};
+use actix_web::{HttpResponse, web::{Query, Path}};
 use bigneon_db::prelude::*;
 use reqwest::StatusCode;
 

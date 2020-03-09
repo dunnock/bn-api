@@ -6,7 +6,7 @@ use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::*;
 use crate::server::AppState;
-use actix_web::{HttpResponse, Path, Query, State};
+use actix_web::{HttpResponse, web::{Path, Query, Data}};
 use bigneon_db::prelude::*;
 use reqwest::StatusCode;
 
@@ -85,7 +85,7 @@ pub fn update(
 
 pub fn show(
     (state, conn, mut parameters, query, auth_user, request): (
-        State<AppState>,
+        Data<AppState>,
         ReadonlyConnection,
         Path<StringPathParameters>,
         Query<EventParameters>,
@@ -255,7 +255,7 @@ pub fn show(
     Ok(HttpResponse::Ok().json(&response))
 }
 
-fn redirection_json(slug: &Slug, state: State<AppState>) -> Result<HttpResponse, BigNeonError> {
+fn redirection_json(slug: &Slug, state: Data<AppState>) -> Result<HttpResponse, BigNeonError> {
     let path = match slug.slug_type {
         SlugTypes::Event => "tickets",
         SlugTypes::Venue => "venues",

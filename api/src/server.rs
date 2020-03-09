@@ -45,6 +45,17 @@ impl AppState {
     }
 }
 
+
+// actix:0.7 back compatibility
+pub(crate) trait GetAppState {
+    fn state(&self) -> &AppState;
+}
+impl GetAppState for HttpRequest {
+    fn state(&self) -> &AppState {
+        self.app_data().expect("critical: AppState not configured for App")
+    }
+}
+
 pub struct Server {
     pub config: Config,
 }
@@ -96,10 +107,12 @@ impl Server {
             //            let keep_alive = server::KeepAlive::Tcp(config.http_keep_alive);
             let mut server = server::new({
                 move || {
-                    App::with_state(
-                        AppState::new(conf.clone(), database.clone(), database_ro.clone(), clients.clone())
-                            .expect("Expected to generate app state"),
-                    )
+                    App::new()
+                        .app_data(
+                            AppState::new(conf.clone(), database.clone(), database_ro.clone(), clients.clone())
+                                .expect("Expected to generate app state"),
+                        )
+                        .app_data(conf.clone())
                         .middleware(BigNeonLogger::new(LOGGER_FORMAT))
                         .middleware(DatabaseTransaction::new())
                         .middleware(AppVersionHeader::new())

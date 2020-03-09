@@ -4,9 +4,7 @@ use crate::extractors::OptionalUser;
 use crate::helpers::application;
 use crate::server::AppState;
 use actix_web::HttpResponse;
-use actix_web::Path;
-use actix_web::Query;
-use actix_web::State;
+use actix_web::web::{Path, Query, Data};
 use bigneon_db::prelude::*;
 use log::Level::Debug;
 use uuid::Uuid;
@@ -28,7 +26,7 @@ pub fn callback(
         Query<QueryParams>,
         Path<PathParams>,
         Connection,
-        State<AppState>,
+        Data<AppState>,
         OptionalUser,
     ),
 ) -> Result<HttpResponse, BigNeonError> {

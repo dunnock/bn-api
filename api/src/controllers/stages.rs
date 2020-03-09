@@ -1,6 +1,6 @@
 use crate::auth::user::User as AuthUser;
 use crate::db::Connection;
-use actix_web::{HttpResponse, Path, Query};
+use actix_web::{HttpResponse, web::{Path, Query}};
 use bigneon_db::models::*;
 
 use crate::errors::*;

@@ -6,7 +6,7 @@ use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::{OrganizationInvitePathParameters, PathParameters, WebPayload};
 use crate::server::AppState;
-use actix_web::{http::StatusCode, HttpResponse, Path, Query, State};
+use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
 use bigneon_db::models::*;
 use bigneon_db::utils::errors::DatabaseError;
 use bigneon_db::utils::errors::Optional;
@@ -32,7 +32,7 @@ pub struct NewOrgInviteRequest {
 }
 pub fn create_for_event(
     (state, connection, new_org_invite, path, auth_user): (
-        State<AppState>,
+        Data<AppState>,
         Connection,
         Json<NewOrgInviteRequest>,
         Path<PathParameters>,
@@ -48,7 +48,7 @@ pub fn create_for_event(
 
 pub fn create(
     (state, connection, new_org_invite, path, auth_user): (
-        State<AppState>,
+        Data<AppState>,
         Connection,
         Json<NewOrgInviteRequest>,
         Path<PathParameters>,
@@ -61,7 +61,7 @@ pub fn create(
 }
 
 fn create_invite(
-    state: State<AppState>,
+    state: Data<AppState>,
     connection: &PgConnection,
     new_org_invite: NewOrgInviteRequest,
     organization: &Organization,

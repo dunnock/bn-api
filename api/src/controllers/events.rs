@@ -13,7 +13,7 @@ use crate::server::AppState;
 use crate::utils::cloudinary::optimize_cloudinary;
 use crate::utils::redis::*;
 use crate::utils::ServiceLocator;
-use actix_web::{http::StatusCode, HttpResponse, Path, Query, State};
+use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
 use bigneon_db::dev::times;
 use bigneon_db::prelude::*;
 use chrono::prelude::*;
@@ -218,7 +218,7 @@ pub fn export_event_data(
  * What events does this user have authority to check in
 **/
 pub fn checkins(
-    (conn, query, auth_user, state): (Connection, Query<SearchParameters>, AuthUser, State<AppState>),
+    (conn, query, auth_user, state): (Connection, Query<SearchParameters>, AuthUser, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let events = auth_user.user.find_events_with_access_to_scan(conn.get())?;
     let mut payload = Payload::new(
@@ -232,7 +232,7 @@ pub fn checkins(
 
 pub fn index(
     (state, connection, query, auth_user): (
-        State<AppState>,
+        Data<AppState>,
         ReadonlyConnection,
         Query<SearchParameters>,
         OptionalUser,
@@ -306,7 +306,7 @@ pub struct EventParameters {
 
 pub fn show(
     (state, connection, parameters, query, user, request): (
-        State<AppState>,
+        Data<AppState>,
         ReadonlyConnection,
         Path<StringPathParameters>,
         Query<EventParameters>,
@@ -560,7 +560,7 @@ pub fn clone(
         Json<CloneFields>,
         Path<PathParameters>,
         AuthUser,
-        State<AppState>,
+        Data<AppState>,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -630,7 +630,7 @@ pub fn redeem_ticket(
         Path<PathParameters>,
         Json<TicketRedeemRequest>,
         AuthUser,
-        State<AppState>,
+        Data<AppState>,
         CacheDatabase,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
@@ -760,7 +760,7 @@ pub struct DashboardResult {
 
 pub fn dashboard(
     (state, connection, path, query, user): (
-        State<AppState>,
+        Data<AppState>,
         Connection,
         Path<PathParameters>,
         Query<DashboardParameters>,
@@ -1297,7 +1297,7 @@ pub fn create_link(
     (path, query, state, user, conn): (
         Path<PathParameters>,
         Json<LinkQueryParameters>,
-        State<AppState>,
+        Data<AppState>,
         AuthUser,
         Connection,
     ),

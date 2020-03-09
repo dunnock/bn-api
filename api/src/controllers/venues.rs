@@ -3,7 +3,7 @@ use crate::db::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::models::PathParameters;
-use actix_web::{HttpResponse, Path, Query};
+use actix_web::{HttpResponse, web::{Path, Query}};
 use bigneon_db::models::*;
 use uuid::Uuid;
 

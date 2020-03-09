@@ -4,7 +4,7 @@ use crate::db::Connection;
 use crate::errors::BigNeonError;
 use crate::extractors::*;
 use crate::models::{PathParameters, WebPayload, WebResult};
-use actix_web::{http::StatusCode, HttpResponse, Path, Query};
+use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_db::models::*;
 use chrono::prelude::*;
 
