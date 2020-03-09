@@ -8,8 +8,8 @@ use crate::utils::redis::*;
 use crate::utils::spotify;
 use crate::utils::ServiceLocator;
 use actix::Addr;
-use actix_web::http;
-use actix_web::middleware::cors::Cors;
+use actix_web::{http, HttpRequest, dev::ServiceRequest};
+use actix_web::middleware::{cors::Cors, Logger};
 use actix_web::{fs::StaticFiles, server, App};
 use bigneon_db::utils::errors::DatabaseError;
 use log::Level::Debug;
@@ -45,12 +45,16 @@ impl AppState {
     }
 }
 
-
 // actix:0.7 back compatibility
 pub(crate) trait GetAppState {
     fn state(&self) -> &AppState;
 }
 impl GetAppState for HttpRequest {
+    fn state(&self) -> &AppState {
+        self.app_data().expect("critical: AppState not configured for App")
+    }
+}
+impl GetAppState for ServiceRequest {
     fn state(&self) -> &AppState {
         self.app_data().expect("critical: AppState not configured for App")
     }
@@ -113,7 +117,8 @@ impl Server {
                                 .expect("Expected to generate app state"),
                         )
                         .app_data(conf.clone())
-                        .middleware(BigNeonLogger::new(LOGGER_FORMAT))
+                        .wrap(Logger::new(LOGGER_FORMAT))
+                        .wrap(BigNeonLogger::create())
                         .middleware(DatabaseTransaction::new())
                         .middleware(AppVersionHeader::new())
                         .middleware(Metatags::new(

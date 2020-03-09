@@ -13,6 +13,7 @@ actix = "0.9"
 actix-web = "2.0"
 actix-cors = "0.2"
 actix-web-actors = "2.0"
+actix-service = "1.0"
 bigneon_db = { path = "../db" }
 bigneon_http = { path = "../http" }
 bigneon_caching_derive = { path = "../http/caching_derive" }
