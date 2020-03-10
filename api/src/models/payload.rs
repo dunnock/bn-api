@@ -34,15 +34,17 @@ where
     }
 }
 
+use futures::future::{Ready, ok};
+
 impl<T> Responder for WebPayload<T>
 where
     T: Serialize,
 {
-    type Item = HttpResponse;
+    type Future = Ready<Result<HttpResponse, Self::Error>>;
     type Error = Error;
 
-    fn respond_to<S>(self, _req: &HttpRequest<S>) -> Result<HttpResponse, Error> {
-        Ok(self.into_http_response()?)
+    fn respond_to(self, _req: &HttpRequest) -> Self::Future {
+        ok(self.into_http_response()?)
     }
 }
 
@@ -66,12 +68,12 @@ impl<T> Responder for WebResult<T>
 where
     T: Serialize,
 {
-    type Item = HttpResponse;
+    type Future = Ready<Result<HttpResponse, Self::Error>>;
     type Error = Error;
 
-    fn respond_to<S>(self, _req: &HttpRequest<S>) -> Result<HttpResponse, Error> {
+    fn respond_to(self, _req: &HttpRequest) -> Self::Future {
         let body = serde_json::to_string(&self.1)?;
-        Ok(HttpResponse::new(self.0)
+        ok(HttpResponse::new(self.0)
             .into_builder()
             .content_type("application/json")
             .body(body))

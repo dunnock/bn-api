@@ -82,6 +82,7 @@ impl FromRequest for ReadonlyConnection {
         if let Some(connection) = request.extensions().get::<ReadonlyConnection>() {
             return ok(connection.clone());
         }
+
         // should be moved to web::block, but would require Connection to be Sync
         let connection = request.state().database_ro.get_ro_connection()?;
         {

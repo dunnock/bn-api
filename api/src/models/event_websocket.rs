@@ -1,9 +1,8 @@
 // Websocket based on actix example https://github.com/actix/examples/blob/0.7/websocket/src/main.rs
 
 use crate::models::*;
-use crate::server::AppState;
 use actix::prelude::*;
-use actix_web::ws;
+use actix_web_actors::ws;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
@@ -16,7 +15,7 @@ pub struct EventWebSocket {
 }
 
 impl Actor for EventWebSocket {
-    type Context = ws::WebsocketContext<Self, AppState>;
+    type Context = ws::WebsocketContext<Self>;
 
     fn started(&mut self, context: &mut Self::Context) {
         self.heartbeat(context);
@@ -61,7 +60,7 @@ impl EventWebSocket {
     }
 }
 
-impl StreamHandler<ws::Message, ws::ProtocolError> for EventWebSocket {
+impl StreamHandler<ws::Message> for EventWebSocket {
     fn started(&mut self, context: &mut Self::Context) {
         let mut clients = context.state().clients.lock().unwrap();
         clients

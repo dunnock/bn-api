@@ -10,6 +10,7 @@ use diesel::PgConnection;
 use std::sync::Arc;
 use std::pin::Pin;
 use std::future::Future;
+use futures::future::{Ready, ok};
 
 pub struct Connection {
     pub inner: Arc<ConnectionType>,
@@ -61,25 +62,23 @@ impl Clone for Connection {
 impl FromRequest for Connection {
     type Config = ();
     type Error = BigNeonError;
-    type Future = Pin<Box<dyn Future<Output = Result<Connection, Self::Error>>>>;
+    type Future = Ready<Result<Connection, Self::Error>>;
 
     fn from_request(request: &HttpRequest, _config: &Self::Config) -> Self::Future {
-        Box::pin(async {
-            if let Some(connection) = request.extensions().get::<Connection>() {
-                return Ok(connection.clone());
-            }
+        if let Some(connection) = request.extensions().get::<Connection>() {
+            return ok(connection.clone());
+        }
 
-            // should be moved to web::block, but would require Connection to be Sync
-            let connection = request.state().database.get_connection()?; 
-            {
-                let connection_object = connection.get();
-                connection_object
-                    .transaction_manager()
-                    .begin_transaction(connection_object)?;
-            }
+        // should be moved to web::block, but would require Connection to be Sync
+        let connection = request.state().database.get_connection()?; 
+        {
+            let connection_object = connection.get();
+            connection_object
+                .transaction_manager()
+                .begin_transaction(connection_object)?;
+        }
 
-            request.extensions_mut().insert(connection.clone());
-            Ok(connection)
-        })
+        request.extensions_mut().insert(connection.clone());
+        ok(connection)
     }
 }
