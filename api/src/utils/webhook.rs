@@ -5,20 +5,17 @@ use bigneon_db::prelude::*;
 use diesel::PgConnection;
 use serde_json;
 use std::collections::HashMap;
-use tokio::prelude::*;
 use uuid::Uuid;
 
-pub fn send_webhook_async(
+// TODO: it uses sync client under the hood, so will block executor
+pub async fn send_webhook_async(
     tokens: &[String],
     body: &str,
     domain_event_publisher_id: Option<Uuid>,
     conn: &PgConnection,
     config: &Config,
-) -> Box<dyn Future<Item = (), Error = BigNeonError>> {
-    match send_webhook(tokens, body, domain_event_publisher_id, conn, config) {
-        Ok(_) => Box::new(future::ok(())),
-        Err(e) => Box::new(future::err(e)),
-    }
+) -> Result<(), BigNeonError> {
+    send_webhook(tokens, body, domain_event_publisher_id, conn, config)
 }
 
 pub fn send_webhook(

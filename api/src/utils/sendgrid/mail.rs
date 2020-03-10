@@ -272,10 +272,9 @@ impl SGMailMessage {
             .header("user-agent", "sendgrid-rs")
             .body(msg_body)
             .send()
-            .await
-            .error_for_status()
-            .map_err(ApplicationError::new)
-            .map(|_| ())
+            .await?
+            .error_for_status()?;
+        Ok(())
     }
 
     fn to_json(&self) -> String {

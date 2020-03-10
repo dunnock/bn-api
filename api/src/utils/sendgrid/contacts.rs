@@ -89,11 +89,11 @@ impl SGContactList {
             .header("Content-Type", "application/json")
             .header("user-agent", "sendgrid-rs")
             .send()
-            .await
-            .error_for_status()
-            .map_err(ApplicationError::new)?
+            .await?
+            .error_for_status()?
             .json()
             .await
+            .map_err(|err| err.into())
     }
 
     pub fn create(&self, api_key: &str) -> Result<SGContactListResponse, BigNeonError> {

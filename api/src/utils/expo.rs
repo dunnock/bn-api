@@ -4,17 +4,14 @@ use log::Level::Debug;
 use serde::export::Option;
 use serde_json::Value;
 use std::str::FromStr;
-use tokio::prelude::*;
 
-pub fn send_push_notification_async(
+// TODO: it is actually sync under the hood and will block executor
+pub async fn send_push_notification_async(
     tokens: &[String],
     body: &str,
     custom_data: Option<Value>,
-) -> Box<dyn Future<Item = (), Error = BigNeonError>> {
-    match send_push_notification(tokens, body, custom_data) {
-        Ok(_) => Box::new(future::ok(())),
-        Err(e) => Box::new(future::err(e)),
-    }
+) -> Result<(), BigNeonError> {
+    send_push_notification(tokens, body, custom_data)
 }
 
 pub fn send_push_notification(tokens: &[String], body: &str, custom_data: Option<Value>) -> Result<(), BigNeonError> {

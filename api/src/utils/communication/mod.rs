@@ -35,9 +35,9 @@ pub async fn send_async(
 
     let destination_addresses = communication.destinations.get();
 
-    let future = match communication.comm_type {
+    match communication.comm_type {
         CommunicationType::EmailTemplate => {
-            send_email_template(domain_action, &config, conn, communication, &destination_addresses)
+            send_email_template(domain_action, &config, conn, communication, &destination_addresses).await
         }
         CommunicationType::Sms => twilio::send_sms_async(
             &config.twilio_account_id,
@@ -45,21 +45,20 @@ pub async fn send_async(
             communication.source.as_ref().unwrap().get_first().unwrap(),
             destination_addresses,
             &communication.body.unwrap_or(communication.title),
-        ),
+        ).await,
         CommunicationType::Push => expo::send_push_notification_async(
             &destination_addresses,
             &communication.body.unwrap_or(communication.title),
             communication.extra_data.map(|ed| json!(ed.clone())),
-        ),
+        ).await,
         CommunicationType::Webhook => webhook::send_webhook_async(
             &destination_addresses,
             &communication.body.unwrap_or(communication.title),
             domain_action.main_table_id,
             conn,
             &config,
-        ),
-    };
-    future.await
+        ).await,
+    }
 }
 
 async fn send_email_template(

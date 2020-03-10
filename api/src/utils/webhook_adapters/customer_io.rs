@@ -7,6 +7,7 @@ use serde_json::Value;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 
+// TODO: good candidate for conversion to async
 pub struct CustomerIoWebhookAdapter {
     site_id: String,
     api_key: String,
