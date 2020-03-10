@@ -1,11 +1,8 @@
 use crate::errors::*;
 use bigneon_db::models::*;
-use futures::future::Either;
-use reqwest::r#async::Client as AsyncClient;
-use reqwest::Client;
+use reqwest::blocking::Client;
 use serde_json;
 use std::collections::HashMap;
-use tokio::prelude::*;
 
 const SENDGRID_API_URL: &'static str = "https://api.sendgrid.com/v3/mail/send";
 
@@ -41,7 +38,7 @@ pub fn send_email(
     }
 }
 
-pub fn send_email_async(
+pub async fn send_email_async(
     sg_api_key: &str,
     source_email_address: String,
     dest_email_addresses: Vec<String>,
@@ -49,7 +46,7 @@ pub fn send_email_async(
     body: Option<String>,
     categories: Option<Vec<String>>,
     unique_args: Option<HashMap<String, String>>,
-) -> Box<dyn Future<Item = (), Error = BigNeonError>> {
+) -> Result<(), BigNeonError> {
     let mut sg_message = SGMailMessage::new();
     sg_message.subject = Some(title);
     sg_message.from = SGEmail::from(source_email_address);
@@ -68,7 +65,7 @@ pub fn send_email_async(
     sg_message.unique_args = unique_args;
     sg_message.category = categories;
 
-    Box::new(sg_message.send_async(sg_api_key))
+    sg_message.send_async(sg_api_key).await
 }
 
 pub fn send_email_template(
@@ -107,7 +104,7 @@ pub fn send_email_template(
     }
 }
 
-pub fn send_email_template_async(
+pub async fn send_email_template_async(
     sg_api_key: &str,
     source_email_address: String,
     dest_email_addresses: &[String],
@@ -115,11 +112,11 @@ pub fn send_email_template_async(
     template_data: &[TemplateData],
     categories: Option<Vec<String>>,
     unique_args: Option<HashMap<String, String>>,
-) -> Box<dyn Future<Item = (), Error = BigNeonError>> {
-    Box::new(if dest_email_addresses.len() != template_data.len() {
-        Either::A(future::err(
+) -> Result<(), BigNeonError> {
+    if dest_email_addresses.len() != template_data.len() {
+        return Err(
             ApplicationError::new("Destination addresses mismatched with template data".to_string()).into(),
-        ))
+        )
     } else {
         let mut sg_message = SGMailMessage::new();
         sg_message.from = SGEmail::from(source_email_address);
@@ -139,8 +136,8 @@ pub fn send_email_template_async(
         sg_message.unique_args = unique_args;
         sg_message.category = categories;
 
-        Either::B(sg_message.send_async(&sg_api_key))
-    })
+        sg_message.send_async(&sg_api_key).await
+    }
 }
 
 #[derive(Clone, Default, Serialize)]
@@ -265,10 +262,9 @@ impl SGMailMessage {
         }
     }
 
-    fn send_async(&self, sq_api_key: &str) -> impl Future<Item = (), Error = BigNeonError> {
-        let reqwest_client = AsyncClient::new();
+    async fn send_async(&self, sq_api_key: &str) -> Result<(), BigNeonError> {
         let msg_body = self.to_json();
-        reqwest_client
+        reqwest::Client::new()
             .post(SENDGRID_API_URL)
             //.headers(reqwest_headers)
             .header("Authorization", format!("Bearer {}", sq_api_key))
@@ -276,9 +272,10 @@ impl SGMailMessage {
             .header("user-agent", "sendgrid-rs")
             .body(msg_body)
             .send()
-            .and_then(|r| future::result(r.error_for_status()))
+            .await
+            .error_for_status()
+            .map_err(ApplicationError::new)
             .map(|_| ())
-            .map_err(|err| ApplicationError::new(err.to_string()).into())
     }
 
     fn to_json(&self) -> String {

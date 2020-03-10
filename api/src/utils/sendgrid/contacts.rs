@@ -1,9 +1,7 @@
 use crate::errors::*;
-use reqwest::r#async::Client as AsyncClient;
-use reqwest::Client;
+use reqwest::blocking::Client;
 use serde_json;
 use std::convert::From;
-use tokio::prelude::*;
 
 const SENDGRID_API_URL: &'static str = "https://api.sendgrid.com/v3";
 const LOG_TARGET: &'static str = "bigneon::utils::sendgrid";
@@ -80,22 +78,22 @@ impl SGContactList {
         Self { name }
     }
 
-    pub fn get_async(
+    pub async fn get_async(
         &self,
         api_key: &str,
         id: String,
-    ) -> impl Future<Item = SGContactListResponse, Error = BigNeonError> {
-        let client = AsyncClient::new();
-
-        client
+    ) -> Result<SGContactListResponse, BigNeonError> {
+        reqwest::Client::new()
             .get(Self::api_url(Some(id)).as_str())
             .header("Authorization", format!("Bearer {}", api_key))
             .header("Content-Type", "application/json")
             .header("user-agent", "sendgrid-rs")
             .send()
-            .and_then(|r| future::result(r.error_for_status()))
-            .and_then(|mut res| res.json::<SGContactListResponse>())
-            .map_err(|err| ApplicationError::new(err.to_string()).into())
+            .await
+            .error_for_status()
+            .map_err(ApplicationError::new)?
+            .json()
+            .await
     }
 
     pub fn create(&self, api_key: &str) -> Result<SGContactListResponse, BigNeonError> {

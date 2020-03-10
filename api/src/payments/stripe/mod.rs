@@ -1,7 +1,6 @@
 use crate::payments::*;
 use bigneon_db::models::PaymentProviders;
-use stripe::StripeClient;
-use stripe::StripeError;
+use ::stripe::{StripeClient, StripeError};
 
 impl From<StripeError> for PaymentProcessorError {
     fn from(s: StripeError) -> PaymentProcessorError {
