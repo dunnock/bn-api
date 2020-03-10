@@ -1,24 +1,26 @@
 use crate::db::Connection;
-use actix_web::error::Error as ActixWebError;
-use actix_web::middleware::{Middleware, Response};
-use actix_web::{FromRequest, HttpRequest, HttpResponse, ResponseError, Result};
+use crate::errors::BigNeonError;
+use actix_web::error;
+use actix_web::{FromRequest, HttpRequest};
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
+use actix_web::dev::{ServiceRequest, ServiceResponse, MessageBody};
+use actix_service::Service;
+use std::error::Error;
+use std::pin::Pin;
+use std::future::Future;
 
 pub trait RequestConnection {
-    fn connection(&self) -> Result<Connection, ActixWebError>;
+    fn connection(&self) -> error::Result<Connection>;
 }
 
 impl RequestConnection for HttpRequest {
-    fn connection(&self) -> Result<Connection, ActixWebError> {
+    fn connection(&self) -> error::Result<Connection> {
         Ok(Connection::from_request(&self, &())?)
     }
 }
 
 pub struct DatabaseTransaction {}
-use crate::errors::BigNeonError;
-use crate::server::AppState;
-use std::error::Error;
 
 impl DatabaseTransaction {
     pub fn new() -> DatabaseTransaction {
@@ -26,8 +28,23 @@ impl DatabaseTransaction {
     }
 }
 
-impl Middleware<AppState> for DatabaseTransaction {
-    fn response(&self, request: &HttpRequest, response: HttpResponse) -> Result<Response> {
+impl DatabaseTransaction {
+    pub fn create<S, B>() -> impl FnMut(ServiceRequest, &mut S) -> Pin<Box<dyn Future<Output = error::Result<ServiceResponse<B>>> + 'static>>
+    where
+        S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = error::Error>,
+        S::Future: 'static,
+        B: MessageBody,
+    {
+        |sreq, serv| {
+            let srv_fut = serv.call(sreq);
+            Box::pin(async move {
+                let resp = srv_fut.await?;
+                Self::response(resp.request(), resp)
+            })
+        }
+    }
+
+    fn response<B>(request: &HttpRequest, response: ServiceResponse<B>) -> error::Result<ServiceResponse<B>> {
         if let Some(connection) = request.extensions().get::<Connection>() {
             let connection_object = connection.get();
 
@@ -45,11 +62,11 @@ impl Middleware<AppState> for DatabaseTransaction {
                 Err(e) => {
                     error!("Diesel Error: {}", e.description());
                     let error: BigNeonError = e.into();
-                    return Ok(Response::Done(error.error_response()));
+                    return Err(error);
                 }
             }
         };
 
-        Ok(Response::Done(response))
+        Ok(response)
     }
 }

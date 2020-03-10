@@ -46,7 +46,7 @@ serde_json = "1.0"
 serde_with = "0.2"
 stripe = {path="../stripe"}
 tari-client= {path="../tari-client"}
-tokio = "0.2"
+tokio = { version = "0.2", features = ["rt-core", "rt-threaded", "time"] }
 # TODO move this to the bigneon org? Currently just testing this lib, so if we
 # are still using it in a few months, fork it into /bigneon
 twilio= { git = "https://github.com/mikethetike/twilio-rs", rev="8a746caed756c3cfe57e082084fda8be3170721a"}

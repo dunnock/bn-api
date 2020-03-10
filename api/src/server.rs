@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::db::*;
 use crate::domain_events::DomainActionMonitor;
-use crate::middleware::{AppVersionHeader, BigNeonLogger, DatabaseTransaction, Metatags};
+use crate::middleware::{AppVersionHeader, BigNeonLogger}; //, DatabaseTransaction, Metatags};
 use crate::models::*;
 use crate::routing;
 use crate::utils::redis::*;
@@ -9,8 +9,9 @@ use crate::utils::spotify;
 use crate::utils::ServiceLocator;
 use actix::Addr;
 use actix_web::{http, HttpRequest, dev::ServiceRequest};
-use actix_web::middleware::{cors::Cors, Logger};
+use actix_web::middleware::Logger;
 use actix_web::{fs::StaticFiles, server, App};
+use actix_cors::Cors;
 use bigneon_db::utils::errors::DatabaseError;
 use log::Level::Debug;
 use std::collections::HashMap;
@@ -116,17 +117,16 @@ impl Server {
                             AppState::new(conf.clone(), database.clone(), database_ro.clone(), clients.clone())
                                 .expect("Expected to generate app state"),
                         )
-                        .app_data(conf.clone())
                         .wrap(Logger::new(LOGGER_FORMAT))
-                        .wrap(BigNeonLogger::create())
-                        .middleware(DatabaseTransaction::new())
-                        .middleware(AppVersionHeader::new())
-                        .middleware(Metatags::new(
+                        .wrap_fn(BigNeonLogger::create())
+                        .wrap_fn(DatabaseTransaction::create())
+                        .wrap(AppVersionHeader::new())
+                        /*.middleware(Metatags::new(
                             conf.ssr_trigger_header.clone(),
                             conf.ssr_trigger_value.clone(),
                             conf.front_end_url.clone(),
                             conf.app_name.clone(),
-                        ))
+                        ))*/
                         .configure(|a| {
                             let mut cors_config = Cors::for_app(a);
                             match conf.allowed_origins.as_ref() {
