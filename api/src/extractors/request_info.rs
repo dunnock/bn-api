@@ -1,5 +1,4 @@
 use crate::models::*;
-use crate::server::AppState;
 use actix_web::error::*;
 use actix_web::{FromRequest, HttpRequest};
 use futures::future::{Ready, ok};

@@ -2,7 +2,6 @@ use crate::auth::user::User;
 use crate::db::Connection;
 use crate::errors::*;
 use crate::models::*;
-use crate::server::AppState;
 use actix_web::{HttpRequest, HttpResponse, web::{Path, Payload}};
 use actix_web_actors::ws;
 use bigneon_db::prelude::*;
