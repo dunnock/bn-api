@@ -1,16 +1,17 @@
 use crate::config::Config;
 use crate::db::*;
 use crate::domain_events::DomainActionMonitor;
-use crate::middleware::{AppVersionHeader, BigNeonLogger}; //, DatabaseTransaction, Metatags};
+use crate::middleware::{AppVersionHeader, BigNeonLogger, DatabaseTransaction}; //, Metatags};
 use crate::models::*;
 use crate::routing;
 use crate::utils::redis::*;
 use crate::utils::spotify;
 use crate::utils::ServiceLocator;
 use actix::Addr;
-use actix_web::{http, HttpRequest, dev::ServiceRequest};
+use actix_web::{http, HttpRequest, HttpResponse, dev::ServiceRequest};
 use actix_web::middleware::Logger;
-use actix_web::{fs::StaticFiles, server, App};
+use actix_web::{HttpServer, App, web};
+use actix_files as fs;
 use actix_cors::Cors;
 use bigneon_db::utils::errors::DatabaseError;
 use log::Level::Debug;
@@ -110,25 +111,15 @@ impl Server {
             }
 
             //            let keep_alive = server::KeepAlive::Tcp(config.http_keep_alive);
-            let mut server = server::new({
+            let mut server = HttpServer::new({
                 move || {
                     App::new()
                         .app_data(
                             AppState::new(conf.clone(), database.clone(), database_ro.clone(), clients.clone())
                                 .expect("Expected to generate app state"),
                         )
-                        .wrap(Logger::new(LOGGER_FORMAT))
-                        .wrap_fn(BigNeonLogger::create())
-                        .wrap_fn(DatabaseTransaction::create())
-                        .wrap(AppVersionHeader::new())
-                        /*.middleware(Metatags::new(
-                            conf.ssr_trigger_header.clone(),
-                            conf.ssr_trigger_value.clone(),
-                            conf.front_end_url.clone(),
-                            conf.app_name.clone(),
-                        ))*/
-                        .configure(|a| {
-                            let mut cors_config = Cors::for_app(a);
+                        .wrap({
+                            let mut cors_config = Cors::new();
                             match conf.allowed_origins.as_ref() {
                                 "*" => cors_config.send_wildcard(),
                                 _ => cors_config.allowed_origin(&conf.allowed_origins),
@@ -144,16 +135,29 @@ impl Server {
                                 ])
                                 .allowed_header(http::header::CONTENT_TYPE)
                                 .expose_headers(vec!["x-app-version", "x-cached-response"])
-                                .max_age(3600);
-
-                            routing::routes(&mut cors_config)
+                                .max_age(3600)
+                                .finish()
                         })
-                        .configure(|a| {
+                        .wrap(Logger::new(LOGGER_FORMAT))
+                        .wrap_fn(BigNeonLogger::create())
+                        .wrap_fn(DatabaseTransaction::create())
+                        .wrap(AppVersionHeader::new())
+                        /*TODO .middleware(Metatags::new(
+                            conf.ssr_trigger_header.clone(),
+                            conf.ssr_trigger_value.clone(),
+                            conf.front_end_url.clone(),
+                            conf.app_name.clone(),
+                        ))*/
+                        .configure( routing::routes )
+                        .service({
                             match &static_file_conf.static_file_path {
-                                Some(static_file_path) => a.handler("/", StaticFiles::new(static_file_path).unwrap()),
-                                None => a
+                                Some(static_file_path) => fs::Files::new("/", static_file_path),
+                                None => web::resource("/").route(web::get().to(HttpResponse::NotFound)),
                             }
                         })
+                        .default_service(
+                            web::get().to(|_req| HttpResponse::NotFound().json(json!({"error": "Not found"})))
+                        )
                 }
             })
                 //            .keep_alive(keep_alive)

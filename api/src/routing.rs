@@ -1,470 +1,470 @@
 use crate::controllers::*;
-use crate::middleware::{CacheResource, CacheUsersBy};
+//use crate::middleware::{CacheResource, CacheUsersBy};
 use crate::server::AppState;
-use actix_web::middleware::cors::CorsBuilder;
-use actix_web::{http::Method, App, HttpResponse};
+use actix_web::{http::Method, App, HttpResponse, web};
 
-pub fn routes(app: &mut CorsBuilder<AppState>) -> App<AppState> {
+pub fn routes(app: &mut web::ServiceConfig) {
     // Please try to keep in alphabetical order
 
-    app.resource("/admin/stuck_domain_actions", |r| {
-        r.method(Method::GET).with(admin::admin::admin_stuck_domain_actions);
-    })
-    .resource("/admin/ticket_count", |r| {
-        r.method(Method::GET).with(admin::admin::admin_ticket_count);
-    })
-    .resource("/admin/orders", |r| {
-        r.method(Method::GET).with(admin::admin::orders);
-    })
-    .resource("/admin/reports", |r| {
-        r.method(Method::GET).with(admin::reports::get_report);
-    })
-    .resource("/a/t", |r| {
-        r.method(Method::GET).with(analytics::track);
-    })
-    .resource("/artists/search", |r| {
-        r.middleware(CacheResource::new(CacheUsersBy::AnonymousOnly));
-        r.method(Method::GET).with(artists::search);
-    })
-    .resource("/artists/{id}/toggle_privacy", |r| {
-        r.method(Method::PUT).with(artists::toggle_privacy);
-    })
-    .resource("/artists/{id}", |r| {
-        r.middleware(CacheResource::new(CacheUsersBy::None));
-        r.method(Method::GET).with(artists::show);
-        r.method(Method::PUT).with(artists::update);
-    })
-    .resource("/artists", |r| {
-        r.middleware(CacheResource::new(CacheUsersBy::AnonymousOnly));
-        r.method(Method::GET).with(artists::index);
-        r.method(Method::POST).with(artists::create);
-    })
-    .resource("/auth/token", |r| r.method(Method::POST).with(auth::token))
-    .resource("/auth/token/refresh", |r| {
-        r.method(Method::POST).with(auth::token_refresh)
-    })
-    .resource("/broadcasts/{id}", |r| {
-        r.method(Method::GET).with(broadcasts::show);
-        r.method(Method::PUT).with(broadcasts::update);
-        r.method(Method::DELETE).with(broadcasts::delete);
-    })
-    .resource("/broadcasts/{id}/tracking_count", |r| {
-        r.method(Method::POST).with(broadcasts::tracking_count);
-    })
-    .resource("/cart", |r| {
-        r.method(Method::DELETE).with(cart::destroy);
-        r.method(Method::POST).with(cart::update_cart);
-        r.method(Method::PUT).with(cart::replace_cart);
-        r.method(Method::GET).with(cart::show);
-    })
-    .resource("/cart/{id}/duplicate", |r| {
-        r.method(Method::POST).with(cart::duplicate);
-    })
-    .resource("/cart/clear_invalid_items", |r| {
-        r.method(Method::DELETE).with(cart::clear_invalid_items);
-    })
-    .resource("/cart/checkout", |r| {
-        r.method(Method::POST).with(cart::checkout);
-    })
-    .resource("/codes/{id}/link", |r| {
-        r.method(Method::GET).with(codes::link);
-    })
-    .resource("/codes/{id}", |r| {
-        r.method(Method::GET).with(codes::show);
-        r.method(Method::PUT).with(codes::update);
-        r.method(Method::DELETE).with(codes::destroy);
-    })
-    .resource("/comps/{id}", |r| {
-        r.method(Method::GET).with(comps::show);
-        r.method(Method::PATCH).with(comps::update);
-        r.method(Method::DELETE).with(comps::destroy);
-    })
-    .resource("/event_report_subscribers/{id}", |r| {
-        r.method(Method::DELETE).with(event_report_subscribers::destroy);
-    })
-    .resource("/events", |r| {
+    app
+    .service(web::resource("/admin/stuck_domain_actions")
+        .route(web::get().to(admin::admin::admin_stuck_domain_actions))
+    )
+    .service(web::resource("/admin/ticket_count")
+        .route(web::get().to(admin::admin::admin_ticket_count))
+    )
+    .service(web::resource("/admin/orders")
+        .route(web::get().to(admin::admin::orders))
+    )
+    .service(web::resource("/admin/reports")
+        .route(web::get().to(admin::reports::get_report))
+    )
+    .service(web::resource("/a/t")
+        .route(web::get().to(analytics::track))
+    )
+    .service(web::resource("/artists/search")
+        //TODO r.middleware(CacheResource::new(CacheUsersBy::AnonymousOnly));
+        .route(web::get().to(artists::search))
+    )
+    .service(web::resource("/artists/{id}/toggle_privacy")
+        .route(web::put().to(artists::toggle_privacy))
+    )
+    .service(web::resource("/artists/{id}")
+        //TODO r.middleware(CacheResource::new(CacheUsersBy::None));
+        .route(web::get().to(artists::show))
+        .route(web::put().to(artists::update))
+    )
+    .service(web::resource("/artists")
+        //r.middleware(CacheResource::new(CacheUsersBy::AnonymousOnly));
+        .route(web::get().to(artists::index))
+        .route(web::post().to(artists::create))
+    )
+    .service(web::resource("/auth/token")
+        .route(web::post().to(auth::token))
+    )
+    .service(web::resource("/auth/token/refresh")
+        .route(web::post().to(auth::token_refresh))
+    )
+    .service(web::resource("/broadcasts/{id}")
+        .route(web::get().to(broadcasts::show))
+        .route(web::put().to(broadcasts::update))
+        .route(web::delete().to(broadcasts::delete))
+    )
+    .service(web::resource("/broadcasts/{id}/tracking_count")
+        .route(web::post().to(broadcasts::tracking_count))
+    )
+    .service(web::resource("/cart")
+        .route(web::delete().to(cart::destroy))
+        .route(web::post().to(cart::update_cart))
+        .route(web::put().to(cart::replace_cart))
+        .route(web::get().to(cart::show))
+    )
+    .service(web::resource("/cart/{id}/duplicate")
+        .route(web::post().to(cart::duplicate))
+    )
+    .service(web::resource("/cart/clear_invalid_items")
+        .route(web::delete().to(cart::clear_invalid_items))
+    )
+    .service(web::resource("/cart/checkout")
+        .route(web::post().to(cart::checkout))
+    )
+    .service(web::resource("/codes/{id}/link")
+        .route(web::get().to(codes::link))
+    )
+    .service(web::resource("/codes/{id}")
+        .route(web::get().to(codes::show))
+        .route(web::put().to(codes::update))
+        .route(web::delete().to(codes::destroy))
+    )
+    .service(web::resource("/comps/{id}")
+        .route(web::get().to(comps::show))
+        .route(web::patch().to(comps::update))
+        .route(web::delete().to(comps::destroy))
+    )
+    .service(web::resource("/event_report_subscribers/{id}")
+        .route(web::delete().to(event_report_subscribers::destroy))
+    )
+    .service(web::resource("/events")
         // In future it may be better to cache this for every user to save the database hit
-        r.middleware(CacheResource::new(CacheUsersBy::GlobalRoles));
-        r.method(Method::GET).with(events::index);
-        r.method(Method::POST).with(events::create);
-    })
-    .resource("/events/checkins", |r| {
-        r.method(Method::GET).with(events::checkins);
-    })
-    .resource("/events/{id}", |r| {
+        //r.middleware(CacheResource::new(CacheUsersBy::GlobalRoles));
+        .route(web::get().to(events::index))
+        .route(web::post().to(events::create))
+    )
+    .service(web::resource("/events/checkins")
+        .route(web::get().to(events::checkins))
+    )
+    .service(web::resource("/events/{id}")
         // In future it may be better to cache this for every user to save the database hit
-        r.middleware(CacheResource::new(CacheUsersBy::GlobalRoles));
-        r.method(Method::GET).with(events::show);
-        r.method(Method::PUT).with(events::update);
-        r.method(Method::DELETE).with(events::cancel);
-    })
-    .resource("/events/{id}/delete", |r| {
-        r.method(Method::DELETE).with(events::delete);
-    })
-    .resource("/events/{id}/artists", |r| {
-        r.method(Method::POST).with(events::add_artist);
-        r.method(Method::PUT).with(events::update_artists);
-    })
-    .resource("/events/{id}/ticket_holder_count", |r| {
-        r.method(Method::GET).with(events::ticket_holder_count);
-    })
-    .resource("/events/{id}/clone", |r| {
-        r.method(Method::POST).with(events::clone);
-    })
-    .resource("/events/{id}/codes", |r| {
-        r.method(Method::GET).with(events::codes);
-        r.method(Method::POST).with(codes::create);
-    })
-    .resource("/events/{id}/dashboard", |r| {
-        r.method(Method::GET).with(events::dashboard);
-    })
-    .resource("/events/{id}/guests", |r| {
-        r.method(Method::GET).with(events::guest_list);
-    })
-    .resource("/events/{id}/holds", |r| {
-        r.method(Method::POST).with(holds::create);
-        r.method(Method::GET).with(events::holds);
-    })
-    .resource("/events/{id}/interest", |r| {
-        r.method(Method::GET).with(events::list_interested_users);
-        r.method(Method::POST).with(events::add_interest);
-        r.method(Method::DELETE).with(events::remove_interest);
-    })
-    .resource("/events/{id}/publish", |r| {
-        r.method(Method::POST).with(events::publish);
-    })
-    .resource("/events/{id}/broadcasts", |r| {
-        r.method(Method::POST).with(broadcasts::create);
-        r.method(Method::GET).with(broadcasts::index);
-        r.method(Method::PUT).with(broadcasts::update);
-    })
-    .resource("/events/{id}/links", |r| {
-        r.method(Method::POST).with(events::create_link);
-    })
-    .resource("/events/{id}/redeem/{ticket_instance_id}", |r| {
-        r.method(Method::POST).with(events::redeem_ticket);
-    })
-    .resource("/events/{id}/redeem", |r| {
-        r.method(Method::POST).with(events::redeem_ticket);
-    })
-    .resource("/events/{id}/report_subscribers", |r| {
-        r.method(Method::GET).with(event_report_subscribers::index);
-        r.method(Method::POST).with(event_report_subscribers::create);
-    })
-    .resource("/events/{id}/tickets", |r| {
-        r.method(Method::GET).with(tickets::index);
-    })
-    .resource("/events/{id}/ticket_types", |r| {
-        r.method(Method::GET).with(ticket_types::index);
-        r.method(Method::POST).with(ticket_types::create);
-    })
-    .resource("/events/{id}/ticket_types/multiple", |r| {
-        r.method(Method::POST).with(ticket_types::create_multiple);
-    })
-    .resource("/events/{event_id}/ticket_types/{ticket_type_id}", |r| {
-        r.method(Method::PATCH).with(ticket_types::update);
-        r.method(Method::DELETE).with(ticket_types::cancel);
-    })
-    .resource("/events/{id}/unpublish", |r| {
-        r.method(Method::POST).with(events::unpublish);
-    })
-    .resource("/events/{id}/users", |r| {
-        r.method(Method::GET).with(events::users);
-    })
-    .resource("/events/{id}/users/invites", |r| {
-        r.method(Method::POST).with(organization_invites::create_for_event);
-    })
-    .resource("/events/{id}/users/invites/{invite_id}", |r| {
-        r.method(Method::DELETE).with(organization_invites::destroy);
-    })
-    .resource("/events/{id}/users/{user_id}", |r| {
-        r.method(Method::DELETE).with(events::remove_user);
-    })
-    .resource("/events/{id}/websockets", |r| {
-        r.method(Method::GET).with(websockets::initate);
-    })
-    .resource("/external/facebook/pages", |r| {
-        r.method(Method::GET).with(external::facebook::pages)
-    })
-    .resource("/external/facebook/events", |r| {
-        r.method(Method::POST).with(external::facebook::create_event);
-    })
-    .resource("/external/facebook/web_login", |r| {
-        r.method(Method::POST).with(external::facebook::web_login)
-    })
-    .resource("/external/facebook/scopes", |r| {
-        r.method(Method::GET).with(external::facebook::scopes);
-    })
-    .resource("/external/facebook", |r| {
-        r.method(Method::DELETE).with(external::facebook::disconnect);
-    })
-    .resource("/genres", |r| {
-        r.middleware(CacheResource::new(CacheUsersBy::None));
-        r.method(Method::GET).with(genres::index);
-    })
-    .resource("/invitations/{id}", |r| {
-        r.method(Method::GET).with(organization_invites::view);
-    })
-    .resource("/invitations", |r| {
-        r.method(Method::POST).with(organization_invites::accept_request);
-    })
-    .resource("/ipns/globee", |r| {
-        r.method(Method::POST).with(ipns::globee);
-    })
-    .resource("/holds/{id}/comps", |r| {
-        r.method(Method::GET).with(comps::index);
-        r.method(Method::POST).with(comps::create);
-    })
-    .resource("/holds/{id}/split", |r| {
-        r.method(Method::POST).with(holds::split);
-    })
-    .resource("/holds/{id}/children", |r| {
-        r.method(Method::GET).with(holds::children);
-    })
-    .resource("/holds/{id}/link", |r| {
-        r.method(Method::GET).with(holds::link);
-    })
-    .resource("/holds/{id}", |r| {
-        r.method(Method::PATCH).with(holds::update);
-        r.method(Method::GET).with(holds::show);
-        r.method(Method::DELETE).with(holds::destroy);
-    })
-    .resource("/notes/{id}", |r| {
-        r.method(Method::DELETE).with(notes::destroy);
-    })
-    .resource("/notes/{main_table}/{id}", |r| {
-        r.method(Method::GET).with(notes::index);
-        r.method(Method::POST).with(notes::create);
-    })
-    .resource("/orders", |r| {
-        r.method(Method::GET).with(orders::index);
-    })
-    .resource("/orders/{id}/activity", |r| {
-        r.method(Method::GET).with(orders::activity);
-    })
-    .resource("/orders/{id}/details", |r| {
-        r.method(Method::GET).with(orders::details);
-    })
-    .resource("/orders/{id}/refund", |r| {
-        r.method(Method::PATCH).with(orders::refund);
-    })
-    .resource("/orders/{id}/resend_confirmation", |r| {
-        r.method(Method::POST).with(orders::resend_confirmation);
-    })
-    .resource("/orders/{id}/send_box_office_instructions", |r| {
-        r.method(Method::POST).with(orders::send_box_office_instructions);
-    })
-    .resource("/orders/{id}/tickets", |r| {
-        r.method(Method::GET).with(orders::tickets);
-    })
-    .resource("/orders/{id}/transfers", |r| {
-        r.method(Method::GET).with(transfers::index);
-    })
-    .resource("/orders/{id}", |r| {
-        r.method(Method::GET).with(orders::show);
-    })
-    .resource("/organization_venues/{id}", |r| {
-        r.method(Method::GET).with(organization_venues::show);
-        r.method(Method::DELETE).with(organization_venues::destroy);
-    })
-    .resource("/organizations/{id}/artists", |r| {
-        r.method(Method::GET).with(artists::show_from_organizations);
-        r.method(Method::POST).with(organizations::add_artist);
-    })
-    .resource("/organizations/{id}/events", |r| {
-        r.method(Method::GET).with(events::show_from_organizations);
-    })
-    .resource("/organizations/{id}/export_event_data", |r| {
-        r.method(Method::GET).with(events::export_event_data);
-    })
-    .resource("/organizations/{id}/fans/{user_id}/activity", |r| {
-        r.method(Method::GET).with(users::activity);
-    })
-    .resource("/organizations/{id}/fans/{user_id}/history", |r| {
-        r.method(Method::GET).with(users::history);
-    })
-    .resource("/organizations/{id}/fans/{user_id}", |r| {
-        r.method(Method::GET).with(users::profile);
-    })
-    .resource("/organizations/{id}/fee_schedule", |r| {
-        r.method(Method::GET).with(organizations::show_fee_schedule);
-        r.method(Method::POST).with(organizations::add_fee_schedule);
-    })
-    .resource("/organizations/{id}/fans", |r| {
-        r.method(Method::GET).with(organizations::search_fans);
-    })
-    .resource("/organizations/{id}/invites/{invite_id}", |r| {
-        r.method(Method::DELETE).with(organization_invites::destroy);
-    })
-    .resource("/organizations/{id}/organization_venues", |r| {
-        r.method(Method::GET).with(organization_venues::organizations_index);
-        r.method(Method::POST).with(organization_venues::create);
-    })
-    .resource("/organizations/{id}/settlements", |r| {
-        r.method(Method::GET).with(settlements::index);
-        r.method(Method::POST).with(settlements::create);
-    })
-    .resource("/organizations/{id}/invites", |r| {
-        r.method(Method::GET).with(organization_invites::index);
-        r.method(Method::POST).with(organization_invites::create);
-    })
-    .resource("/organizations/{id}/users", |r| {
-        r.method(Method::POST).with(organizations::add_or_replace_user);
-        r.method(Method::PUT).with(organizations::add_or_replace_user);
-        r.method(Method::GET).with(organizations::list_organization_members);
-    })
-    .resource("/organizations/{id}/users/{user_id}", |r| {
-        r.method(Method::DELETE).with(organizations::remove_user);
-    })
-    .resource("/organizations/{id}/venues", |r| {
-        r.method(Method::GET).with(venues::show_from_organizations);
-    })
-    .resource("/organizations/{id}", |r| {
-        r.method(Method::GET).with(organizations::show);
-        r.method(Method::PATCH).with(organizations::update);
-    })
-    .resource("/organizations", |r| {
-        r.method(Method::GET).with(organizations::index);
-        r.method(Method::POST).with(organizations::create);
-    })
-    .resource("/password_reset", |r| {
-        r.method(Method::POST).with(password_resets::create);
-        r.method(Method::PUT).with(password_resets::update);
-    })
-    .resource("/payments/callback/{nonce}/{id}", |r| {
-        r.method(Method::GET).with(payments::callback);
-    })
-    .resource("/payment_methods", |r| {
-        r.method(Method::GET).with(payment_methods::index);
-    })
-    .resource("/redemption_codes/{code}", |r| {
-        r.method(Method::GET).with(redemption_codes::show)
-    })
-    .resource("/regions/{id}", |r| {
-        r.middleware(CacheResource::new(CacheUsersBy::None));
-        r.method(Method::GET).with(regions::show);
-        r.method(Method::PUT).with(regions::update);
-    })
-    .resource("/regions", |r| {
-        r.middleware(CacheResource::new(CacheUsersBy::None));
-        r.method(Method::GET).with(regions::index);
-        r.method(Method::POST).with(regions::create)
-    })
-    .resource("/reports/{id}", |r| {
-        r.method(Method::GET).with(reports::get_report);
-    })
-    .resource("/slugs", |r| {
-        r.method(Method::GET).with(slugs::index);
-    })
-    .resource("/slugs/{id}", |r| {
-        r.method(Method::GET).with(slugs::show);
-        r.method(Method::PUT).with(slugs::update);
-    })
-    .resource("/status", |r| r.method(Method::GET).with(status::check))
-    .resource("/stages/{id}", |r| {
-        r.method(Method::GET).with(stages::show);
-        r.method(Method::PUT).with(stages::update);
-        r.method(Method::DELETE).with(stages::delete);
-    })
-    .resource("/settlement_adjustments/{id}", |r| {
-        r.method(Method::DELETE).with(settlement_adjustments::destroy);
-    })
-    .resource("/settlements/{id}/adjustments", |r| {
-        r.method(Method::GET).with(settlement_adjustments::index);
-        r.method(Method::POST).with(settlement_adjustments::create);
-    })
-    .resource("/settlements/{id}", |r| {
-        r.method(Method::GET).with(settlements::show);
-        r.method(Method::DELETE).with(settlements::destroy);
-    })
-    .resource("/tickets/transfer", |r| {
-        r.method(Method::POST).with(tickets::transfer_authorization);
-    })
-    .resource("/tickets/receive", |r| {
-        r.method(Method::POST).with(tickets::receive_transfer);
-    })
-    .resource("/tickets/send", |r| {
-        r.method(Method::POST).with(tickets::send_via_email_or_phone);
-    })
-    .resource("/tickets/{id}", |r| {
-        r.method(Method::GET).with(tickets::show);
-        r.method(Method::PATCH).with(tickets::update);
-    })
-    .resource("/tickets", |r| {
-        r.method(Method::GET).with(tickets::index);
-    })
-    .resource("/tickets/{id}/redeem", |r| {
-        r.method(Method::GET).with(tickets::show_redeemable_ticket);
-    })
-    .resource("/transfers/transfer_key/{id}", |r| {
-        r.method(Method::GET).with(transfers::show_by_transfer_key);
-    })
-    .resource("/transfers/activity", |r| {
-        r.method(Method::GET).with(transfers::activity);
-    })
-    .resource("/transfers/{id}", |r| {
-        r.method(Method::DELETE).with(transfers::cancel);
-    })
-    .resource("/transfers", |r| {
-        r.method(Method::GET).with(transfers::index);
-    })
-    .resource("/users/me", |r| {
-        r.method(Method::GET).with(users::current_user);
-        r.method(Method::PUT).with(users::update_current_user);
-    })
-    .resource("/users/register", |r| r.method(Method::POST).with(users::register))
-    .resource("/users/{id}/tokens", |r| {
-        r.method(Method::GET)
-            .with(users::show_push_notification_tokens_for_user_id);
-    })
-    .resource("/users/tokens", |r| {
-        r.method(Method::GET).with(users::show_push_notification_tokens);
-        r.method(Method::POST).with(users::add_push_notification_token);
-    })
-    .resource("/users/tokens/{id}", |r| {
-        r.method(Method::DELETE).with(users::remove_push_notification_token);
-    })
-    .resource("/users", |r| {
-        r.method(Method::POST).with(users::register_and_login);
-    })
-    .resource("/users/{id}", |r| {
-        r.method(Method::GET).with(users::show);
-        r.method(Method::DELETE).with(users::delete);
-    })
-    .resource("/user_invites", |r| {
-        r.method(Method::POST).with(user_invites::create);
-    })
-    .resource("/users/{id}/organizations", |r| {
-        r.method(Method::GET).with(users::list_organizations);
-    })
-    .resource("/venues/{id}/organization_venues", |r| {
-        r.method(Method::GET).with(organization_venues::venues_index);
-        r.method(Method::POST).with(organization_venues::create);
-    })
-    .resource("/venues/{id}/stages", |r| {
-        r.method(Method::POST).with(stages::create);
-        r.method(Method::GET).with(stages::index);
-    })
-    .resource("/venues/{id}/toggle_privacy", |r| {
-        r.method(Method::PUT).with(venues::toggle_privacy);
-    })
-    .resource("/venues/{id}", |r| {
-        r.middleware(CacheResource::new(CacheUsersBy::None));
-        r.method(Method::GET).with(venues::show);
-        r.method(Method::PUT).with(venues::update);
-    })
-    .resource("/venues", |r| {
-        r.middleware(CacheResource::new(CacheUsersBy::AnonymousOnly));
-        r.method(Method::GET).with(venues::index);
-        r.method(Method::POST).with(venues::create);
-    })
-    .resource("/sitemap.xml", |r| {
-        r.middleware(CacheResource::new(CacheUsersBy::None));
-        r.method(Method::GET).with(sitemap_gen::index);
-    })
-    .register()
-    .default_resource(|r| {
-        r.method(Method::GET)
-            .f(|_req| HttpResponse::NotFound().json(json!({"error": "Not found"})));
-    })
+        //r.middleware(CacheResource::new(CacheUsersBy::GlobalRoles));
+        .route(web::get().to(events::show))
+        .route(web::put().to(events::update))
+        .route(web::delete().to(events::cancel))
+    )
+    .service(web::resource("/events/{id}/delete")
+        .route(web::delete().to(events::delete))
+    )
+    .service(web::resource("/events/{id}/artists")
+        .route(web::post().to(events::add_artist))
+        .route(web::put().to(events::update_artists))
+    )
+    .service(web::resource("/events/{id}/ticket_holder_count")
+        .route(web::get().to(events::ticket_holder_count))
+    )
+    .service(web::resource("/events/{id}/clone")
+        .route(web::post().to(events::clone))
+    )
+    .service(web::resource("/events/{id}/codes")
+        .route(web::get().to(events::codes))
+        .route(web::post().to(codes::create))
+    )
+    .service(web::resource("/events/{id}/dashboard")
+        .route(web::get().to(events::dashboard))
+    )
+    .service(web::resource("/events/{id}/guests")
+        .route(web::get().to(events::guest_list))
+    )
+    .service(web::resource("/events/{id}/holds")
+        .route(web::post().to(holds::create))
+        .route(web::get().to(events::holds))
+    )
+    .service(web::resource("/events/{id}/interest")
+        .route(web::get().to(events::list_interested_users))
+        .route(web::post().to(events::add_interest))
+        .route(web::delete().to(events::remove_interest))
+    )
+    .service(web::resource("/events/{id}/publish")
+        .route(web::post().to(events::publish))
+    )
+    .service(web::resource("/events/{id}/broadcasts")
+        .route(web::post().to(broadcasts::create))
+        .route(web::get().to(broadcasts::index))
+        .route(web::put().to(broadcasts::update))
+    )
+    .service(web::resource("/events/{id}/links")
+        .route(web::post().to(events::create_link))
+    )
+    .service(web::resource("/events/{id}/redeem/{ticket_instance_id}")
+        .route(web::post().to(events::redeem_ticket))
+    )
+    .service(web::resource("/events/{id}/redeem")
+        .route(web::post().to(events::redeem_ticket))
+    )
+    .service(web::resource("/events/{id}/report_subscribers")
+        .route(web::get().to(event_report_subscribers::index))
+        .route(web::post().to(event_report_subscribers::create))
+    )
+    .service(web::resource("/events/{id}/tickets")
+        .route(web::get().to(tickets::index))
+    )
+    .service(web::resource("/events/{id}/ticket_types")
+        .route(web::get().to(ticket_types::index))
+        .route(web::post().to(ticket_types::create))
+    )
+    .service(web::resource("/events/{id}/ticket_types/multiple")
+        .route(web::post().to(ticket_types::create_multiple))
+    )
+    .service(web::resource("/events/{event_id}/ticket_types/{ticket_type_id}")
+        .route(web::patch().to(ticket_types::update))
+        .route(web::delete().to(ticket_types::cancel))
+    )
+    .service(web::resource("/events/{id}/unpublish")
+        .route(web::post().to(events::unpublish))
+    )
+    .service(web::resource("/events/{id}/users")
+        .route(web::get().to(events::users))
+    )
+    .service(web::resource("/events/{id}/users/invites")
+        .route(web::post().to(organization_invites::create_for_event))
+    )
+    .service(web::resource("/events/{id}/users/invites/{invite_id}")
+        .route(web::delete().to(organization_invites::destroy))
+    )
+    .service(web::resource("/events/{id}/users/{user_id}")
+        .route(web::delete().to(events::remove_user))
+    )
+    .service(web::resource("/events/{id}/websockets")
+        .route(web::get().to(websockets::initate))
+    )
+    .service(web::resource("/external/facebook/pages")
+        .route(web::get().to(external::facebook::pages))
+    )
+    .service(web::resource("/external/facebook/events")
+        .route(web::post().to(external::facebook::create_event))
+    )
+    .service(web::resource("/external/facebook/web_login")
+        .route(web::post().to(external::facebook::web_login))
+    )
+    .service(web::resource("/external/facebook/scopes")
+        .route(web::get().to(external::facebook::scopes))
+    )
+    .service(web::resource("/external/facebook")
+        .route(web::delete().to(external::facebook::disconnect))
+    )
+    .service(web::resource("/genres")
+        //r.middleware(CacheResource::new(CacheUsersBy::None));
+        .route(web::get().to(genres::index))
+    )
+    .service(web::resource("/invitations/{id}")
+        .route(web::get().to(organization_invites::view))
+    )
+    .service(web::resource("/invitations")
+        .route(web::post().to(organization_invites::accept_request))
+    )
+    .service(web::resource("/ipns/globee")
+        .route(web::post().to(ipns::globee))
+    )
+    .service(web::resource("/holds/{id}/comps")
+        .route(web::get().to(comps::index))
+        .route(web::post().to(comps::create))
+    )
+    .service(web::resource("/holds/{id}/split")
+        .route(web::post().to(holds::split))
+    )
+    .service(web::resource("/holds/{id}/children")
+        .route(web::get().to(holds::children))
+    )
+    .service(web::resource("/holds/{id}/link")
+        .route(web::get().to(holds::link))
+    )
+    .service(web::resource("/holds/{id}")
+        .route(web::patch().to(holds::update))
+        .route(web::get().to(holds::show))
+        .route(web::delete().to(holds::destroy))
+    )
+    .service(web::resource("/notes/{id}")
+        .route(web::delete().to(notes::destroy))
+    )
+    .service(web::resource("/notes/{main_table}/{id}")
+        .route(web::get().to(notes::index))
+        .route(web::post().to(notes::create))
+    )
+    .service(web::resource("/orders")
+        .route(web::get().to(orders::index))
+    )
+    .service(web::resource("/orders/{id}/activity")
+        .route(web::get().to(orders::activity))
+    )
+    .service(web::resource("/orders/{id}/details")
+        .route(web::get().to(orders::details))
+    )
+    .service(web::resource("/orders/{id}/refund")
+        .route(web::patch().to(orders::refund))
+    )
+    .service(web::resource("/orders/{id}/resend_confirmation")
+        .route(web::post().to(orders::resend_confirmation))
+    )
+    .service(web::resource("/orders/{id}/send_box_office_instructions")
+        .route(web::post().to(orders::send_box_office_instructions))
+    )
+    .service(web::resource("/orders/{id}/tickets")
+        .route(web::get().to(orders::tickets))
+    )
+    .service(web::resource("/orders/{id}/transfers")
+        .route(web::get().to(transfers::index))
+    )
+    .service(web::resource("/orders/{id}")
+        .route(web::get().to(orders::show))
+    )
+    .service(web::resource("/organization_venues/{id}")
+        .route(web::get().to(organization_venues::show))
+        .route(web::delete().to(organization_venues::destroy))
+    )
+    .service(web::resource("/organizations/{id}/artists")
+        .route(web::get().to(artists::show_from_organizations))
+        .route(web::post().to(organizations::add_artist))
+    )
+    .service(web::resource("/organizations/{id}/events")
+        .route(web::get().to(events::show_from_organizations))
+    )
+    .service(web::resource("/organizations/{id}/export_event_data")
+        .route(web::get().to(events::export_event_data))
+    )
+    .service(web::resource("/organizations/{id}/fans/{user_id}/activity")
+        .route(web::get().to(users::activity))
+    )
+    .service(web::resource("/organizations/{id}/fans/{user_id}/history")
+        .route(web::get().to(users::history))
+    )
+    .service(web::resource("/organizations/{id}/fans/{user_id}")
+        .route(web::get().to(users::profile))
+    )
+    .service(web::resource("/organizations/{id}/fee_schedule")
+        .route(web::get().to(organizations::show_fee_schedule))
+        .route(web::post().to(organizations::add_fee_schedule))
+    )
+    .service(web::resource("/organizations/{id}/fans")
+        .route(web::get().to(organizations::search_fans))
+    )
+    .service(web::resource("/organizations/{id}/invites/{invite_id}")
+        .route(web::delete().to(organization_invites::destroy))
+    )
+    .service(web::resource("/organizations/{id}/organization_venues")
+        .route(web::get().to(organization_venues::organizations_index))
+        .route(web::post().to(organization_venues::create))
+    )
+    .service(web::resource("/organizations/{id}/settlements")
+        .route(web::get().to(settlements::index))
+        .route(web::post().to(settlements::create))
+    )
+    .service(web::resource("/organizations/{id}/invites")
+        .route(web::get().to(organization_invites::index))
+        .route(web::post().to(organization_invites::create))
+    )
+    .service(web::resource("/organizations/{id}/users")
+        .route(web::post().to(organizations::add_or_replace_user))
+        .route(web::put().to(organizations::add_or_replace_user))
+        .route(web::get().to(organizations::list_organization_members))
+    )
+    .service(web::resource("/organizations/{id}/users/{user_id}")
+        .route(web::delete().to(organizations::remove_user))
+    )
+    .service(web::resource("/organizations/{id}/venues")
+        .route(web::get().to(venues::show_from_organizations))
+    )
+    .service(web::resource("/organizations/{id}")
+        .route(web::get().to(organizations::show))
+        .route(web::patch().to(organizations::update))
+    )
+    .service(web::resource("/organizations")
+        .route(web::get().to(organizations::index))
+        .route(web::post().to(organizations::create))
+    )
+    .service(web::resource("/password_reset")
+        .route(web::post().to(password_resets::create))
+        .route(web::put().to(password_resets::update))
+    )
+    .service(web::resource("/payments/callback/{nonce}/{id}")
+        .route(web::get().to(payments::callback))
+    )
+    .service(web::resource("/payment_methods")
+        .route(web::get().to(payment_methods::index))
+    )
+    .service(web::resource("/redemption_codes/{code}")
+        .route(web::get().to(redemption_codes::show))
+    )
+    .service(web::resource("/regions/{id}")
+        //r.middleware(CacheResource::new(CacheUsersBy::None));
+        .route(web::get().to(regions::show))
+        .route(web::put().to(regions::update))
+    )
+    .service(web::resource("/regions")
+        //r.middleware(CacheResource::new(CacheUsersBy::None));
+        .route(web::get().to(regions::index))
+        .route(web::post().to(regions::create))
+    )
+    .service(web::resource("/reports/{id}")
+        .route(web::get().to(reports::get_report))
+    )
+    .service(web::resource("/slugs")
+        .route(web::get().to(slugs::index))
+    )
+    .service(web::resource("/slugs/{id}")
+        .route(web::get().to(slugs::show))
+        .route(web::put().to(slugs::update))
+    )
+    .service(web::resource("/status")
+        .route(web::get().to(status::check))
+    )
+    .service(web::resource("/stages/{id}")
+        .route(web::get().to(stages::show))
+        .route(web::put().to(stages::update))
+        .route(web::delete().to(stages::delete))
+    )
+    .service(web::resource("/settlement_adjustments/{id}")
+        .route(web::delete().to(settlement_adjustments::destroy))
+    )
+    .service(web::resource("/settlements/{id}/adjustments")
+        .route(web::get().to(settlement_adjustments::index))
+        .route(web::post().to(settlement_adjustments::create))
+    )
+    .service(web::resource("/settlements/{id}")
+        .route(web::get().to(settlements::show))
+        .route(web::delete().to(settlements::destroy))
+    )
+    .service(web::resource("/tickets/transfer")
+        .route(web::post().to(tickets::transfer_authorization))
+    )
+    .service(web::resource("/tickets/receive")
+        .route(web::post().to(tickets::receive_transfer))
+    )
+    .service(web::resource("/tickets/send")
+        .route(web::post().to(tickets::send_via_email_or_phone))
+    )
+    .service(web::resource("/tickets/{id}")
+        .route(web::get().to(tickets::show))
+        .route(web::patch().to(tickets::update))
+    )
+    .service(web::resource("/tickets")
+        .route(web::get().to(tickets::index))
+    )
+    .service(web::resource("/tickets/{id}/redeem")
+        .route(web::get().to(tickets::show_redeemable_ticket))
+    )
+    .service(web::resource("/transfers/transfer_key/{id}")
+        .route(web::get().to(transfers::show_by_transfer_key))
+    )
+    .service(web::resource("/transfers/activity")
+        .route(web::get().to(transfers::activity))
+    )
+    .service(web::resource("/transfers/{id}")
+        .route(web::delete().to(transfers::cancel))
+    )
+    .service(web::resource("/transfers")
+        .route(web::get().to(transfers::index))
+    )
+    .service(web::resource("/users/me")
+        .route(web::get().to(users::current_user))
+        .route(web::put().to(users::update_current_user))
+    )
+    .service(web::resource("/users/register")
+        .route(web::post().to(users::register))
+    )
+    .service(web::resource("/users/{id}/tokens")
+        .route(web::get().to(users::show_push_notification_tokens_for_user_id))
+    )
+    .service(web::resource("/users/tokens")
+        .route(web::get().to(users::show_push_notification_tokens))
+        .route(web::post().to(users::add_push_notification_token))
+    )
+    .service(web::resource("/users/tokens/{id}")
+        .route(web::delete().to(users::remove_push_notification_token))
+    )
+    .service(web::resource("/users")
+        .route(web::post().to(users::register_and_login))
+    )
+    .service(web::resource("/users/{id}")
+        .route(web::get().to(users::show))
+        .route(web::delete().to(users::delete))
+    )
+    .service(web::resource("/user_invites")
+        .route(web::post().to(user_invites::create))
+    )
+    .service(web::resource("/users/{id}/organizations")
+        .route(web::get().to(users::list_organizations))
+    )
+    .service(web::resource("/venues/{id}/organization_venues")
+        .route(web::get().to(organization_venues::venues_index))
+        .route(web::post().to(organization_venues::create))
+    )
+    .service(web::resource("/venues/{id}/stages")
+        .route(web::post().to(stages::create))
+        .route(web::get().to(stages::index))
+    )
+    .service(web::resource("/venues/{id}/toggle_privacy")
+        .route(web::put().to(venues::toggle_privacy))
+    )
+    .service(web::resource("/venues/{id}")
+        //r.middleware(CacheResource::new(CacheUsersBy::None));
+        .route(web::get().to(venues::show))
+        .route(web::put().to(venues::update))
+    )
+    .service(web::resource("/venues")
+        //r.middleware(CacheResource::new(CacheUsersBy::AnonymousOnly));
+        .route(web::get().to(venues::index))
+        .route(web::post().to(venues::create))
+    )
+    .service(web::resource("/sitemap.xml")
+        //r.middleware(CacheResource::new(CacheUsersBy::None));
+        .route(web::get().to(sitemap_gen::index))
+    );
 }
