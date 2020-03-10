@@ -25,7 +25,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(user: DbUser, request: &HttpRequest<AppState>) -> Result<User, EnumParseError> {
+    pub fn new(user: DbUser, request: &HttpRequest) -> Result<User, EnumParseError> {
         let global_scopes = user.get_global_scopes().into_iter().map(|s| s.to_string()).collect();
         Ok(User {
             user,
