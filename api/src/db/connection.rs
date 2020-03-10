@@ -2,14 +2,11 @@ use crate::db::*;
 use crate::errors::BigNeonError;
 use crate::server::GetAppState;
 use actix_web::{FromRequest, HttpRequest, Result};
-use actix_web::error::ErrorServiceUnavailable;
 use diesel;
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
 use diesel::PgConnection;
 use std::sync::Arc;
-use std::pin::Pin;
-use std::future::Future;
 use futures::future::{Ready, ok};
 
 pub struct Connection {
