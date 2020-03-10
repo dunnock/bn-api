@@ -14,10 +14,10 @@ pub struct RegenerateDripActionsExecutor {
 impl DomainActionExecutor for RegenerateDripActionsExecutor {
     fn execute(&self, action: DomainAction, conn: Connection) -> ExecutorFuture {
         match self.perform_job(&action, &conn) {
-            Ok(_) => ExecutorFuture::new(action, conn, Box::new(future::ok(()))),
+            Ok(_) => ExecutorFuture::new(action, conn, Box::pin(future::ok(()))),
             Err(e) => {
                 jlog!(Error, "Update genres action failed", {"action_id": action.id, "main_table_id": action.main_table_id, "error": e.to_string()});
-                ExecutorFuture::new(action, conn, Box::new(future::err(e)))
+                ExecutorFuture::new(action, conn, Box::pin(future::err(e)))
             }
         }
     }

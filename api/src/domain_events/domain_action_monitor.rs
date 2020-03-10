@@ -14,10 +14,8 @@ use crate::domain_events::errors::DomainActionError;
 use crate::domain_events::routing::{DomainActionExecutor, DomainActionRouter};
 use bigneon_db::prelude::*;
 use logging::*;
-use tokio::prelude::*;
-use tokio::runtime::current_thread;
 use tokio::runtime::Runtime;
-use tokio::timer::Timeout;
+use tokio::time::timeout;
 
 pub struct DomainActionMonitor {
     config: Config,
@@ -48,10 +46,13 @@ impl DomainActionMonitor {
                 cmp::max(1, self.config.connection_pool.max / 2) as usize,
             )?;
 
-            let mut runtime = current_thread::Runtime::new().unwrap();
+            let mut runtime = tokio::runtime::Builder::new()
+                .basic_scheduler()
+                .build()
+                .unwrap();
 
             for (executor, domain_action, connection) in futures {
-                let timeout = Timeout::new(executor.execute(domain_action, connection), Duration::from_secs(55));
+                let timeout = timeout(Duration::from_secs(55), executor.execute(domain_action, connection));
 
                 runtime
                     .block_on(timeout.or_else(|err| {
@@ -249,7 +250,7 @@ impl DomainActionMonitor {
                 thread::sleep(Duration::from_secs(interval));
             } else {
                 for (command, action, connection) in actions {
-                    let timeout = Timeout::new(command.execute(action, connection), Duration::from_secs(55));
+                    let timeout = timeout(Duration::from_secs(55), command.execute(action, connection));
 
                     runtime.spawn(timeout.or_else(|err| {
                         jlog! {Error,"bigneon::domain_actions", "Action:  failed", {"error": err.to_string()}};
