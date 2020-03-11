@@ -112,21 +112,22 @@ impl SGContactList {
             .and_then(|mut r| r.json())
             .map(|json: serde_json::Value| json.into())
             .or_else(|err| {
-                if err.is_client_error() {
-                    // 4XX error
-                    // Possible duplicate error being returned from sendgrid
-                    // Fetch all lists and if there's a matching name, return the list object
-                    let lists =
-                        Self::fetch_all(api_key).map_err(|err| ApplicationError::new(format!("{}", err).into()))?;
+                match err.status() {
+                    Some(status) if status.is_client_error() => {
+                        // 4XX error
+                        // Possible duplicate error being returned from sendgrid
+                        // Fetch all lists and if there's a matching name, return the list object
+                        let lists =
+                            Self::fetch_all(api_key).map_err(|err| ApplicationError::new(format!("{}", err).into()))?;
 
-                    let found_list = lists.iter().find(|l| l.name == self.name);
-                    if let Some(list) = found_list {
-                        Ok(list.clone())
-                    } else {
-                        Err(BigNeonError::new(Box::new(err)))
-                    }
-                } else {
-                    Err(BigNeonError::new(Box::new(err)))
+                        let found_list = lists.iter().find(|l| l.name == self.name);
+                        if let Some(list) = found_list {
+                            Ok(list.clone())
+                        } else {
+                            Err(BigNeonError::new(Box::new(err)))
+                        }
+                    },
+                    _ => Err(BigNeonError::new(Box::new(err))),
                 }
             })
     }

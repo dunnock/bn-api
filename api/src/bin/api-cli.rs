@@ -1,14 +1,8 @@
 #![deny(unused_extern_crates)]
-extern crate bigneon_api;
-extern crate bigneon_db;
-extern crate dotenv;
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate logging;
-extern crate clap;
-extern crate diesel;
-extern crate uuid;
 
 use bigneon_api::config::Config;
 use bigneon_api::db::Database;

@@ -15,6 +15,7 @@ actix-cors = "0.2"
 actix-web-actors = "2.0"
 actix-service = "1.0"
 actix-files = "0.2"
+actix-http = "1.0.1"
 bigneon_db = { path = "../db" }
 bigneon_http = { path = "../http" }
 bigneon_caching_derive = { path = "../http/caching_derive" }

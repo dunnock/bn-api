@@ -10,9 +10,10 @@ use crate::utils::ServiceLocator;
 use actix::Addr;
 use actix_web::{http, HttpRequest, HttpResponse, dev::ServiceRequest};
 use actix_web::middleware::Logger;
-use actix_web::{HttpServer, App, web};
+use actix_web::{HttpServer, App, web, web::Data};
 use actix_files as fs;
 use actix_cors::Cors;
+use actix_service::Service;
 use bigneon_db::utils::errors::DatabaseError;
 use log::Level::Debug;
 use std::collections::HashMap;
@@ -49,16 +50,20 @@ impl AppState {
 
 // actix:0.7 back compatibility
 pub(crate) trait GetAppState {
-    fn state(&self) -> &AppState;
+    fn state(&self) -> Data<AppState>;
 }
 impl GetAppState for HttpRequest {
-    fn state(&self) -> &AppState {
-        self.app_data().expect("critical: AppState not configured for App")
+    fn state(&self) -> Data<AppState> {
+        let data: &Data<AppState> = self.app_data()
+            .expect("critical: AppState not configured for App");
+        data.clone()
     }
 }
 impl GetAppState for ServiceRequest {
-    fn state(&self) -> &AppState {
-        self.app_data().expect("critical: AppState not configured for App")
+    fn state(&self) -> Data<AppState> {
+        let data: Data<AppState> = self.app_data()
+            .expect("critical: AppState not configured for App");
+        data
     }
 }
 
@@ -114,13 +119,13 @@ impl Server {
             let mut server = HttpServer::new({
                 move || {
                     App::new()
-                        .app_data(
+                        .data(
                             AppState::new(conf.clone(), database.clone(), database_ro.clone(), clients.clone())
                                 .expect("Expected to generate app state"),
                         )
                         .wrap({
                             let mut cors_config = Cors::new();
-                            match conf.allowed_origins.as_ref() {
+                            cors_config = match conf.allowed_origins.as_ref() {
                                 "*" => cors_config.send_wildcard(),
                                 _ => cors_config.allowed_origin(&conf.allowed_origins),
                             };
@@ -139,8 +144,21 @@ impl Server {
                                 .finish()
                         })
                         .wrap(Logger::new(LOGGER_FORMAT))
-                        .wrap_fn(BigNeonLogger::create())
-                        .wrap_fn(DatabaseTransaction::create())
+                        .wrap_fn(|sreq, serv| {
+                            let data = BigNeonLogger::start(&sreq);
+                            let fut = serv.call(sreq);
+                            async move {
+                                let resp = fut.await;
+                                BigNeonLogger::finish(&data, resp)
+                            }
+                        })
+                        .wrap_fn(|sreq, serv| {
+                            let srv_fut = serv.call(sreq);
+                            async move {
+                                let resp = srv_fut.await?;
+                                DatabaseTransaction::response(resp)
+                            }
+                        })
                         .wrap(AppVersionHeader::new())
                         /*TODO .middleware(Metatags::new(
                             conf.ssr_trigger_header.clone(),
@@ -149,14 +167,13 @@ impl Server {
                             conf.app_name.clone(),
                         ))*/
                         .configure( routing::routes )
-                        .service({
-                            match &static_file_conf.static_file_path {
-                                Some(static_file_path) => fs::Files::new("/", static_file_path),
-                                None => web::resource("/").route(web::get().to(HttpResponse::NotFound)),
+                        .configure( |conf| {
+                            if let Some(static_file_path) = &static_file_conf.static_file_path {
+                                conf.service(fs::Files::new("/", static_file_path));
                             }
                         })
                         .default_service(
-                            web::get().to(|_req| HttpResponse::NotFound().json(json!({"error": "Not found"})))
+                            web::get().to(|| HttpResponse::NotFound().json(json!({"error": "Not found"})))
                         )
                 }
             })

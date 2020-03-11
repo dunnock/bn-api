@@ -29,23 +29,10 @@ impl DatabaseTransaction {
 }
 
 impl DatabaseTransaction {
-    pub fn create<S, B>() -> impl FnMut(ServiceRequest, &mut S) -> Pin<Box<dyn Future<Output = error::Result<ServiceResponse<B>>> + 'static>>
-    where
-        S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = error::Error>,
-        S::Future: 'static,
-        B: MessageBody,
-    {
-        |sreq, serv| {
-            let srv_fut = serv.call(sreq);
-            Box::pin(async move {
-                let resp = srv_fut.await?;
-                Self::response(resp.request(), resp)
-            })
-        }
-    }
+    pub fn response<B>(response: ServiceResponse<B>) -> error::Result<ServiceResponse<B>> {
+        let request = response.request();
 
-    fn response<B>(request: &HttpRequest, response: ServiceResponse<B>) -> error::Result<ServiceResponse<B>> {
-        if let Some(connection) = request.extensions().get::<Connection>() {
+        let res = if let Some(connection) = request.extensions().get::<Connection>() {
             let connection_object = connection.get();
 
             let transaction_response = match response.response().error() {
@@ -58,15 +45,18 @@ impl DatabaseTransaction {
             };
 
             match transaction_response {
-                Ok(_) => (),
+                Ok(_) => Ok(()),
                 Err(e) => {
                     error!("Diesel Error: {}", e.description());
                     let error: BigNeonError = e.into();
-                    return Ok(response.error_response(error));
+                    Err(error)
                 }
             }
-        };
+        } else { Ok(()) };
 
-        Ok(response)
+        match res {
+            Ok(_) => Ok(response),
+            Err(err) => Ok(response.error_response(err))
+        }
     }
 }

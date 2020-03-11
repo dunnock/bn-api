@@ -13,26 +13,20 @@ use std::pin::Pin;
 pub struct BigNeonLogger;
 
 impl BigNeonLogger {
-    pub fn create<S, B>() -> impl FnMut(ServiceRequest, &mut S) -> Box<dyn Future<Output = error::Result<ServiceResponse<B>>> + 'static>
+    pub async fn wrapper<S, B>(sreq: ServiceRequest, serv: &mut S) -> error::Result<ServiceResponse<B>>
     where
         S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = error::Error>,
         S::Future: 'static,
         B: MessageBody,
     {
-        |sreq, serv| {
-            let data = RequestLogData::from(&sreq);
-            BigNeonLogger::start(&data);
-            let srv_fut = serv.call(sreq);
-            Box::new(async move {
-                let resp = srv_fut.await;
-                BigNeonLogger::finish(&data, &resp);
-                resp
-            })
-        }
+        let data = BigNeonLogger::start(&sreq);
+        let resp = serv.call(sreq).await;
+        BigNeonLogger::finish(&data, resp)
     }
 
     // log message at the start of request lifecycle
-    fn start(data: &RequestLogData) {
+    pub fn start(sreq: &ServiceRequest) -> RequestLogData {
+        let data = RequestLogData::from(sreq);
         if data.uri != "/status" {
             jlog!(
                 Level::Info,
@@ -47,13 +41,14 @@ impl BigNeonLogger {
                     "api_version": env!("CARGO_PKG_VERSION")
             });
         };
+        data
     }
 
     // log message at the end of request lifecycle
-    fn finish<B: MessageBody>(data: &RequestLogData, resp: &error::Result<ServiceResponse<B>>) {
+    pub fn finish<B: MessageBody>(data: &RequestLogData, resp: error::Result<ServiceResponse<B>>) -> error::Result<ServiceResponse<B>> {
         let error = match resp {
-            Err(error) => Some(error),
-            Ok(resp) => resp.response().error(),
+            Err(ref error) => Some(error),
+            Ok(ref resp) => resp.response().error(),
         };
         if let Some(error) = error {
             let level = match error.as_response_error().status_code() {
@@ -73,13 +68,13 @@ impl BigNeonLogger {
                     "api_version": env!("CARGO_PKG_VERSION"),
                     "user_agent": data.user_agent
             });
-        }
-
+        };
+        resp
     }
 }
 
 
-struct RequestLogData {
+pub struct RequestLogData {
     user: Option<uuid::Uuid>, // NOTE: this used to be Option<Option<uuid::Uuid>>
     ip_address: Option<String>,
     method: String,

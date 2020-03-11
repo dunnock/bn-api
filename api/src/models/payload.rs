@@ -5,6 +5,7 @@ use actix_web::HttpResponse;
 use actix_web::{Error, Responder};
 use bigneon_db::models::Payload;
 use serde::Serialize;
+use futures::future::{ok, err, Ready};
 
 #[derive(Debug)]
 pub struct WebPayload<T>(StatusCode, Payload<T>);
@@ -27,14 +28,11 @@ where
 
     pub fn into_http_response(self) -> Result<HttpResponse, BigNeonError> {
         let body = serde_json::to_string(&self.1)?;
-        Ok(HttpResponse::new(self.0)
-            .into_builder()
+        Ok(HttpResponse::build(self.0)
             .content_type("application/json")
             .body(body))
     }
 }
-
-use futures::future::{Ready, ok};
 
 impl<T> Responder for WebPayload<T>
 where
@@ -44,7 +42,10 @@ where
     type Error = Error;
 
     fn respond_to(self, _req: &HttpRequest) -> Self::Future {
-        ok(self.into_http_response()?)
+        match self.into_http_response() {
+            Ok(r) => ok(r),
+            Err(e) => err(e.into()),
+        }
     }
 }
 
@@ -72,11 +73,12 @@ where
     type Error = Error;
 
     fn respond_to(self, _req: &HttpRequest) -> Self::Future {
-        let body = serde_json::to_string(&self.1)?;
-        ok(HttpResponse::new(self.0)
-            .into_builder()
-            .content_type("application/json")
-            .body(body))
+        match serde_json::to_string(&self.1) {
+            Ok(body) => ok(HttpResponse::build(self.0)
+                .content_type("application/json")
+                .body(body)),
+            Err(e) => err(e.into()),
+        }
     }
 }
 

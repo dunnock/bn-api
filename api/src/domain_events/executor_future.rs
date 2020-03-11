@@ -35,7 +35,7 @@ impl ExecutorFuture {
 impl Future for ExecutorFuture {
     type Output = Result<(), BigNeonError>;
 
-    fn poll(self: std::pin::Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+    fn poll(mut self: std::pin::Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         match self.inner.as_mut().poll(cx) {
             Poll::Ready(Ok(r)) => {
                 jlog!(Info,

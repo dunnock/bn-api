@@ -55,8 +55,8 @@ impl DomainActionMonitor {
             for (executor, domain_action, connection) in futures {
                 let timeout = timeout(Duration::from_secs(55), executor.execute(domain_action, connection));
 
-                runtime
-                    .block_on(timeout.or_else(|err| async {
+                let res = runtime
+                    .block_on(timeout.or_else(|err| async move {
                         jlog! {Error,"bigneon::domain_actions", "Action: failed", {"error": err.to_string()}};
                         Err(())
                     }))
@@ -253,7 +253,7 @@ impl DomainActionMonitor {
                 for (command, action, connection) in actions {
                     let timeout = timeout(Duration::from_secs(55), command.execute(action, connection));
 
-                    runtime.spawn(timeout.or_else(|err| async {
+                    runtime.spawn(timeout.or_else(|err| async move {
                         jlog! {Error,"bigneon::domain_actions", "Action:  failed", {"error": err.to_string()}};
                         Err(())
                     }));
