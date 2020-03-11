@@ -9,6 +9,7 @@ documentation = "https://github.com/big-neon/docs"
 edition = "2018"
 
 [dependencies]
+actix-rt = "1.0"
 actix = "0.9"
 actix-web = "2.0"
 actix-cors = "0.2"

@@ -15,7 +15,8 @@ use clap::*;
 use dotenv::dotenv;
 use log::Level::*;
 
-fn main() {
+#[actix_rt::main]
+async fn main() {
     logging::setup_logger();
     info!("Loading environment");
     dotenv().ok();
@@ -88,6 +89,6 @@ fn main() {
             .unwrap_or("false")
             .parse()
             .expect("Unknown value for `run-til-empty`. Use `true` or `false`"),
-    );
+    ).await;
     info!("Server shutting down");
 }

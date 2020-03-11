@@ -15,10 +15,11 @@ use actix_files as fs;
 use actix_cors::Cors;
 use actix_service::Service;
 use bigneon_db::utils::errors::DatabaseError;
-use log::Level::Debug;
+use log::Level::{Debug, Warn};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
+use std::error::Error;
 
 // Must be valid JSON
 const LOGGER_FORMAT: &'static str = r#"{"level": "INFO", "target":"bigneon::request", "remote_ip":"%a", "user_agent": "%{User-Agent}i", "request": "%r", "status_code": %s, "response_time": %D, "api_version":"%{x-app-version}o", "client_version": "%{X-API-Client-Version}i" }"#;
@@ -72,7 +73,7 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn start(
+    pub async fn start(
         config: Config,
         process_actions: bool,
         process_events: bool,
@@ -184,7 +185,10 @@ impl Server {
             if let Some(workers) = config.actix.workers {
                 server = server.workers(workers);
             }
-            server.run();
+            match server.run().await {
+                Ok(_) => {},
+                Err(e) => jlog!(Warn, "bigneon_api::server", "Server exit with error", {"error": e.description()}),
+            };
 
             if process_actions || process_events {
                 domain_action_monitor.stop();

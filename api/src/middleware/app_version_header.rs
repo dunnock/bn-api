@@ -4,10 +4,7 @@ use actix_web::middleware::DefaultHeaders;
 const SEMVER_HEADER_NAME: &'static str = "X-App-Version";
 const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-pub struct AppVersionHeader {
-    header_name: HeaderName,
-    app_version: HeaderValue,
-}
+pub struct AppVersionHeader;
 
 impl AppVersionHeader {
     pub fn new() -> DefaultHeaders {
