@@ -1,10 +1,10 @@
-use crate::config::Config;
-use crate::errors::*;
-use crate::payments::globee::GlobeePaymentProcessor;
-use crate::payments::stripe::StripePaymentProcessor;
-use crate::payments::PaymentProcessor;
-use crate::utils::deep_linker::BranchDeepLinker;
-use crate::utils::deep_linker::DeepLinker;
+use crate::BranchDeepLinker;
+use crate::DeepLinker;
+use bigneon_config::Config;
+use bigneon_errors::*;
+use bigneon_payments::globee::GlobeePaymentProcessor;
+use bigneon_payments::stripe::StripePaymentProcessor;
+use bigneon_payments::PaymentProcessor;
 use bigneon_db::prelude::*;
 use bigneon_db::services::CountryLookup;
 use bigneon_db::utils::errors::DatabaseError;

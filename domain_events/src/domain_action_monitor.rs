@@ -7,17 +7,19 @@ use std::time::Duration;
 use std::{cmp, thread};
 
 use log::Level::*;
-
-use crate::config::Config;
-use crate::db::*;
-use crate::domain_events::errors::DomainActionError;
-use crate::domain_events::routing::{DomainActionExecutor, DomainActionRouter};
-use bigneon_db::prelude::*;
+use serde_json::json;
 use logging::*;
+
+use crate::errors::DomainActionError;
+use crate::routing::{DomainActionExecutor, DomainActionRouter};
+use bigneon_config::Config;
+use bigneon_db_connections::*;
+use bigneon_db::prelude::*;
 use tokio::prelude::*;
 use tokio::runtime::current_thread;
 use tokio::runtime::Runtime;
 use tokio::timer::Timeout;
+
 
 pub struct DomainActionMonitor {
     config: Config,

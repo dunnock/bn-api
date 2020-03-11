@@ -7,3 +7,4 @@ mod json;
 mod optional_user;
 mod request_info;
 mod user;
+mod connection;

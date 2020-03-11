@@ -10,7 +10,7 @@ use crate::payments::PaymentProcessor;
 use crate::payments::PaymentProcessorBehavior;
 use crate::payments::RedirectToPaymentPageBehavior;
 use crate::server::AppState;
-use crate::utils::ServiceLocator;
+use bigneon_locators::ServiceLocator;
 use actix_web::{HttpResponse, Path, State};
 use bigneon_db::models::TicketType as Dbticket_types;
 use bigneon_db::models::User as DbUser;

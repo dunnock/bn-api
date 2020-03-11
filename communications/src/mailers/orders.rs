@@ -1,5 +1,5 @@
-use crate::config::Config;
-use crate::errors::*;
+use bigneon_config::Config;
+use bigneon_errors::*;
 use bigneon_db::models::*;
 use bigneon_db::prelude::{DisplayOrder, OrderItem, Refund};
 use diesel::PgConnection;

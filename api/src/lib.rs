@@ -53,18 +53,20 @@ extern crate validator_derive;
 extern crate cache;
 extern crate sitemap;
 
+pub use bigneon_errors as errors;
+pub use bigneon_config as config;
+pub use bigneon_domain_events as domain_events;
+pub use bigneon_communications as communications;
+pub use bigneon_db_connections as db;
+pub use bigneon_payments as payments;
+
 pub mod auth;
 pub mod communications;
-pub mod config;
 pub mod controllers;
-pub mod db;
-pub mod domain_events;
-pub mod errors;
 pub mod extractors;
 pub mod helpers;
 pub mod middleware;
 pub mod models;
-mod payments;
 mod routing;
 pub mod server;
 pub mod utils;

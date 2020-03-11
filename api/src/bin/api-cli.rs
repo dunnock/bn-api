@@ -13,7 +13,7 @@ extern crate uuid;
 use bigneon_api::config::Config;
 use bigneon_api::db::Database;
 use bigneon_api::utils::spotify;
-use bigneon_api::utils::ServiceLocator;
+use bigneon_locators::ServiceLocator;
 use bigneon_db::prelude::*;
 use bigneon_db::schema::transfers;
 use clap::*;

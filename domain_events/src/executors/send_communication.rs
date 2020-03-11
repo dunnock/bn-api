@@ -1,8 +1,8 @@
-use crate::config::Config;
-use crate::db::Connection;
-use crate::domain_events::executor_future::ExecutorFuture;
-use crate::domain_events::routing::DomainActionExecutor;
-use crate::utils::communication;
+use crate::executor_future::ExecutorFuture;
+use crate::routing::DomainActionExecutor;
+use bigneon_config::Config;
+use bigneon_db_connections::Connection;
+use bigneon_api::utils::communication;
 use bigneon_db::prelude::*;
 
 pub struct SendCommunicationExecutor {

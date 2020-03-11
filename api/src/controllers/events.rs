@@ -12,7 +12,7 @@ use crate::models::*;
 use crate::server::AppState;
 use crate::utils::cloudinary::optimize_cloudinary;
 use crate::utils::redis::*;
-use crate::utils::ServiceLocator;
+use bigneon_locators::ServiceLocator;
 use actix_web::{http::StatusCode, HttpResponse, Path, Query, State};
 use bigneon_db::dev::times;
 use bigneon_db::prelude::*;

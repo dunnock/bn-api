@@ -1,4 +1,4 @@
-use crate::errors::{ApplicationError, BigNeonError};
+use bigneon_errors::{ApplicationError, BigNeonError};
 use bigneon_db::models::{EmailProvider, Environment};
 use bigneon_db::utils::errors::EnumParseError;
 use dotenv::dotenv;
@@ -8,6 +8,7 @@ use std::fmt;
 use std::str;
 use std::str::FromStr;
 use tari_client::{HttpTariClient, TariClient, TariTestClient};
+use serde::{Serialize, Deserialize};
 
 #[derive(Clone)]
 pub struct Config {

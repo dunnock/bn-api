@@ -59,6 +59,7 @@ pub use self::transfers::*;
 pub use self::users::*;
 pub use self::venues::*;
 pub use self::wallets::*;
+pub use self::ticket_count_report::*;
 
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
@@ -125,6 +126,7 @@ mod transfers;
 mod users;
 mod venues;
 mod wallets;
+mod ticket_count_report;
 
 pub fn deserialize_unless_blank<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
 where

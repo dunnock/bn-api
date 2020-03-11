@@ -1,10 +1,10 @@
-use crate::config::Config;
-use crate::db::{CacheDatabase, ConnectionType};
-use crate::db::{Connection, ReadonlyConnection};
+use crate::{CacheDatabase, ConnectionType};
+use crate::{Connection, ReadonlyConnection};
+use bigneon_config::Config;
 use cache::RedisCacheConnection;
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::PgConnection;
-use r2d2::Error as R2D2Error;
+use ::r2d2::Error as R2D2Error;
 
 type R2D2Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 

@@ -1,4 +1,4 @@
-use crate::errors::BigNeonError;
+use bigneon_errors::BigNeonError;
 use bigneon_db::models::*;
 use diesel::PgConnection;
 use url::form_urlencoded::byte_serialize;

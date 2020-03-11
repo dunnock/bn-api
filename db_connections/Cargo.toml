@@ -1,0 +1,26 @@
+[package]
+name = "bigneon_db_connections"
+version = "0.1.0"
+authors = ["Big Neon Team"]
+edition = "2018"
+description = "Big Neon database connection handlers"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bigneon_db = { path = "../db" }
+bigneon_errors = { version = "0.1.0", path = "../errors" }
+bigneon_config = { version = "0.1.0", path = "../config" }
+cache = { path = "../cache" }
+futures = "0.1"
+tokio = "0.1"
+reqwest="0.9.22"
+serde = "1.0"
+diesel="1.4.2"
+logging = {path = "../logging"}
+macros = {path = "../macros"}
+log = "0.4"
+uuid = { version = "0.6", features = ["serde", "v4"] }
+validator = "0.8"
+itertools = "0.7"
+r2d2 = "0.8"

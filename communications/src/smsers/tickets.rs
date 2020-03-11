@@ -1,6 +1,6 @@
-use crate::config::Config;
-use crate::errors::*;
-use crate::utils::deep_linker::DeepLinker;
+use bigneon_config::Config;
+use bigneon_errors::*;
+use bigneon_locators::DeepLinker;
 use bigneon_db::models::*;
 use diesel::pg::PgConnection;
 

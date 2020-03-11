@@ -1,10 +1,10 @@
-use crate::errors::AuthError;
-use crate::errors::*;
-use crate::jwt::errors::Error as JwtError;
-use crate::payments::PaymentProcessorError;
+use crate::AuthError;
+use crate::*;
+use jsonwebtoken::errors::Error as JwtError;
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use bigneon_db::utils::errors::*;
 use branch_rs::BranchError;
+use bigneon_payments::PaymentProcessorError;
 use chrono;
 use customer_io::CustomerIoError;
 use diesel::result::Error as DieselError;
@@ -20,6 +20,8 @@ use tari_client::TariError;
 use twilio::TwilioError;
 use url;
 use uuid::ParseError as UuidParseError;
+use log::error;
+use serde_json::json;
 
 #[derive(Debug)]
 pub struct BigNeonError(Box<dyn ConvertToWebError + Send + Sync>);

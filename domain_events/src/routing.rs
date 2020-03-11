@@ -1,8 +1,8 @@
-use crate::config::Config;
-use crate::db::Connection;
-use crate::domain_events::errors::DomainActionError;
-use crate::domain_events::executor_future::ExecutorFuture;
-use crate::domain_events::executors::*;
+use crate::errors::DomainActionError;
+use crate::executor_future::ExecutorFuture;
+use crate::executors::*;
+use bigneon_config::Config;
+use bigneon_db_connections::Connection;
 use bigneon_db::models::enums::DomainActionTypes;
 use bigneon_db::prelude::*;
 use std::borrow::Borrow;

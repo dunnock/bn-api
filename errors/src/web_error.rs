@@ -1,6 +1,6 @@
-use crate::errors::*;
-use crate::jwt::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
-use crate::payments::PaymentProcessorError;
+use crate::*;
+use jsonwebtoken::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
+use bigneon_payments::PaymentProcessorError;
 use actix_web::{http::StatusCode, HttpResponse};
 use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use bigneon_db::utils::errors::*;
@@ -21,6 +21,9 @@ use std::string::ToString;
 use stripe::StripeError;
 use tari_client::TariError;
 use uuid::ParseError as UuidParseError;
+use log::{error, warn, info};
+use serde::Serialize;
+use serde_json::json;
 
 pub trait ConvertToWebError: Debug + Error + ToString {
     fn to_response(&self) -> HttpResponse;

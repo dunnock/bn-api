@@ -1,10 +1,9 @@
-use crate::config::Config;
-use crate::errors::*;
-use crate::models::*;
-use bigneon_db::models::*;
+use bigneon_config::Config;
+use bigneon_errors::*;
+use bigneon_db::models::{TicketCountReport, Event, CommAddress, Communication, CommunicationType};
 use chrono::prelude::*;
 use diesel::PgConnection;
-use serde_json;
+use serde_json::json;
 use std::collections::HashMap;
 
 pub fn ticket_counts(

@@ -1,4 +1,4 @@
-use bigneon_db::models::*;
+use crate::models::reports::TicketSalesAndCounts;
 use itertools::Itertools;
 use std::collections::HashMap;
 use uuid::Uuid;

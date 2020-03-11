@@ -1,4 +1,4 @@
-use crate::errors::*;
+use bigneon_errors::*;
 use bigneon_db::models::*;
 use diesel::pg::PgConnection;
 use itertools::Itertools;

@@ -3,6 +3,7 @@ name = "bigneon_api"
 version = "1.9.33"
 authors = ["CjS77"]
 license = "BSD-3"
+edition = "2018"
 repository = "https://github.com/big-neon/bn-api/"
 description = "Big Neon unified API server"
 documentation = "https://github.com/big-neon/docs"
@@ -13,6 +14,13 @@ actix-web = "=0.7.18"
 bigneon_db = { path = "../db" }
 bigneon_http = { path = "../http" }
 bigneon_caching_derive = { path = "../http/caching_derive" }
+bigneon_config = { version = "0.1.0", path = "../config" }
+bigneon_errors = { version = "0.1.0", path = "../errors" }
+bigneon_domain_events = { version = "0.1.0", path = "../domain_events" }
+bigneon_communications = { version = "0.1.0", path = "../communications" }
+bigneon_db_connections = { version = "0.1.0", path = "../db_connections" }
+bigneon_payments = { version = "0.1.0", path = "../payments" }
+bigneon_locators = { version = "0.1.0", path = "../locators" }
 branch_rs = {path="../branch_rs"}
 chrono = {version = "0.4", features = ["serde"]}
 clap = "2.32"
@@ -50,4 +58,3 @@ uuid = { version = "0.6", features = ["serde", "v4"] }
 url="1.7.2"
 validator = "0.8"
 validator_derive = "0.8"
-sitemap = "0.4"

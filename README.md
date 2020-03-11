@@ -50,3 +50,14 @@ Facebook login is optional. If you would like to enable it, you will need to get
 an `app id` via the Facebook Developer page.
 
 On the Facebook Developer page, you will also need to set the `Valid  OAuth Redirect URIs`.
+
+# Workspace crates
+
+- payments - payments processing handlers
+- locators - services locator and deep links factory
+- errors - error types
+- domain_events - background processing of bigneon events
+- db_connectors - database connection handlers
+- config - application configuration
+- communications - external communication via mailers, pushers and smsers
+- api - main server

@@ -1,7 +1,4 @@
-use crate::db::*;
-use crate::errors::BigNeonError;
-use crate::server::AppState;
-use actix_web::{FromRequest, HttpRequest, Result};
+use crate::*;
 use diesel;
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
@@ -52,27 +49,5 @@ impl Clone for Connection {
         Connection {
             inner: self.inner.clone(),
         }
-    }
-}
-
-impl FromRequest<AppState> for Connection {
-    type Config = ();
-    type Result = Result<Connection, BigNeonError>;
-
-    fn from_request(request: &HttpRequest<AppState>, _config: &Self::Config) -> Self::Result {
-        if let Some(connection) = request.extensions().get::<Connection>() {
-            return Ok(connection.clone());
-        }
-
-        let connection = request.state().database.get_connection()?;
-        {
-            let connection_object = connection.get();
-            connection_object
-                .transaction_manager()
-                .begin_transaction(connection_object)?;
-        }
-
-        request.extensions_mut().insert(connection.clone());
-        Ok(connection)
     }
 }

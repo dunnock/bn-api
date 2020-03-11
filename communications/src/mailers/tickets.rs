@@ -1,10 +1,12 @@
-use crate::communications::mailers::insert_event_template_data;
-use crate::config::Config;
-use crate::errors::*;
+use super::insert_event_template_data;
+use bigneon_config::Config;
+use bigneon_errors::*;
 use bigneon_db::models::*;
 use chrono::prelude::*;
 use diesel::pg::PgConnection;
 use itertools::Itertools;
+use macros::map;
+use serde_json::json;
 
 pub fn send_tickets(
     config: &Config,

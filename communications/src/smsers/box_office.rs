@@ -1,5 +1,5 @@
-use crate::config::Config;
-use crate::errors::*;
+use bigneon_config::Config;
+use bigneon_errors::*;
 use bigneon_db::models::*;
 use diesel::pg::PgConnection;
 use phonenumber::{Mode, PhoneNumber};

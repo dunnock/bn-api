@@ -12,7 +12,14 @@ members = [
     "logging",
     "macros",
     "customer_io",
-    "cache"
+    "cache",
+    "domain_events",
+    "communications",
+    "db_connections",
+    "config",
+    "errors",
+    "payments",
+    "locators",
 ]
 
 [patch.crates-io]

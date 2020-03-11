@@ -1,0 +1,17 @@
+[package]
+name = "bigneon_payments"
+version = "0.1.0"
+authors = ["Big Neon Team"]
+edition = "2018"
+description = "Big Neon payments processing handlers"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bigneon_db = { path = "../db" }
+globee = { path="../globee" }
+stripe = {path="../stripe"}
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "0.6", features = ["serde", "v4"] }
+serde_json = "1.0"
+serde = { version = "1", features = ["derive"] }

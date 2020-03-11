@@ -2,15 +2,17 @@ use futures::future;
 use log::Level::{Debug, Error};
 use uuid::Uuid;
 
-use crate::config::Config;
-use crate::db::Connection;
-use crate::domain_events::executor_future::ExecutorFuture;
-use crate::domain_events::routing::DomainActionExecutor;
-use crate::errors::ApplicationError;
-use crate::errors::BigNeonError;
+use crate::executor_future::ExecutorFuture;
+use crate::routing::DomainActionExecutor;
+use bigneon_config::Config;
+use bigneon_db_connections::Connection;
+use bigneon_errors::ApplicationError;
+use bigneon_errors::BigNeonError;
 use bigneon_db::prelude::*;
 use globee::GlobeeClient;
 use globee::GlobeeIpnRequest;
+use serde_json::json;
+use logging::jlog;
 
 pub struct ProcessPaymentIPNExecutor {
     globee_api_key: String,

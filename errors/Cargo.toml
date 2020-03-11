@@ -1,0 +1,32 @@
+[package]
+name = "bigneon_errors"
+version = "0.1.0"
+authors = ["Big Neon Team"]
+edition = "2018"
+description = "Big Neon error types"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+jsonwebtoken = "5"
+actix-web = "=0.7.18"
+bigneon_db = { path = "../db" }
+branch_rs = { path = "../branch_rs" }
+customer_io= { path = "../customer_io" }
+stripe = { path = "../stripe" }
+bigneon_payments = { version = "0.1.0", path = "../payments" }
+chrono = { version = "0.4", features = ["serde"] }
+diesel = "1.4.2"
+facebook = { path="../facebook"}
+globee = { path="../globee" }
+redis = "0.13"
+reqwest = "0.9.22"
+serde_json = "1.0"
+tari-client = {path="../tari-client"}
+twilio = { git = "https://github.com/mikethetike/twilio-rs", rev="8a746caed756c3cfe57e082084fda8be3170721a"}
+uuid = { version = "0.6", features = ["serde", "v4"] }
+url = "1.7.2"
+r2d2 = "0.8"
+sitemap = "0.4"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }

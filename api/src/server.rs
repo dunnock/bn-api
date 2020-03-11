@@ -6,7 +6,7 @@ use crate::models::*;
 use crate::routing;
 use crate::utils::redis::*;
 use crate::utils::spotify;
-use crate::utils::ServiceLocator;
+use bigneon_locators::ServiceLocator;
 use actix::Addr;
 use actix_web::http;
 use actix_web::middleware::cors::Cors;

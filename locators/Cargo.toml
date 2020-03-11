@@ -1,0 +1,16 @@
+[package]
+name = "bigneon_locators"
+version = "0.1.0"
+authors = ["Big Neon Team"]
+edition = "2018"
+description = "Big Neon services locator and deep links factory"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bigneon_errors = { version="0.1.0", path = "../errors" }
+branch_rs = { version="0.1.0", path = "../branch_rs" }
+bigneon_config = { version="0.1.0", path = "../config" }
+bigneon_payments = { version="0.1.0", path = "../payments" }
+bigneon_db = { path = "../db" }
+log = "0.4"
