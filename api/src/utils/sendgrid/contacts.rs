@@ -195,14 +195,14 @@ impl SGContactListResponse {
     }
 }
 
-fn send_request_json(api_key: &str, req: reqwest::RequestBuilder) -> Result<serde_json::Value, BigNeonError> {
+fn send_request_json(api_key: &str, req: reqwest::blocking::RequestBuilder) -> Result<serde_json::Value, BigNeonError> {
     send_request(api_key, req)
         .and_then(|r| r.error_for_status())
         .and_then(|mut r| r.json())
         .map_err(|err| ApplicationError::new(err.to_string()).into())
 }
 
-fn send_request(api_key: &str, req: reqwest::RequestBuilder) -> reqwest::Result<reqwest::Response> {
+fn send_request(api_key: &str, req: reqwest::blocking::RequestBuilder) -> reqwest::Result<reqwest::blocking::Response> {
     req.header("Authorization", format!("Bearer {}", api_key))
         .header("Content-Type", "application/json")
         .header("user-agent", "sendgrid-rs")

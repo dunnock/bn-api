@@ -52,7 +52,7 @@ pub enum SlugResponse {
     },
 }
 
-pub fn index(
+pub async fn index(
     (connection, query, user): (ReadonlyConnection, Query<PagingParameters>, AuthUser),
 ) -> Result<WebPayload<Slug>, BigNeonError> {
     let connection = connection.get();
@@ -68,7 +68,7 @@ pub fn index(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub fn update(
+pub async fn update(
     (connection, parameters, slug_parameters, user): (
         Connection,
         Path<PathParameters>,
@@ -83,7 +83,7 @@ pub fn update(
     Ok(HttpResponse::Ok().json(updated_slug))
 }
 
-pub fn show(
+pub async fn show(
     (state, conn, mut parameters, query, auth_user, request): (
         Data<AppState>,
         ReadonlyConnection,
@@ -124,7 +124,7 @@ pub fn show(
     let response = match slug.slug_type {
         SlugTypes::Event => {
             parameters.id = slug.main_table_id.to_string();
-            return events::show((state, conn, parameters, query, auth_user, request));
+            return events::show((state, conn, parameters, query, auth_user, request)).await;
         }
         SlugTypes::Organization => {
             let organization = Organization::find(slug.main_table_id, connection)?;

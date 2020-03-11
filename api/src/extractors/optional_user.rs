@@ -1,8 +1,8 @@
 use crate::auth::user::User;
 use actix_web::error::*;
-use actix_web::{FromRequest, HttpRequest};
+use actix_web::{FromRequest, HttpRequest, dev::Payload};
 use uuid::Uuid;
-use futures::future::{Ready, ok};
+use futures::future::{Ready, ok, err};
 
 #[derive(Clone)]
 pub struct OptionalUser(pub Option<User>);
@@ -12,10 +12,14 @@ impl FromRequest for OptionalUser {
     type Error = Error;
     type Future = Ready<Result<OptionalUser, Error>>;
 
-    fn from_request(req: &HttpRequest, cfg: &Self::Config) -> Self::Future {
+    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
         // If auth header exists pass authorization errors back to client
         if let Some(_auth_header) = req.headers().get("Authorization") {
-            return User::from_request(req, cfg).map(|u| OptionalUser(Some(u)));
+            let user = match User::from_request(req, payload).into_inner() {
+                Ok(user) => user,
+                Err(e) => return err(e),
+            };
+            return ok(OptionalUser(Some(user)));
         }
         ok(OptionalUser(None))
     }

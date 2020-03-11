@@ -18,7 +18,7 @@ pub fn verify_response(
     captcha_response: String,
     remote_ip: Option<&str>,
 ) -> Result<Response, ApplicationError> {
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     let mut params = HashMap::new();
     params.insert("secret", google_recaptcha_secret_key);
     params.insert("response", captcha_response.as_str());

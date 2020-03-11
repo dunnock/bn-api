@@ -4,7 +4,7 @@ use actix_web::HttpResponse;
 use bigneon_db::models::*;
 use uuid::Uuid;
 
-pub fn index(connection: Connection) -> Result<HttpResponse, BigNeonError> {
+pub async fn index(connection: Connection) -> Result<HttpResponse, BigNeonError> {
     let genres = Genre::all(connection.get())?;
     Ok(HttpResponse::Ok()
         .json(json!({"genres": &genres.into_iter().map(|g| GenreListItem{id: g.id, name: g.name }).collect::<Vec<GenreListItem >>()})))

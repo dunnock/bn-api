@@ -7,7 +7,7 @@ use log::Level::*;
 
 static mut IS_OK: bool = false;
 
-pub fn check(connection: Connection) -> Result<HttpResponse, BigNeonError> {
+pub async fn check(connection: Connection) -> Result<HttpResponse, BigNeonError> {
     if unsafe { IS_OK } {
         return Ok(HttpResponse::Ok().finish());
     }

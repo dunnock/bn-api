@@ -16,6 +16,7 @@ use bigneon_db::prelude::*;
 use logging::*;
 use tokio::runtime::Runtime;
 use tokio::time::timeout;
+use futures::future::TryFutureExt;
 
 pub struct DomainActionMonitor {
     config: Config,
@@ -55,7 +56,7 @@ impl DomainActionMonitor {
                 let timeout = timeout(Duration::from_secs(55), executor.execute(domain_action, connection));
 
                 runtime
-                    .block_on(timeout.or_else(|err| {
+                    .block_on(timeout.or_else(|err| async {
                         jlog! {Error,"bigneon::domain_actions", "Action: failed", {"error": err.to_string()}};
                         Err(())
                     }))
@@ -252,7 +253,7 @@ impl DomainActionMonitor {
                 for (command, action, connection) in actions {
                     let timeout = timeout(Duration::from_secs(55), command.execute(action, connection));
 
-                    runtime.spawn(timeout.or_else(|err| {
+                    runtime.spawn(timeout.or_else(|err| async {
                         jlog! {Error,"bigneon::domain_actions", "Action:  failed", {"error": err.to_string()}};
                         Err(())
                     }));

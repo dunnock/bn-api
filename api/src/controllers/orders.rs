@@ -19,7 +19,7 @@ use std::cmp;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-pub fn index(
+pub async fn index(
     (conn, query_parameters, user): (Connection, Query<PagingParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     //@TODO Implement proper paging on db
@@ -30,7 +30,7 @@ pub fn index(
     Ok(HttpResponse::Ok().json(&Payload::new(orders, query_parameters.into_inner().into())))
 }
 
-pub fn activity(
+pub async fn activity(
     (conn, path, user): (Connection, Path<PathParameters>, User),
 ) -> Result<WebPayload<ActivityItem>, BigNeonError> {
     let connection = conn.get();
@@ -42,7 +42,7 @@ pub fn activity(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub fn show((conn, path, auth_user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((conn, path, auth_user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();
     let order = Order::find(path.id, connection)?;
     let mut organization_ids = Vec::new();
@@ -72,7 +72,7 @@ pub fn show((conn, path, auth_user): (Connection, Path<PathParameters>, User)) -
     )?)))
 }
 
-pub fn resend_confirmation(
+pub async fn resend_confirmation(
     (conn, path, auth_user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();
@@ -105,7 +105,7 @@ pub struct DetailsResponse {
     pub order_contains_other_tickets: bool,
 }
 
-pub fn details((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn details((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();
     let order = Order::find(path.id, connection)?;
 
@@ -142,7 +142,7 @@ pub struct RefundResponse {
     pub refund_breakdown: HashMap<PaymentMethods, i64>,
 }
 
-pub fn refund(
+pub async fn refund(
     (conn, path, json, user, state): (
         Connection,
         Path<PathParameters>,
@@ -419,7 +419,7 @@ fn is_authorized_to_refund(
     Ok(authorized_to_refund_items)
 }
 
-pub fn tickets((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn tickets((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let order = Order::find(path.id, conn)?;
     // TODO: Only show the redeem key for orgs that the user has access to redeem
@@ -448,7 +448,7 @@ pub struct SendBoxOfficeInstructionsRequest {
     pub phone: String,
 }
 
-pub fn send_box_office_instructions(
+pub async fn send_box_office_instructions(
     (conn, path, data, user, state): (
         Connection,
         Path<PathParameters>,

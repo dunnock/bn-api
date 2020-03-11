@@ -62,7 +62,7 @@ impl From<UpdateHoldRequest> for UpdateHoldAttributes {
 
 // add update fields in here as well
 
-pub fn create(
+pub async fn create(
     (conn, req, path, user): (Connection, Json<CreateHoldRequest>, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
@@ -117,7 +117,7 @@ pub fn create(
     application::created(json!(r))
 }
 
-pub fn update(
+pub async fn update(
     (conn, req, path, user): (Connection, Json<UpdateHoldRequest>, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
@@ -133,7 +133,7 @@ pub fn update(
     Ok(HttpResponse::Ok().json(hold))
 }
 
-pub fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::HoldRead, &hold.organization(conn)?, &hold.event(conn)?, conn)?;
@@ -172,7 +172,7 @@ pub fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Res
     Ok(HttpResponse::Ok().json(r))
 }
 
-pub fn link(
+pub async fn link(
     (conn, path, user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
@@ -221,7 +221,7 @@ pub struct SplitHoldRequest {
     pub phone: Option<String>,
 }
 
-pub fn children(
+pub async fn children(
     (conn, path, query_parameters, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),
 ) -> Result<WebPayload<DisplayHold>, BigNeonError> {
     let conn = conn.get();
@@ -242,7 +242,7 @@ pub fn children(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub fn split(
+pub async fn split(
     (conn, req, path, user): (Connection, Json<SplitHoldRequest>, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
@@ -266,7 +266,7 @@ pub fn split(
     Ok(HttpResponse::Created().json(new_hold))
 }
 
-pub fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::HoldWrite, &hold.organization(conn)?, &hold.event(conn)?, conn)?;

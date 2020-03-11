@@ -9,7 +9,7 @@ use crate::utils::spotify;
 use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_db::models::*;
 
-pub fn search(
+pub async fn search(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, OptionalUser),
 ) -> Result<WebPayload<CreateArtistRequest>, BigNeonError> {
     let connection = connection.get();
@@ -35,7 +35,7 @@ pub fn search(
     }
 }
 
-pub fn index(
+pub async fn index(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, OptionalUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let db_user = user.into_inner().map(|u| u.user);
@@ -50,13 +50,13 @@ pub fn index(
     Ok(HttpResponse::Ok().json(&payload))
 }
 
-pub fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let artist = Artist::find(&parameters.id, connection)?.for_display(connection)?;
     Ok(HttpResponse::Ok().json(&artist))
 }
 
-pub fn create(
+pub async fn create(
     (connection, json_create_artist, user): (Connection, Json<CreateArtistRequest>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -113,7 +113,7 @@ pub fn create(
     Ok(HttpResponse::Created().json(&artist.for_display(connection)?))
 }
 
-pub fn show_from_organizations(
+pub async fn show_from_organizations(
     (connection, organization_id, query_parameters, user): (
         Connection,
         Path<PathParameters>,
@@ -130,7 +130,7 @@ pub fn show_from_organizations(
     Ok(HttpResponse::Ok().json(&payload))
 }
 
-pub fn update(
+pub async fn update(
     (connection, parameters, artist_parameters, user): (
         Connection,
         Path<PathParameters>,
@@ -178,7 +178,7 @@ pub fn update(
     Ok(HttpResponse::Ok().json(&updated_artist.for_display(connection)?))
 }
 
-pub fn toggle_privacy(
+pub async fn toggle_privacy(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     user.requires_scope(Scopes::ArtistWrite)?;

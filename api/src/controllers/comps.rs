@@ -8,7 +8,7 @@ use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_db::models::*;
 use chrono::prelude::*;
 
-pub fn index(
+pub async fn index(
     (conn, path, query_parameters, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),
 ) -> Result<WebPayload<DisplayHold>, BigNeonError> {
     let conn = conn.get();
@@ -38,7 +38,7 @@ pub fn index(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::CompRead, &hold.organization(conn)?, conn)?;
@@ -59,7 +59,7 @@ pub struct NewCompRequest {
     pub max_per_user: Option<u32>,
 }
 
-pub fn create(
+pub async fn create(
     (conn, new_comp, path, user): (Connection, Json<NewCompRequest>, Path<PathParameters>, User),
 ) -> Result<WebResult<DisplayHold>, BigNeonError> {
     let conn = conn.get();
@@ -82,7 +82,7 @@ pub fn create(
     Ok(WebResult::new(StatusCode::CREATED, comp.into_display(conn)?))
 }
 
-pub fn update(
+pub async fn update(
     (conn, req, path, user): (Connection, Json<UpdateHoldRequest>, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
@@ -100,7 +100,7 @@ pub fn update(
     Ok(HttpResponse::Ok().json(comp))
 }
 
-pub fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::CompWrite, &hold.organization(conn)?, conn)?;

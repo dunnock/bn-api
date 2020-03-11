@@ -60,7 +60,7 @@ impl EventWebSocket {
     }
 }
 
-impl StreamHandler<ws::Message> for EventWebSocket {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EventWebSocket {
     fn started(&mut self, context: &mut Self::Context) {
         let mut clients = context.state().clients.lock().unwrap();
         clients
@@ -69,18 +69,21 @@ impl StreamHandler<ws::Message> for EventWebSocket {
             .push(context.address());
     }
 
-    fn handle(&mut self, message: ws::Message, context: &mut Self::Context) {
+    fn handle(&mut self, message: Result<ws::Message, ws::ProtocolError>, context: &mut Self::Context) {
         match message {
-            ws::Message::Ping(message) => {
+            Ok(ws::Message::Ping(message)) => {
                 self.heartbeat = Instant::now();
                 context.pong(&message);
             }
-            ws::Message::Pong(_) => {
+            Ok(ws::Message::Pong(_)) => {
                 self.heartbeat = Instant::now();
             }
-            ws::Message::Text(text) => context.text(text),
-            ws::Message::Binary(bin) => context.binary(bin),
-            ws::Message::Close(_) => {
+            Ok(ws::Message::Text(text)) => context.text(text),
+            Ok(ws::Message::Binary(bin)) => context.binary(bin),
+            Ok(ws::Message::Close(_)) => {
+                self.close(context);
+            },
+            Err(_) => {
                 self.close(context);
             }
         }

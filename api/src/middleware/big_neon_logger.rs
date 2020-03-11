@@ -1,4 +1,5 @@
 use crate::extractors::Uuid;
+use crate::server::GetAppState;
 use actix_web::error;
 use actix_web::http::header;
 use actix_web::http::StatusCode;
@@ -12,7 +13,7 @@ use std::pin::Pin;
 pub struct BigNeonLogger;
 
 impl BigNeonLogger {
-    pub fn create<S, B>() -> impl FnMut(ServiceRequest, &mut S) -> Pin<Box<dyn Future<Output = error::Result<ServiceResponse<B>>> + 'static>>
+    pub fn create<S, B>() -> impl FnMut(ServiceRequest, &mut S) -> Box<dyn Future<Output = error::Result<ServiceResponse<B>>> + 'static>
     where
         S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = error::Error>,
         S::Future: 'static,
@@ -22,7 +23,7 @@ impl BigNeonLogger {
             let data = RequestLogData::from(&sreq);
             BigNeonLogger::start(&data);
             let srv_fut = serv.call(sreq);
-            Box::pin(async move {
+            Box::new(async move {
                 let resp = srv_fut.await;
                 BigNeonLogger::finish(&data, &resp);
                 resp
@@ -31,7 +32,7 @@ impl BigNeonLogger {
     }
 
     // log message at the start of request lifecycle
-    fn start(data: &RequestLogData) -> RequestLogData {
+    fn start(data: &RequestLogData) {
         if data.uri != "/status" {
             jlog!(
                 Level::Info,
@@ -50,13 +51,15 @@ impl BigNeonLogger {
 
     // log message at the end of request lifecycle
     fn finish<B: MessageBody>(data: &RequestLogData, resp: &error::Result<ServiceResponse<B>>) {
-        if let Err(error) =  resp {
-            let level = if resp.status() == StatusCode::UNAUTHORIZED {
-                Level::Info
-            } else if resp.status().is_client_error() {
-                Level::Warn
-            } else {
-                Level::Error
+        let error = match resp {
+            Err(error) => Some(error),
+            Ok(resp) => resp.response().error(),
+        };
+        if let Some(error) = error {
+            let level = match error.as_response_error().status_code() {
+                StatusCode::UNAUTHORIZED => Level::Info,
+                s if s.is_client_error() => Level::Warn,
+                _ => Level::Error,
             };
             jlog!(
                 level,
@@ -71,6 +74,7 @@ impl BigNeonLogger {
                     "user_agent": data.user_agent
             });
         }
+
     }
 }
 

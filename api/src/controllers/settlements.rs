@@ -15,7 +15,7 @@ pub struct NewSettlementRequest {
     pub comment: Option<String>,
 }
 
-pub fn index(
+pub async fn index(
     (connection, query, path, user): (Connection, Query<PagingParameters>, Path<PathParameters>, AuthUser),
 ) -> Result<WebPayload<Settlement>, BigNeonError> {
     let connection = connection.get();
@@ -34,7 +34,7 @@ pub fn index(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub fn create(
+pub async fn create(
     (connection, new_settlement, path, user): (Connection, Json<NewSettlementRequest>, Path<PathParameters>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -52,7 +52,7 @@ pub fn create(
     Ok(HttpResponse::Created().json(&settlement))
 }
 
-pub fn show(
+pub async fn show(
     (connection, path, user): (Connection, Path<PathParameters>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -71,7 +71,7 @@ pub fn show(
     Ok(HttpResponse::Ok().json(&display_settlement))
 }
 
-pub fn destroy(
+pub async fn destroy(
     (connection, path, user): (Connection, Path<PathParameters>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();

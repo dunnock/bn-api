@@ -4,7 +4,7 @@ use actix_web::error;
 use actix_web::{FromRequest, HttpRequest};
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
-use actix_web::dev::{ServiceRequest, ServiceResponse, MessageBody};
+use actix_web::dev::{ServiceRequest, ServiceResponse, MessageBody, Payload};
 use actix_service::Service;
 use std::error::Error;
 use std::pin::Pin;
@@ -16,7 +16,7 @@ pub trait RequestConnection {
 
 impl RequestConnection for HttpRequest {
     fn connection(&self) -> error::Result<Connection> {
-        Ok(Connection::from_request(&self, &())?)
+        Ok(Connection::from_request(&self, &mut Payload::None).into_inner()?)
     }
 }
 
@@ -48,7 +48,7 @@ impl DatabaseTransaction {
         if let Some(connection) = request.extensions().get::<Connection>() {
             let connection_object = connection.get();
 
-            let transaction_response = match response.error() {
+            let transaction_response = match response.response().error() {
                 Some(_) => connection_object
                     .transaction_manager()
                     .rollback_transaction(connection_object),
@@ -62,7 +62,7 @@ impl DatabaseTransaction {
                 Err(e) => {
                     error!("Diesel Error: {}", e.description());
                     let error: BigNeonError = e.into();
-                    return Err(error);
+                    return Ok(response.error_response(error));
                 }
             }
         };

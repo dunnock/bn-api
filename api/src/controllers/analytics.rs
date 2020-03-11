@@ -33,7 +33,7 @@ pub struct PageViewTrackingData {
     referrer: Option<String>,
 }
 
-pub fn track(
+pub async fn track(
     (state, query, request, connection): (
         Data<AppState>,
         Query<PageViewTrackingData>,

@@ -17,7 +17,7 @@ impl WebhookAdapter for NullAdapter {
     fn initialize(&mut self, _config: Value) {}
 
     fn send(&self, webhook_urls: &[String], payload: HashMap<String, Value, RandomState>) -> Result<(), BigNeonError> {
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
         for webhook_url in webhook_urls {
             let mut resp = client
                 .post(webhook_url)

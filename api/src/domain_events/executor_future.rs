@@ -36,7 +36,7 @@ impl Future for ExecutorFuture {
     type Output = Result<(), BigNeonError>;
 
     fn poll(self: std::pin::Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-        match self.inner.poll(cx) {
+        match self.inner.as_mut().poll(cx) {
             Poll::Ready(Ok(r)) => {
                 jlog!(Info,
                 "bigneon::domain_actions",
@@ -47,7 +47,7 @@ impl Future for ExecutorFuture {
                     });
                 self.action.set_done(&self.conn.get())?;
                 self.conn.commit_transaction()?;
-                Poll::Ready(Ok(r));
+                Poll::Ready(Ok(r))
             },
             Poll::Ready(Err(e)) => {
                 let desc = e.to_string();
@@ -67,7 +67,7 @@ impl Future for ExecutorFuture {
                 self.conn.rollback_transaction()?;
 
                 self.action.set_failed(&desc, self.conn.get())?;
-                Poll::Ready(Err(e));
+                Poll::Ready(Err(e))
             },
             Poll::Pending => Poll::Pending,
         }

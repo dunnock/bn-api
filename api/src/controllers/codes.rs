@@ -81,7 +81,7 @@ impl From<UpdateCodeRequest> for UpdateCodeAttributes {
     }
 }
 
-pub fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let code = Code::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::CodeRead, &code.organization(conn)?, &code.event(conn)?, conn)?;
@@ -89,7 +89,7 @@ pub fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Res
     Ok(HttpResponse::Ok().json(code.for_display(conn)?))
 }
 
-pub fn link(
+pub async fn link(
     (conn, path, user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
@@ -113,7 +113,7 @@ pub fn link(
     Ok(HttpResponse::Ok().json(json!({ "link": link })))
 }
 
-pub fn create(
+pub async fn create(
     (conn, req, path, user): (Connection, Json<CreateCodeRequest>, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
@@ -147,7 +147,7 @@ pub fn create(
     application::created(json!(code.for_display(conn)?))
 }
 
-pub fn update(
+pub async fn update(
     (conn, req, path, user): (Connection, Json<UpdateCodeRequest>, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
@@ -164,7 +164,7 @@ pub fn update(
     Ok(HttpResponse::Ok().json(code.for_display(conn)?))
 }
 
-pub fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let code = Code::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::CodeWrite, &code.organization(conn)?, &code.event(conn)?, conn)?;

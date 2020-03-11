@@ -8,7 +8,7 @@ use actix_web::Responder;
 use bigneon_db::models::User;
 use serde_json;
 use uuid::Uuid;
-use futures::future::{Ready, ok};
+use futures::future::{Ready, ok, err};
 
 #[derive(Serialize, Deserialize)]
 pub struct TokenResponse {
@@ -20,9 +20,11 @@ impl Responder for TokenResponse {
     type Future = Ready<Result<HttpResponse, Error>>;
     type Error = Error;
 
-    fn respond_to<S>(self, _req: &HttpRequest) -> Self::Future {
-        let body = serde_json::to_string(&self)?;
-        ok(HttpResponse::Ok().content_type("application/json").body(body))
+    fn respond_to(self, _req: &HttpRequest) -> Self::Future {
+        match serde_json::to_string(&self) {
+            Ok(body) => ok(HttpResponse::Ok().content_type("application/json").body(body)),
+            Err(e) => err(e.into())
+        }
     }
 }
 

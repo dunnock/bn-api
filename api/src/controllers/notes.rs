@@ -18,7 +18,7 @@ pub struct NoteFilterParameters {
     pub filter_deleted: Option<bool>,
 }
 
-pub fn create(
+pub async fn create(
     (conn, path, json, auth_user): (Connection, Path<MainTablePathParameters>, Json<NewNoteRequest>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();
@@ -35,7 +35,7 @@ pub fn create(
     Ok(HttpResponse::Created().json(json!(note)))
 }
 
-pub fn index(
+pub async fn index(
     (conn, path, query, note_query, auth_user): (
         Connection,
         Path<MainTablePathParameters>,
@@ -76,7 +76,7 @@ pub fn index(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub fn destroy(
+pub async fn destroy(
     (conn, path, auth_user): (Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();

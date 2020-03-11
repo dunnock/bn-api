@@ -51,7 +51,7 @@ impl From<ReportQueryParameters> for Paging {
     }
 }
 
-pub fn get_report(
+pub async fn get_report(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     match query.report.trim() {

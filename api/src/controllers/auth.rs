@@ -5,7 +5,7 @@ use crate::extractors::*;
 use crate::helpers::application;
 use crate::jwt::{decode, Validation};
 use crate::models::*;
-use crate::server::AppState;
+use crate::server::{AppState, GetAppState};
 use crate::utils::google_recaptcha;
 use actix_web::{HttpRequest, HttpResponse, web::Data};
 use bigneon_db::prelude::*;
@@ -44,7 +44,7 @@ impl RefreshRequest {
     }
 }
 
-pub fn token(
+pub async fn token(
     (http_request, connection, login_request, request_info): (
         HttpRequest,
         Connection,
@@ -104,7 +104,7 @@ pub fn token(
     Ok(response)
 }
 
-pub fn token_refresh(
+pub async fn token_refresh(
     (state, connection, refresh_request): (Data<AppState>, Connection, Json<RefreshRequest>),
 ) -> Result<HttpResponse, BigNeonError> {
     let mut validation = Validation::default();

@@ -31,7 +31,7 @@ impl WebhookAdapter for CustomerIoWebhookAdapter {
     }
 
     fn send(&self, _webhook_urls: &[String], payload: HashMap<String, Value, RandomState>) -> Result<(), BigNeonError> {
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
         let mut payload = payload;
         payload.insert("environment".to_string(), json!(self.environment));
 
@@ -68,7 +68,7 @@ impl WebhookAdapter for CustomerIoWebhookAdapter {
 impl CustomerIoWebhookAdapter {
     fn send_request(
         &self,
-        client: reqwest::RequestBuilder,
+        client: reqwest::blocking::RequestBuilder,
         payload: &HashMap<String, Value, RandomState>,
     ) -> Result<(), BigNeonError> {
         jlog!(
@@ -94,7 +94,7 @@ impl CustomerIoWebhookAdapter {
         payload: &HashMap<String, Value, RandomState>,
         user_id: &str,
     ) -> Result<(), BigNeonError> {
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
         let client = client
             .put(&format!("https://track.customer.io/api/v1/customers/{}", user_id))
             .json(&payload);

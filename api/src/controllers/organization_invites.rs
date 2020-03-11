@@ -30,7 +30,7 @@ pub struct NewOrgInviteRequest {
     pub roles: Vec<Roles>,
     pub event_ids: Option<Vec<Uuid>>,
 }
-pub fn create_for_event(
+pub async fn create_for_event(
     (state, connection, new_org_invite, path, auth_user): (
         Data<AppState>,
         Connection,
@@ -46,7 +46,7 @@ pub fn create_for_event(
     create_invite(state, connection, invite, &organization, auth_user)
 }
 
-pub fn create(
+pub async fn create(
     (state, connection, new_org_invite, path, auth_user): (
         Data<AppState>,
         Connection,
@@ -170,7 +170,7 @@ fn create_invite(
     Ok(HttpResponse::Created().json(invite))
 }
 
-pub fn index(
+pub async fn index(
     (connection, path, query_parameters, auth_user): (
         Connection,
         Path<PathParameters>,
@@ -192,7 +192,7 @@ pub fn index(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub fn destroy(
+pub async fn destroy(
     (connection, path, auth_user): (Connection, Path<OrganizationInvitePathParameters>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -235,7 +235,7 @@ pub fn destroy(
     Ok(HttpResponse::Ok().json(json!({})))
 }
 
-pub fn view((connection, path): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
+pub async fn view((connection, path): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
     // TODO: Change /{id} to /?token={} in routing and client apps.
     // Until then, just remember that the id passed in is actually the token
     let connection = connection.get();
@@ -243,7 +243,7 @@ pub fn view((connection, path): (Connection, Path<PathParameters>)) -> Result<Ht
     Ok(HttpResponse::Ok().json(json!(invite_details)))
 }
 
-pub fn accept_request(
+pub async fn accept_request(
     (connection, query, user): (Connection, Query<InviteResponseQuery>, OptionalUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let query_struct = query.into_inner();

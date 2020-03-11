@@ -22,7 +22,7 @@ pub struct UpdatePasswordResetParameters {
     pub password: String,
 }
 
-pub fn create(
+pub async fn create(
     (state, connection, parameters): (Data<AppState>, Connection, Json<CreatePasswordResetParameters>),
 ) -> Result<HttpResponse, BigNeonError> {
     let request_pending_response = Ok(HttpResponse::Created().json(json!({
@@ -45,7 +45,7 @@ pub fn create(
     request_pending_response
 }
 
-pub fn update(
+pub async fn update(
     (state, connection, parameters): (Data<AppState>, Connection, Json<UpdatePasswordResetParameters>),
 ) -> Result<HttpResponse, BigNeonError> {
     let user =

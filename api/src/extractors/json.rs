@@ -3,11 +3,12 @@
 
 use actix_web::dev::JsonBody;
 use actix_web::error::{Error, InternalError, JsonPayloadError};
-use actix_web::{FromRequest, HttpRequest, HttpResponse};
+use actix_web::{FromRequest, HttpRequest, HttpResponse, dev::Payload};
 use serde::de::DeserializeOwned;
 use std::ops::Deref;
 use std::pin::Pin;
 use std::future::Future;
+use futures::future::TryFutureExt;
 
 const LIMIT_DEFAULT: usize = 262_144; // 256Kb
 
@@ -36,13 +37,15 @@ where
     type Future = Pin<Box<dyn Future<Output = Result<Self, Error>>>>;
 
     #[inline]
-    fn from_request(req: &HttpRequest, cfg: &Self::Config) -> Self::Future {
-        let req2 = req.clone();
+    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
+        let mut json_body = JsonBody::new(req, payload, None);
+        if let Some(cfg) = req.app_data::<JsonConfig>() {
+            json_body = json_body.limit(cfg.limit);
+        }
         Box::pin(
-            JsonBody::new::<()>(req, None)
-                .limit(cfg.limit)
-                .map_err(move |e| json_error(e, &req2))
-                .map(Json),
+            json_body
+                .map_err(json_error)
+                .map_ok(Json),
         )
     }
 }
@@ -64,7 +67,7 @@ impl Default for JsonConfig {
     }
 }
 
-fn json_error(err: JsonPayloadError, _req: &HttpRequest) -> Error {
+fn json_error(err: JsonPayloadError) -> Error {
     let response = match err {
         JsonPayloadError::Deserialize(ref json_error) => {
             HttpResponse::BadRequest().json(json!({ "error": json_error.to_string() }))

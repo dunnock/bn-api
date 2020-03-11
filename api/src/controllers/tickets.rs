@@ -45,7 +45,7 @@ impl From<SearchParameters> for Paging {
     }
 }
 
-pub fn index(
+pub async fn index(
     (connection, path, query, auth_user): (Connection, Path<OptionalPathParameters>, Query<SearchParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     //todo convert to use pagingparams
@@ -73,7 +73,7 @@ pub struct ShowTicketResponse {
     pub ticket: DisplayTicket,
 }
 
-pub fn show(
+pub async fn show(
     (connection, parameters, auth_user): (Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -90,7 +90,7 @@ pub fn show(
     Ok(HttpResponse::Ok().json(&ticket_response))
 }
 
-pub fn update(
+pub async fn update(
     (connection, parameters, ticket_parameters, user): (
         Connection,
         Path<PathParameters>,
@@ -114,7 +114,7 @@ pub fn update(
     Ok(HttpResponse::Ok().json(&ticket_response))
 }
 
-pub fn show_redeemable_ticket(
+pub async fn show_redeemable_ticket(
     (connection, parameters, auth_user): (Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -131,7 +131,7 @@ pub fn show_redeemable_ticket(
     Ok(HttpResponse::Ok().json(&redeemable_ticket))
 }
 
-pub fn send_via_email_or_phone(
+pub async fn send_via_email_or_phone(
     (connection, send_tickets_request, auth_user, state): (Connection, Json<SendTicketsRequest>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     auth_user.requires_scope(Scopes::TicketTransfer)?;
@@ -230,7 +230,7 @@ pub struct SendTicketsRequest {
     pub email_or_phone: String,
 }
 
-pub fn transfer_authorization(
+pub async fn transfer_authorization(
     (connection, transfer_tickets_request, auth_user): (Connection, Json<TransferTicketRequest>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     auth_user.requires_scope(Scopes::TicketTransfer)?;
@@ -249,7 +249,7 @@ pub fn transfer_authorization(
     Ok(HttpResponse::Ok().json(&transfer_authorization))
 }
 
-pub fn receive_transfer(
+pub async fn receive_transfer(
     (connection, transfer_authorization, auth_user, state): (
         Connection,
         Json<TransferAuthorization>,

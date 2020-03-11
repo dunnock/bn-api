@@ -126,7 +126,7 @@ pub struct DisplayCreatedTicket {
     pub id: Uuid,
 }
 
-pub fn create(
+pub async fn create(
     (connection, path, data, user, state): (
         Connection,
         Path<PathParameters>,
@@ -151,7 +151,7 @@ pub fn create(
     Ok(HttpResponse::Created().json(&created_ticket_types[0]))
 }
 
-pub fn create_multiple(
+pub async fn create_multiple(
     (connection, path, data, user, state): (
         Connection,
         Path<PathParameters>,
@@ -176,7 +176,7 @@ pub struct TicketTypesResponse {
     pub ticket_types: Vec<AdminDisplayTicketType>,
 }
 
-pub fn index(
+pub async fn index(
     (connection, path, query_parameters, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -200,7 +200,7 @@ pub fn index(
     Ok(HttpResponse::Ok().json(&payload))
 }
 
-pub fn cancel(
+pub async fn cancel(
     (connection, path, user, state): (Connection, Path<EventTicketPathParameters>, User, Data<AppState>),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -240,7 +240,7 @@ pub fn cancel(
     Ok(HttpResponse::Ok().finish())
 }
 
-pub fn update(
+pub async fn update(
     (connection, path, data, user, state): (
         Connection,
         Path<EventTicketPathParameters>,

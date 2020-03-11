@@ -7,7 +7,7 @@ use crate::models::PathParameters;
 use actix_web::{HttpResponse, web::Path};
 use bigneon_db::models::*;
 
-pub fn index(
+pub async fn index(
     (connection, path, user): (Connection, Path<PathParameters>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -24,7 +24,7 @@ pub struct NewSettlementAdjustmentRequest {
     pub settlement_adjustment_type: SettlementAdjustmentTypes,
 }
 
-pub fn create(
+pub async fn create(
     (connection, path, json, user): (
         Connection,
         Path<PathParameters>,
@@ -50,7 +50,7 @@ pub fn create(
     Ok(HttpResponse::Created().json(&settlement_adjustment))
 }
 
-pub fn destroy(
+pub async fn destroy(
     (connection, path, user): (Connection, Path<PathParameters>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();

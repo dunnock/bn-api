@@ -6,7 +6,7 @@ use actix_web::{HttpRequest, HttpResponse, web::{Path, Payload}};
 use actix_web_actors::ws;
 use bigneon_db::prelude::*;
 
-pub fn initate(
+pub async fn initate(
     (conn, path, request, user): (Connection, Path<PathParameters>, HttpRequest, User),
     stream: Payload
 ) -> Result<HttpResponse, BigNeonError> {

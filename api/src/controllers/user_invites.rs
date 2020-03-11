@@ -17,7 +17,7 @@ pub struct UserInviteRequest {
     pub email: String,
 }
 
-pub fn create(
+pub async fn create(
     (state, connection, parameters, auth_user): (Data<AppState>, Connection, Json<UserInviteRequest>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();

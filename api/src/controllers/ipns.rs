@@ -8,7 +8,7 @@ use globee::GlobeeIpnRequest;
 use log::Level::Debug;
 use uuid::Uuid;
 
-pub fn globee((data, conn): (Json<GlobeeIpnRequest>, Connection)) -> Result<HttpResponse, BigNeonError> {
+pub async fn globee((data, conn): (Json<GlobeeIpnRequest>, Connection)) -> Result<HttpResponse, BigNeonError> {
     let data = data.into_inner();
     jlog!(Debug, "Globee IPN received", { "data": &data });
     let order_id = match data.custom_payment_id {

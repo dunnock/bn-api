@@ -44,7 +44,7 @@ pub struct EventParameter {
     pub event_id: Option<Uuid>,
 }
 
-pub fn show(
+pub async fn show(
     connection: Connection,
     query: Query<EventParameter>,
     path: Path<PathParameters>,

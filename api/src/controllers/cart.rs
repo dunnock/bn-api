@@ -41,7 +41,7 @@ pub struct UpdateCartRequest {
     pub tracking_data: Option<Value>,
 }
 
-pub fn update_cart(
+pub async fn update_cart(
     (connection, json, user, request_info): (Connection, Json<UpdateCartRequest>, User, RequestInfo),
 ) -> Result<HttpResponse, BigNeonError> {
     let json = json.into_inner();
@@ -86,7 +86,7 @@ pub fn update_cart(
     Ok(HttpResponse::Ok().json(Order::find(cart.id, connection)?.for_display(None, user.id(), connection)?))
 }
 
-pub fn duplicate(
+pub async fn duplicate(
     (connection, path, user): (Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -101,7 +101,7 @@ pub fn duplicate(
     Ok(HttpResponse::Ok().json(duplicate_order.for_display(None, user.id(), connection)?))
 }
 
-pub fn destroy((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
 
     // Find the current cart of the user, if it exists.
@@ -111,7 +111,7 @@ pub fn destroy((connection, user): (Connection, User)) -> Result<HttpResponse, B
     Ok(HttpResponse::Ok().json(Order::find(cart.id, connection)?.for_display(None, user.id(), connection)?))
 }
 
-pub fn replace_cart(
+pub async fn replace_cart(
     (connection, json, user, request_info): (Connection, Json<UpdateCartRequest>, User, RequestInfo),
 ) -> Result<HttpResponse, BigNeonError> {
     let json = json.into_inner();
@@ -156,7 +156,7 @@ pub fn replace_cart(
     Ok(HttpResponse::Ok().json(Order::find(cart.id, connection)?.for_display(None, user.id(), connection)?))
 }
 
-pub fn show((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let order = match Order::find_cart_for_user(user.id(), connection)? {
         Some(o) => o,
@@ -204,7 +204,7 @@ pub enum PaymentRequest {
     Free,
 }
 
-pub fn clear_invalid_items((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn clear_invalid_items((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let mut order = match Order::find_cart_for_user(user.id(), connection)? {
         Some(o) => o,
@@ -220,7 +220,7 @@ pub fn clear_invalid_items((connection, user): (Connection, User)) -> Result<Htt
     Ok(HttpResponse::Ok().json(order.for_display(None, user.id(), connection)?))
 }
 
-pub fn checkout(
+pub async fn checkout(
     (connection, json, user, state, request_info): (
         Connection,
         Json<CheckoutCartRequest>,

@@ -1,7 +1,7 @@
 use crate::errors::{ApplicationError, ApplicationErrorType, BigNeonError};
 use crate::models::CreateArtistRequest;
 use log::Level::*;
-use reqwest::Client;
+use reqwest::blocking::Client;
 use serde_json;
 use serde_json::Value;
 use std::default::Default;

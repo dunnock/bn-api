@@ -21,7 +21,7 @@ pub struct PathParams {
     pub id: Uuid,
 }
 
-pub fn callback(
+pub async fn callback(
     (query, path, connection, state, user): (
         Query<QueryParams>,
         Path<PathParams>,

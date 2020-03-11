@@ -1,6 +1,6 @@
 use crate::errors::BigNeonError;
 use crate::server::GetAppState;
-use actix_web::{FromRequest, HttpRequest, Result};
+use actix_web::{FromRequest, HttpRequest, Result, dev::Payload};
 use cache::RedisCacheConnection;
 use futures::future::{Ready, ok};
 
@@ -14,7 +14,7 @@ impl FromRequest for CacheDatabase {
     type Error = BigNeonError;
     type Future = Ready<Result<CacheDatabase, Self::Error>>;
 
-    fn from_request(request: &HttpRequest, _config: &Self::Config) -> Self::Future {
+    fn from_request(request: &HttpRequest, _: &mut Payload) -> Self::Future {
         if let Some(connection) = request.extensions().get::<CacheDatabase>() {
             return ok(connection.clone());
         }

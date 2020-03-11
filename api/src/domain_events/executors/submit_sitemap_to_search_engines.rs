@@ -5,7 +5,7 @@ use crate::errors::BigNeonError;
 use bigneon_db::prelude::*;
 use futures::future;
 use log::Level;
-use reqwest::Client;
+use reqwest::blocking::Client;
 
 pub struct SubmitSitemapToSearchEnginesExecutor {
     api_url: String,

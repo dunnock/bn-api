@@ -6,7 +6,7 @@ use actix_web::{http::StatusCode, HttpResponse, web::Query};
 use bigneon_db::models::{DomainAction, Report, Scopes};
 use bigneon_db::prelude::{DisplayOrder, Event, Order, Paging, PagingParameters, Payload};
 
-pub fn admin_ticket_count((connection, user): (Connection, AuthUser)) -> Result<HttpResponse, BigNeonError> {
+pub async fn admin_ticket_count((connection, user): (Connection, AuthUser)) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     user.requires_scope(Scopes::OrgAdmin)?;
@@ -14,7 +14,7 @@ pub fn admin_ticket_count((connection, user): (Connection, AuthUser)) -> Result<
     Ok(HttpResponse::Ok().json(result))
 }
 
-pub fn admin_stuck_domain_actions((connection, user): (Connection, AuthUser)) -> Result<HttpResponse, BigNeonError> {
+pub async fn admin_stuck_domain_actions(connection: Connection, user: AuthUser) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     user.requires_scope(Scopes::OrgAdmin)?;
@@ -22,7 +22,7 @@ pub fn admin_stuck_domain_actions((connection, user): (Connection, AuthUser)) ->
     Ok(HttpResponse::Ok().json(result))
 }
 
-pub fn orders(
+pub async fn orders(
     (conn, query, user): (Connection, Query<PagingParameters>, User),
 ) -> Result<WebPayload<DisplayOrder>, BigNeonError> {
     let conn = conn.get();

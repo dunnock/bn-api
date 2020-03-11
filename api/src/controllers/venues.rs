@@ -7,7 +7,7 @@ use actix_web::{HttpResponse, web::{Path, Query}};
 use bigneon_db::models::*;
 use uuid::Uuid;
 
-pub fn index(
+pub async fn index(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, OptionalUser),
 ) -> Result<HttpResponse, BigNeonError> {
     //TODO implement proper paging on db
@@ -24,14 +24,14 @@ pub fn index(
     )))
 }
 
-pub fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let venue = Venue::find(parameters.id, connection)?;
 
     Ok(HttpResponse::Ok().json(&venue))
 }
 
-pub fn show_from_organizations(
+pub async fn show_from_organizations(
     (connection, organization_id, query_parameters, user): (
         Connection,
         Path<PathParameters>,
@@ -91,7 +91,7 @@ impl From<NewVenueData> for NewVenue {
     }
 }
 
-pub fn create(
+pub async fn create(
     (connection, new_venue, user): (Connection, Json<NewVenueData>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -111,7 +111,7 @@ pub fn create(
     Ok(HttpResponse::Created().json(&venue))
 }
 
-pub fn toggle_privacy(
+pub async fn toggle_privacy(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -122,7 +122,7 @@ pub fn toggle_privacy(
     Ok(HttpResponse::Ok().json(updated_venue))
 }
 
-pub fn update(
+pub async fn update(
     (connection, parameters, venue_parameters, user): (
         Connection,
         Path<PathParameters>,

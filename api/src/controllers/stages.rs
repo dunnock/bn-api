@@ -8,7 +8,7 @@ use crate::extractors::*;
 use crate::models::PathParameters;
 use diesel::PgConnection;
 
-pub fn index(
+pub async fn index(
     (connection, path_parameters, query_parameters): (Connection, Path<PathParameters>, Query<PagingParameters>),
 ) -> Result<HttpResponse, BigNeonError> {
     let stages = Stage::find_by_venue_id(path_parameters.id, connection.get())?;
@@ -21,7 +21,7 @@ pub fn index(
     )))
 }
 
-pub fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
     let stage = Stage::find(parameters.id, connection)?;
 
@@ -35,7 +35,7 @@ pub struct CreateStage {
     pub capacity: Option<i64>,
 }
 
-pub fn create(
+pub async fn create(
     (connection, parameters, create_stage, user): (Connection, Path<PathParameters>, Json<CreateStage>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -53,7 +53,7 @@ pub fn create(
     Ok(HttpResponse::Created().json(&stage))
 }
 
-pub fn update(
+pub async fn update(
     (connection, parameters, stage_parameters, user): (
         Connection,
         Path<PathParameters>,
@@ -70,7 +70,7 @@ pub fn update(
     Ok(HttpResponse::Ok().json(updated_stage))
 }
 
-pub fn delete(
+pub async fn delete(
     (connection, parameters, user): (Connection, Path<PathParameters>, AuthUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();

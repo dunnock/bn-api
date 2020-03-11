@@ -58,7 +58,6 @@ error_conversion!(sitemap::Error);
 error_conversion!(reqwest::Error);
 error_conversion!(url::ParseError);
 error_conversion!(ToStrError);
-error_conversion!(actix_web::Error);
 
 impl fmt::Display for BigNeonError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -91,8 +90,7 @@ impl BigNeonError {
 impl ConvertToWebError for sitemap::Error {
     fn to_response(&self) -> HttpResponse {
         error!("Sitemap generator error: {}", self);
-        HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
-            .into_builder()
+        HttpResponse::InternalServerError()
             .json(json!({"error": self.to_string()}))
     }
 }
@@ -100,8 +98,7 @@ impl ConvertToWebError for sitemap::Error {
 impl ConvertToWebError for std::io::Error {
     fn to_response(&self) -> HttpResponse {
         error!("IO Error: {}", self);
-        HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
-            .into_builder()
+        HttpResponse::InternalServerError()
             .json(json!({"error": self.to_string()}))
     }
 }
@@ -115,8 +112,7 @@ impl From<TwilioError> for BigNeonError {
 impl ConvertToWebError for TwilioError {
     fn to_response(&self) -> HttpResponse {
         error!("Twilio error: {}", self);
-        HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
-            .into_builder()
+        HttpResponse::InternalServerError()
             .json(json!({"error": self.to_string()}))
     }
 }
