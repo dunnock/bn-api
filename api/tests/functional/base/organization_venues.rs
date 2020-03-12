@@ -94,8 +94,7 @@ pub async fn destroy(role: Roles, with_number_of_extra_venues: i64, should_succe
         let organization_venue = OrganizationVenue::find(organization_venue.id, connection);
         assert!(organization_venue.is_err());
     } else if should_succeed {
-        let expected_json = HttpResponse::new(StatusCode::UNPROCESSABLE_ENTITY)
-            .into_builder()
+        let expected_json = HttpResponse::UnprocessableEntity()
             .json(json!({
                 "error": "Unable to remove organization venue link, at least one organization must be associated with venue"
             }));
@@ -147,7 +146,7 @@ pub async fn organizations_index(role: Roles, should_test_succeed: bool) {
         path,
         query_parameters,
         auth_user,
-    ));
+    )).await;
 
     let wrapped_expected_organization_venues = Payload {
         data: vec![
@@ -224,7 +223,7 @@ pub async fn venues_index(role: Roles, should_test_succeed: bool) {
     path.id = venue2.id;
 
     let response =
-        organization_venues::venues_index((database.connection.clone().into(), path, query_parameters, auth_user));
+        organization_venues::venues_index((database.connection.clone().into(), path, query_parameters, auth_user)).await;
 
     let wrapped_expected_organization_venues = Payload {
         data: vec![

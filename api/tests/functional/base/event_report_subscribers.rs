@@ -31,7 +31,7 @@ pub async fn index(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response = event_report_subscribers::index((database.connection.clone().into(), path, auth_user));
+    let response = event_report_subscribers::index((database.connection.clone().into(), path, auth_user)).await;
     let counter = expected_event_report_subscribers.len() as u32;
     let wrapped_expected_orgs = Payload {
         data: expected_event_report_subscribers,
@@ -75,7 +75,7 @@ pub async fn create(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response = event_report_subscribers::create((database.connection.clone().into(), json, path, auth_user));
+    let response = event_report_subscribers::create((database.connection.clone().into(), json, path, auth_user)).await;
 
     if should_test_succeed {
         let response = response.unwrap();

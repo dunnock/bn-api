@@ -15,203 +15,203 @@ use uuid::Uuid;
 #[cfg(test)]
 mod index_tests {
     use super::*;
-    #[test]
-    fn index_org_member() {
-        base::transfers::index(Roles::OrgMember, false, true);
+    #[actix_rt::test]
+    async fn index_org_member() {
+        base::transfers::index(Roles::OrgMember, false, true).await;
     }
-    #[test]
-    fn index_admin() {
-        base::transfers::index(Roles::Admin, false, true);
+    #[actix_rt::test]
+    async fn index_admin() {
+        base::transfers::index(Roles::Admin, false, true).await;
     }
-    #[test]
-    fn index_user() {
-        base::transfers::index(Roles::User, false, false);
+    #[actix_rt::test]
+    async fn index_user() {
+        base::transfers::index(Roles::User, false, false).await;
     }
-    #[test]
-    fn index_org_owner() {
-        base::transfers::index(Roles::OrgOwner, false, true);
+    #[actix_rt::test]
+    async fn index_org_owner() {
+        base::transfers::index(Roles::OrgOwner, false, true).await;
     }
-    #[test]
-    fn index_door_person() {
-        base::transfers::index(Roles::DoorPerson, false, false);
+    #[actix_rt::test]
+    async fn index_door_person() {
+        base::transfers::index(Roles::DoorPerson, false, false).await;
     }
-    #[test]
-    fn index_promoter() {
-        base::transfers::index(Roles::Promoter, false, true);
+    #[actix_rt::test]
+    async fn index_promoter() {
+        base::transfers::index(Roles::Promoter, false, true).await;
     }
-    #[test]
-    fn index_promoter_read_only() {
-        base::transfers::index(Roles::PromoterReadOnly, false, true);
+    #[actix_rt::test]
+    async fn index_promoter_read_only() {
+        base::transfers::index(Roles::PromoterReadOnly, false, true).await;
     }
-    #[test]
-    fn index_org_admin() {
-        base::transfers::index(Roles::OrgAdmin, false, true);
+    #[actix_rt::test]
+    async fn index_org_admin() {
+        base::transfers::index(Roles::OrgAdmin, false, true).await;
     }
-    #[test]
-    fn index_box_office() {
-        base::transfers::index(Roles::OrgBoxOffice, true, true);
+    #[actix_rt::test]
+    async fn index_box_office() {
+        base::transfers::index(Roles::OrgBoxOffice, true, true).await;
     }
-    #[test]
-    fn index_owns_order_org_member() {
-        base::transfers::index(Roles::OrgMember, true, true);
+    #[actix_rt::test]
+    async fn index_owns_order_org_member() {
+        base::transfers::index(Roles::OrgMember, true, true).await;
     }
-    #[test]
-    fn index_owns_order_admin() {
-        base::transfers::index(Roles::Admin, true, true);
+    #[actix_rt::test]
+    async fn index_owns_order_admin() {
+        base::transfers::index(Roles::Admin, true, true).await;
     }
-    #[test]
-    fn index_owns_order_user() {
-        base::transfers::index(Roles::User, true, true);
+    #[actix_rt::test]
+    async fn index_owns_order_user() {
+        base::transfers::index(Roles::User, true, true).await;
     }
-    #[test]
-    fn index_owns_order_org_owner() {
-        base::transfers::index(Roles::OrgOwner, true, true);
+    #[actix_rt::test]
+    async fn index_owns_order_org_owner() {
+        base::transfers::index(Roles::OrgOwner, true, true).await;
     }
-    #[test]
-    fn index_owns_order_door_person() {
-        base::transfers::index(Roles::DoorPerson, true, true);
+    #[actix_rt::test]
+    async fn index_owns_order_door_person() {
+        base::transfers::index(Roles::DoorPerson, true, true).await;
     }
-    #[test]
-    fn index_owns_order_promoter() {
-        base::transfers::index(Roles::Promoter, true, true);
+    #[actix_rt::test]
+    async fn index_owns_order_promoter() {
+        base::transfers::index(Roles::Promoter, true, true).await;
     }
-    #[test]
-    fn index_owns_order_promoter_read_only() {
-        base::transfers::index(Roles::PromoterReadOnly, true, true);
+    #[actix_rt::test]
+    async fn index_owns_order_promoter_read_only() {
+        base::transfers::index(Roles::PromoterReadOnly, true, true).await;
     }
-    #[test]
-    fn index_owns_order_org_admin() {
-        base::transfers::index(Roles::OrgAdmin, true, true);
+    #[actix_rt::test]
+    async fn index_owns_order_org_admin() {
+        base::transfers::index(Roles::OrgAdmin, true, true).await;
     }
-    #[test]
-    fn index_owns_order_box_office() {
-        base::transfers::index(Roles::OrgBoxOffice, true, true);
+    #[actix_rt::test]
+    async fn index_owns_order_box_office() {
+        base::transfers::index(Roles::OrgBoxOffice, true, true).await;
     }
 }
 
 #[cfg(test)]
 mod cancel_completed_transfer_tests {
     use super::*;
-    #[test]
-    fn cancel_completed_transfer_org_member() {
-        base::transfers::cancel_completed_transfer(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_org_member() {
+        base::transfers::cancel_completed_transfer(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn cancel_completed_transfer_admin() {
-        base::transfers::cancel_completed_transfer(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_admin() {
+        base::transfers::cancel_completed_transfer(Roles::Admin, true).await;
     }
-    #[test]
-    fn cancel_completed_transfer_super() {
-        base::transfers::cancel_completed_transfer(Roles::Super, true);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_super() {
+        base::transfers::cancel_completed_transfer(Roles::Super, true).await;
     }
-    #[test]
-    fn cancel_completed_transfer_user() {
-        base::transfers::cancel_completed_transfer(Roles::User, false);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_user() {
+        base::transfers::cancel_completed_transfer(Roles::User, false).await;
     }
-    #[test]
-    fn cancel_completed_transfer_org_owner() {
-        base::transfers::cancel_completed_transfer(Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_org_owner() {
+        base::transfers::cancel_completed_transfer(Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn cancel_completed_transfer_door_person() {
-        base::transfers::cancel_completed_transfer(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_door_person() {
+        base::transfers::cancel_completed_transfer(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn cancel_completed_transfer_promoter() {
-        base::transfers::cancel_completed_transfer(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_promoter() {
+        base::transfers::cancel_completed_transfer(Roles::Promoter, false).await;
     }
-    #[test]
-    fn cancel_completed_transfer_promoter_read_only() {
-        base::transfers::cancel_completed_transfer(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_promoter_read_only() {
+        base::transfers::cancel_completed_transfer(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn cancel_completed_transfer_org_admin() {
-        base::transfers::cancel_completed_transfer(Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_org_admin() {
+        base::transfers::cancel_completed_transfer(Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn cancel_completed_transfer_box_office() {
-        base::transfers::cancel_completed_transfer(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn cancel_completed_transfer_box_office() {
+        base::transfers::cancel_completed_transfer(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod cancel_tests {
     use super::*;
-    #[test]
-    fn cancel_org_member() {
-        base::transfers::cancel(Roles::OrgMember, false, true);
+    #[actix_rt::test]
+    async fn cancel_org_member() {
+        base::transfers::cancel(Roles::OrgMember, false, true).await;
     }
-    #[test]
-    fn cancel_admin() {
-        base::transfers::cancel(Roles::Admin, false, true);
+    #[actix_rt::test]
+    async fn cancel_admin() {
+        base::transfers::cancel(Roles::Admin, false, true).await;
     }
-    #[test]
-    fn cancel_user() {
-        base::transfers::cancel(Roles::User, false, false);
+    #[actix_rt::test]
+    async fn cancel_user() {
+        base::transfers::cancel(Roles::User, false, false).await;
     }
-    #[test]
-    fn cancel_org_owner() {
-        base::transfers::cancel(Roles::OrgOwner, false, true);
+    #[actix_rt::test]
+    async fn cancel_org_owner() {
+        base::transfers::cancel(Roles::OrgOwner, false, true).await;
     }
-    #[test]
-    fn cancel_door_person() {
-        base::transfers::cancel(Roles::DoorPerson, false, false);
+    #[actix_rt::test]
+    async fn cancel_door_person() {
+        base::transfers::cancel(Roles::DoorPerson, false, false).await;
     }
-    #[test]
-    fn cancel_promoter() {
-        base::transfers::cancel(Roles::Promoter, false, true);
+    #[actix_rt::test]
+    async fn cancel_promoter() {
+        base::transfers::cancel(Roles::Promoter, false, true).await;
     }
-    #[test]
-    fn cancel_promoter_read_only() {
-        base::transfers::cancel(Roles::PromoterReadOnly, false, false);
+    #[actix_rt::test]
+    async fn cancel_promoter_read_only() {
+        base::transfers::cancel(Roles::PromoterReadOnly, false, false).await;
     }
-    #[test]
-    fn cancel_org_admin() {
-        base::transfers::cancel(Roles::OrgAdmin, false, true);
+    #[actix_rt::test]
+    async fn cancel_org_admin() {
+        base::transfers::cancel(Roles::OrgAdmin, false, true).await;
     }
-    #[test]
-    fn cancel_box_office() {
-        base::transfers::cancel(Roles::OrgBoxOffice, false, false);
+    #[actix_rt::test]
+    async fn cancel_box_office() {
+        base::transfers::cancel(Roles::OrgBoxOffice, false, false).await;
     }
-    #[test]
-    fn cancel_owns_order_org_member() {
-        base::transfers::cancel(Roles::OrgMember, true, true);
+    #[actix_rt::test]
+    async fn cancel_owns_order_org_member() {
+        base::transfers::cancel(Roles::OrgMember, true, true).await;
     }
-    #[test]
-    fn cancel_owns_order_admin() {
-        base::transfers::cancel(Roles::Admin, true, true);
+    #[actix_rt::test]
+    async fn cancel_owns_order_admin() {
+        base::transfers::cancel(Roles::Admin, true, true).await;
     }
-    #[test]
-    fn cancel_owns_order_user() {
-        base::transfers::cancel(Roles::User, true, true);
+    #[actix_rt::test]
+    async fn cancel_owns_order_user() {
+        base::transfers::cancel(Roles::User, true, true).await;
     }
-    #[test]
-    fn cancel_owns_order_org_owner() {
-        base::transfers::cancel(Roles::OrgOwner, true, true);
+    #[actix_rt::test]
+    async fn cancel_owns_order_org_owner() {
+        base::transfers::cancel(Roles::OrgOwner, true, true).await;
     }
-    #[test]
-    fn cancel_owns_order_door_person() {
-        base::transfers::cancel(Roles::DoorPerson, true, true);
+    #[actix_rt::test]
+    async fn cancel_owns_order_door_person() {
+        base::transfers::cancel(Roles::DoorPerson, true, true).await;
     }
-    #[test]
-    fn cancel_owns_order_promoter() {
-        base::transfers::cancel(Roles::Promoter, true, true);
+    #[actix_rt::test]
+    async fn cancel_owns_order_promoter() {
+        base::transfers::cancel(Roles::Promoter, true, true).await;
     }
-    #[test]
-    fn cancel_owns_order_promoter_read_only() {
-        base::transfers::cancel(Roles::PromoterReadOnly, true, true);
+    #[actix_rt::test]
+    async fn cancel_owns_order_promoter_read_only() {
+        base::transfers::cancel(Roles::PromoterReadOnly, true, true).await;
     }
-    #[test]
-    fn cancel_owns_order_org_admin() {
-        base::transfers::cancel(Roles::OrgAdmin, true, true);
+    #[actix_rt::test]
+    async fn cancel_owns_order_org_admin() {
+        base::transfers::cancel(Roles::OrgAdmin, true, true).await;
     }
-    #[test]
-    fn cancel_owns_order_box_office() {
-        base::transfers::cancel(Roles::OrgBoxOffice, true, true);
+    #[actix_rt::test]
+    async fn cancel_owns_order_box_office() {
+        base::transfers::cancel(Roles::OrgBoxOffice, true, true).await;
     }
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn activity() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -250,7 +250,7 @@ pub async fn activity() {
         paging_parameters,
         filter_parameters,
         auth_user.clone(),
-    ));
+    )).await;
 
     let response = response.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -276,7 +276,7 @@ pub async fn activity() {
     }
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn show_by_transfer_key() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -392,7 +392,7 @@ async fn index() {
         filter_parameters,
         path,
         auth_user.clone(),
-    ));
+    )).await;
 
     let response = response.unwrap();
     let mut expected_tags: HashMap<String, Value> = HashMap::new();
@@ -442,7 +442,7 @@ async fn index() {
         filter_parameters,
         path,
         auth_user,
-    ));
+    )).await;
 
     let response = response.unwrap();
     let mut expected_tags: HashMap<String, Value> = HashMap::new();

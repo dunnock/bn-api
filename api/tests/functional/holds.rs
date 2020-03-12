@@ -12,164 +12,164 @@ use uuid::Uuid;
 #[cfg(test)]
 mod create_tests {
     use super::*;
-    #[test]
-    fn create_org_member() {
-        base::holds::create(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn create_org_member() {
+        base::holds::create(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn create_admin() {
-        base::holds::create(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn create_admin() {
+        base::holds::create(Roles::Admin, true).await;
     }
-    #[test]
-    fn create_user() {
-        base::holds::create(Roles::User, false);
+    #[actix_rt::test]
+    async fn create_user() {
+        base::holds::create(Roles::User, false).await;
     }
-    #[test]
-    fn create_org_owner() {
-        base::holds::create(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn create_org_owner() {
+        base::holds::create(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn create_door_person() {
-        base::holds::create(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn create_door_person() {
+        base::holds::create(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn create_promoter() {
-        base::holds::create(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn create_promoter() {
+        base::holds::create(Roles::Promoter, true).await;
     }
-    #[test]
-    fn create_promoter_read_only() {
-        base::holds::create(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn create_promoter_read_only() {
+        base::holds::create(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn create_org_admin() {
-        base::holds::create(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn create_org_admin() {
+        base::holds::create(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn create_box_office() {
-        base::holds::create(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn create_box_office() {
+        base::holds::create(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod children_tests {
     use super::*;
-    #[test]
-    fn children_org_member() {
-        base::holds::children(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn children_org_member() {
+        base::holds::children(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn children_admin() {
-        base::holds::children(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn children_admin() {
+        base::holds::children(Roles::Admin, true).await;
     }
-    #[test]
-    fn children_user() {
-        base::holds::children(Roles::User, false);
+    #[actix_rt::test]
+    async fn children_user() {
+        base::holds::children(Roles::User, false).await;
     }
-    #[test]
-    fn children_org_owner() {
-        base::holds::children(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn children_org_owner() {
+        base::holds::children(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn children_door_person() {
-        base::holds::children(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn children_door_person() {
+        base::holds::children(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn children_promoter() {
-        base::holds::children(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn children_promoter() {
+        base::holds::children(Roles::Promoter, true).await;
     }
-    #[test]
-    fn children_promoter_read_only() {
-        base::holds::children(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn children_promoter_read_only() {
+        base::holds::children(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn children_org_admin() {
-        base::holds::children(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn children_org_admin() {
+        base::holds::children(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn children_box_office() {
-        base::holds::children(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn children_box_office() {
+        base::holds::children(Roles::OrgBoxOffice, true).await;
     }
 }
 
 #[cfg(test)]
 mod split_tests {
     use super::*;
-    #[test]
-    fn split_org_member() {
-        base::holds::split(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn split_org_member() {
+        base::holds::split(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn split_admin() {
-        base::holds::split(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn split_admin() {
+        base::holds::split(Roles::Admin, true).await;
     }
-    #[test]
-    fn split_user() {
-        base::holds::split(Roles::User, false);
+    #[actix_rt::test]
+    async fn split_user() {
+        base::holds::split(Roles::User, false).await;
     }
-    #[test]
-    fn split_org_owner() {
-        base::holds::split(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn split_org_owner() {
+        base::holds::split(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn split_door_person() {
-        base::holds::split(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn split_door_person() {
+        base::holds::split(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn split_promoter() {
-        base::holds::split(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn split_promoter() {
+        base::holds::split(Roles::Promoter, true).await;
     }
-    #[test]
-    fn split_promoter_read_only() {
-        base::holds::split(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn split_promoter_read_only() {
+        base::holds::split(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn split_org_admin() {
-        base::holds::split(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn split_org_admin() {
+        base::holds::split(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn split_box_office() {
-        base::holds::split(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn split_box_office() {
+        base::holds::split(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod update_tests {
     use super::*;
-    #[test]
-    fn update_org_member() {
-        base::holds::update(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        base::holds::update(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn update_admin() {
-        base::holds::update(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        base::holds::update(Roles::Admin, true).await;
     }
-    #[test]
-    fn update_user() {
-        base::holds::update(Roles::User, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        base::holds::update(Roles::User, false).await;
     }
-    #[test]
-    fn update_org_owner() {
-        base::holds::update(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        base::holds::update(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn update_door_person() {
-        base::holds::update(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        base::holds::update(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn update_promoter() {
-        base::holds::update(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        base::holds::update(Roles::Promoter, true).await;
     }
-    #[test]
-    fn update_promoter_read_only() {
-        base::holds::update(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        base::holds::update(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn update_org_admin() {
-        base::holds::update(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        base::holds::update(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn update_box_office() {
-        base::holds::update(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        base::holds::update(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -251,7 +251,7 @@ async fn update_with_validation_errors() {
     );
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn read_hold() {
     let database = TestDatabase::new();
     let organization = database.create_organization().finish();

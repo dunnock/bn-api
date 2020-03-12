@@ -75,11 +75,12 @@ pub async fn show(role: Roles, should_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     let response: HttpResponse = organizations::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.into(),
         path,
         auth_user.clone(),
     ))
+    .await
     .into();
 
     if !should_succeed {
@@ -181,11 +182,12 @@ pub async fn create(role: Roles, should_test_succeed: bool) {
 
     let test_request = TestRequest::create_with_uri("/organizations");
     let response: HttpResponse = organizations::create((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.into(),
         json,
         auth_user,
     ))
+    .await
     .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     if should_test_succeed {
@@ -228,12 +230,13 @@ pub async fn update(role: Roles, should_succeed: bool) {
     });
 
     let response: HttpResponse = organizations::update((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.into(),
         path,
         json,
         auth_user.clone(),
     ))
+    .await
     .into();
     if !should_succeed {
         support::expects_unauthorized(&response);
@@ -280,12 +283,13 @@ pub async fn update_restricted_field(restricted_field: &str, role: Roles, should
     let json = Json(attributes);
 
     let response: HttpResponse = organizations::update((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.into(),
         path,
         json,
         auth_user.clone(),
     ))
+    .await
     .into();
     if !should_succeed {
         support::expects_unauthorized(&response);
@@ -450,7 +454,7 @@ pub async fn list_organization_members(role: Roles, should_succeed: bool) {
         path,
         query_parameters,
         auth_user.clone(),
-    ));
+    )).await;
 
     if !should_succeed {
         let http_response = response.err().unwrap().error_response();

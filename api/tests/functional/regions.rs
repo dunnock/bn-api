@@ -18,7 +18,7 @@ async fn index() {
     let expected_regions = vec![region, region2];
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
-    let response = regions::index((database.connection.into(), query_parameters)).unwrap();
+    let response = regions::index((database.connection.into(), query_parameters)).await.unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.payload().data[0].id, Uuid::nil());
@@ -46,81 +46,81 @@ async fn show() {
 #[cfg(test)]
 mod create_tests {
     use super::*;
-    #[test]
-    fn create_org_member() {
-        base::regions::create(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn create_org_member() {
+        base::regions::create(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn create_admin() {
-        base::regions::create(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn create_admin() {
+        base::regions::create(Roles::Admin, true).await;
     }
-    #[test]
-    fn create_user() {
-        base::regions::create(Roles::User, false);
+    #[actix_rt::test]
+    async fn create_user() {
+        base::regions::create(Roles::User, false).await;
     }
-    #[test]
-    fn create_org_owner() {
-        base::regions::create(Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn create_org_owner() {
+        base::regions::create(Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn create_door_person() {
-        base::regions::create(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn create_door_person() {
+        base::regions::create(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn create_promoter() {
-        base::regions::create(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn create_promoter() {
+        base::regions::create(Roles::Promoter, false).await;
     }
-    #[test]
-    fn create_promoter_read_only() {
-        base::regions::create(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn create_promoter_read_only() {
+        base::regions::create(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn create_org_admin() {
-        base::regions::create(Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn create_org_admin() {
+        base::regions::create(Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn create_box_office() {
-        base::regions::create(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn create_box_office() {
+        base::regions::create(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod update_tests {
     use super::*;
-    #[test]
-    fn update_org_member() {
-        base::regions::update(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        base::regions::update(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn update_admin() {
-        base::regions::update(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        base::regions::update(Roles::Admin, true).await;
     }
-    #[test]
-    fn update_user() {
-        base::regions::update(Roles::User, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        base::regions::update(Roles::User, false).await;
     }
-    #[test]
-    fn update_org_owner() {
-        base::regions::update(Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        base::regions::update(Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn update_door_person() {
-        base::regions::update(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        base::regions::update(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn update_promoter() {
-        base::regions::update(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        base::regions::update(Roles::Promoter, false).await;
     }
-    #[test]
-    fn update_promoter_read_only() {
-        base::regions::update(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        base::regions::update(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn update_org_admin() {
-        base::regions::update(Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        base::regions::update(Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn update_box_office() {
-        base::regions::update(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        base::regions::update(Roles::OrgBoxOffice, false).await;
     }
 }

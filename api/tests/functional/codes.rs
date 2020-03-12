@@ -14,164 +14,164 @@ use chrono::NaiveDateTime;
 #[cfg(test)]
 mod show_tests {
     use super::*;
-    #[test]
-    fn show_org_member() {
-        base::codes::show(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn show_org_member() {
+        base::codes::show(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn show_admin() {
-        base::codes::show(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn show_admin() {
+        base::codes::show(Roles::Admin, true).await;
     }
-    #[test]
-    fn show_user() {
-        base::codes::show(Roles::User, false);
+    #[actix_rt::test]
+    async fn show_user() {
+        base::codes::show(Roles::User, false).await;
     }
-    #[test]
-    fn show_org_owner() {
-        base::codes::show(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn show_org_owner() {
+        base::codes::show(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn show_door_person() {
-        base::codes::show(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn show_door_person() {
+        base::codes::show(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn show_promoter() {
-        base::codes::show(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn show_promoter() {
+        base::codes::show(Roles::Promoter, true).await;
     }
-    #[test]
-    fn show_promoter_read_only() {
-        base::codes::show(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn show_promoter_read_only() {
+        base::codes::show(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn show_org_admin() {
-        base::codes::show(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn show_org_admin() {
+        base::codes::show(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn show_box_office() {
-        base::codes::show(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn show_box_office() {
+        base::codes::show(Roles::OrgBoxOffice, true).await;
     }
 }
 
 #[cfg(test)]
 mod create_tests {
     use super::*;
-    #[test]
-    fn create_org_member() {
-        base::codes::create(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn create_org_member() {
+        base::codes::create(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn create_admin() {
-        base::codes::create(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn create_admin() {
+        base::codes::create(Roles::Admin, true).await;
     }
-    #[test]
-    fn create_user() {
-        base::codes::create(Roles::User, false);
+    #[actix_rt::test]
+    async fn create_user() {
+        base::codes::create(Roles::User, false).await;
     }
-    #[test]
-    fn create_org_owner() {
-        base::codes::create(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn create_org_owner() {
+        base::codes::create(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn create_door_person() {
-        base::codes::create(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn create_door_person() {
+        base::codes::create(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn create_promoter() {
-        base::codes::create(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn create_promoter() {
+        base::codes::create(Roles::Promoter, true).await;
     }
-    #[test]
-    fn create_promoter_read_only() {
-        base::codes::create(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn create_promoter_read_only() {
+        base::codes::create(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn create_org_admin() {
-        base::codes::create(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn create_org_admin() {
+        base::codes::create(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn create_box_office() {
-        base::codes::create(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn create_box_office() {
+        base::codes::create(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod update_tests {
     use super::*;
-    #[test]
-    fn update_org_member() {
-        base::codes::update(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        base::codes::update(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn update_admin() {
-        base::codes::update(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        base::codes::update(Roles::Admin, true).await;
     }
-    #[test]
-    fn update_user() {
-        base::codes::update(Roles::User, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        base::codes::update(Roles::User, false).await;
     }
-    #[test]
-    fn update_org_owner() {
-        base::codes::update(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        base::codes::update(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn update_door_person() {
-        base::codes::update(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        base::codes::update(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn update_promoter() {
-        base::codes::update(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        base::codes::update(Roles::Promoter, true).await;
     }
-    #[test]
-    fn update_promoter_read_only() {
-        base::codes::update(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        base::codes::update(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn update_org_admin() {
-        base::codes::update(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        base::codes::update(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn update_box_office() {
-        base::codes::update(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        base::codes::update(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod destroy_tests {
     use super::*;
-    #[test]
-    fn destroy_org_member() {
-        base::codes::destroy(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn destroy_org_member() {
+        base::codes::destroy(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn destroy_admin() {
-        base::codes::destroy(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn destroy_admin() {
+        base::codes::destroy(Roles::Admin, true).await;
     }
-    #[test]
-    fn destroy_user() {
-        base::codes::destroy(Roles::User, false);
+    #[actix_rt::test]
+    async fn destroy_user() {
+        base::codes::destroy(Roles::User, false).await;
     }
-    #[test]
-    fn destroy_org_owner() {
-        base::codes::destroy(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn destroy_org_owner() {
+        base::codes::destroy(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn destroy_door_person() {
-        base::codes::destroy(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn destroy_door_person() {
+        base::codes::destroy(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn destroy_promoter() {
-        base::codes::destroy(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn destroy_promoter() {
+        base::codes::destroy(Roles::Promoter, true).await;
     }
-    #[test]
-    fn destroy_promoter_read_only() {
-        base::codes::destroy(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn destroy_promoter_read_only() {
+        base::codes::destroy(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn destroy_org_admin() {
-        base::codes::destroy(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn destroy_org_admin() {
+        base::codes::destroy(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn destroy_box_office() {
-        base::codes::destroy(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn destroy_box_office() {
+        base::codes::destroy(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -382,7 +382,7 @@ async fn update_fails_adding_ticket_type_id_from_other_event() {
     );
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn update_adding_keeping_and_removing_ticket_types() {
     let database = TestDatabase::new();
     let connection = database.connection.get();

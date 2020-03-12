@@ -147,6 +147,7 @@ pub async fn create_multiple(role: Roles, should_test_succeed: bool) {
         auth_user,
         state,
     ))
+    .await
     .into();
 
     if should_test_succeed {
@@ -257,8 +258,9 @@ pub async fn update(role: Roles, should_test_succeed: bool) {
         path,
         Json(request_data),
         auth_user,
-        request.extract_state(),
+        request.extract_state().await,
     ))
+    .await
     .into();
 
     //Check if fields have been updated by retrieving the ticket type and pricing

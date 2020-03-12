@@ -4,532 +4,532 @@ use bigneon_db::models::Roles;
 #[cfg(test)]
 mod index_tests {
     use super::*;
-    #[test]
-    fn index_org_member() {
-        organizations::index(Roles::OrgMember);
+    #[actix_rt::test]
+    async fn index_org_member() {
+        organizations::index(Roles::OrgMember).await;
     }
-    #[test]
-    fn index_admin() {
-        organizations::index(Roles::Admin);
+    #[actix_rt::test]
+    async fn index_admin() {
+        organizations::index(Roles::Admin).await;
     }
-    #[test]
-    fn index_user() {
-        organizations::index(Roles::User);
+    #[actix_rt::test]
+    async fn index_user() {
+        organizations::index(Roles::User).await;
     }
-    #[test]
-    fn index_org_owner() {
-        organizations::index(Roles::OrgOwner);
+    #[actix_rt::test]
+    async fn index_org_owner() {
+        organizations::index(Roles::OrgOwner).await;
     }
-    #[test]
-    fn index_door_person() {
-        organizations::index(Roles::DoorPerson);
+    #[actix_rt::test]
+    async fn index_door_person() {
+        organizations::index(Roles::DoorPerson).await;
     }
-    #[test]
-    fn index_promoter() {
-        organizations::index(Roles::Promoter);
+    #[actix_rt::test]
+    async fn index_promoter() {
+        organizations::index(Roles::Promoter).await;
     }
-    #[test]
-    fn index_promoter_read_only() {
-        organizations::index(Roles::PromoterReadOnly);
+    #[actix_rt::test]
+    async fn index_promoter_read_only() {
+        organizations::index(Roles::PromoterReadOnly).await;
     }
-    #[test]
-    fn index_org_admin() {
-        organizations::index(Roles::OrgAdmin);
+    #[actix_rt::test]
+    async fn index_org_admin() {
+        organizations::index(Roles::OrgAdmin).await;
     }
-    #[test]
-    fn index_box_office() {
-        organizations::index(Roles::OrgBoxOffice);
+    #[actix_rt::test]
+    async fn index_box_office() {
+        organizations::index(Roles::OrgBoxOffice).await;
     }
 }
 
 #[cfg(test)]
 mod show_tests {
     use super::*;
-    #[test]
-    fn show_org_member() {
-        organizations::show(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn show_org_member() {
+        organizations::show(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn show_admin() {
-        organizations::show(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn show_admin() {
+        organizations::show(Roles::Admin, true).await;
     }
-    #[test]
-    fn show_user() {
-        organizations::show(Roles::User, false);
+    #[actix_rt::test]
+    async fn show_user() {
+        organizations::show(Roles::User, false).await;
     }
-    #[test]
-    fn show_org_owner() {
-        organizations::show(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn show_org_owner() {
+        organizations::show(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn show_door_person() {
-        organizations::show(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn show_door_person() {
+        organizations::show(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn show_promoter() {
-        organizations::show(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn show_promoter() {
+        organizations::show(Roles::Promoter, false).await;
     }
-    #[test]
-    fn show_promoter_read_only() {
-        organizations::show(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn show_promoter_read_only() {
+        organizations::show(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn show_org_admin() {
-        organizations::show(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn show_org_admin() {
+        organizations::show(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn show_box_office() {
-        organizations::show(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn show_box_office() {
+        organizations::show(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod index_for_all_orgs_tests {
     use super::*;
-    #[test]
-    fn index_for_all_orgs_org_member() {
-        organizations::index_for_all_orgs(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn index_for_all_orgs_org_member() {
+        organizations::index_for_all_orgs(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn index_for_all_orgs_admin() {
-        organizations::index_for_all_orgs(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn index_for_all_orgs_admin() {
+        organizations::index_for_all_orgs(Roles::Admin, true).await;
     }
-    #[test]
-    fn index_for_all_orgs_user() {
-        organizations::index_for_all_orgs(Roles::User, false);
+    #[actix_rt::test]
+    async fn index_for_all_orgs_user() {
+        organizations::index_for_all_orgs(Roles::User, false).await;
     }
-    #[test]
-    fn index_for_all_orgs_org_owner() {
-        organizations::index_for_all_orgs(Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn index_for_all_orgs_org_owner() {
+        organizations::index_for_all_orgs(Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn index_for_all_orgs_door_person() {
-        organizations::index_for_all_orgs(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn index_for_all_orgs_door_person() {
+        organizations::index_for_all_orgs(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn index_for_all_orgs_promoter() {
-        organizations::index_for_all_orgs(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn index_for_all_orgs_promoter() {
+        organizations::index_for_all_orgs(Roles::Promoter, false).await;
     }
-    #[test]
-    fn index_for_all_orgs_promoter_read_only() {
-        organizations::index_for_all_orgs(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn index_for_all_orgs_promoter_read_only() {
+        organizations::index_for_all_orgs(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn index_for_all_orgs_org_admin() {
-        organizations::index_for_all_orgs(Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn index_for_all_orgs_org_admin() {
+        organizations::index_for_all_orgs(Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn index_for_all_orgs_box_office() {
-        organizations::index_for_all_orgs(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn index_for_all_orgs_box_office() {
+        organizations::index_for_all_orgs(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod create_tests {
     use super::*;
-    #[test]
-    fn create_org_member() {
-        organizations::create(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn create_org_member() {
+        organizations::create(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn create_admin() {
-        organizations::create(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn create_admin() {
+        organizations::create(Roles::Admin, true).await;
     }
-    #[test]
-    fn create_user() {
-        organizations::create(Roles::User, false);
+    #[actix_rt::test]
+    async fn create_user() {
+        organizations::create(Roles::User, false).await;
     }
-    #[test]
-    fn create_org_owner() {
-        organizations::create(Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn create_org_owner() {
+        organizations::create(Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn create_door_person() {
-        organizations::create(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn create_door_person() {
+        organizations::create(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn create_promoter() {
-        organizations::create(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn create_promoter() {
+        organizations::create(Roles::Promoter, false).await;
     }
-    #[test]
-    fn create_promoter_read_only() {
-        organizations::create(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn create_promoter_read_only() {
+        organizations::create(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn create_org_admin() {
-        organizations::create(Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn create_org_admin() {
+        organizations::create(Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn create_box_office() {
-        organizations::create(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn create_box_office() {
+        organizations::create(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod remove_user_tests {
     use super::*;
-    #[test]
-    fn remove_user_org_member() {
-        organizations::remove_user(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn remove_user_org_member() {
+        organizations::remove_user(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn remove_user_admin() {
-        organizations::remove_user(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn remove_user_admin() {
+        organizations::remove_user(Roles::Admin, true).await;
     }
-    #[test]
-    fn remove_user_user() {
-        organizations::remove_user(Roles::User, false);
+    #[actix_rt::test]
+    async fn remove_user_user() {
+        organizations::remove_user(Roles::User, false).await;
     }
-    #[test]
-    fn remove_user_org_owner() {
-        organizations::remove_user(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn remove_user_org_owner() {
+        organizations::remove_user(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn remove_user_door_person() {
-        organizations::remove_user(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn remove_user_door_person() {
+        organizations::remove_user(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn remove_user_promoter() {
-        organizations::remove_user(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn remove_user_promoter() {
+        organizations::remove_user(Roles::Promoter, false).await;
     }
-    #[test]
-    fn remove_user_promoter_read_only() {
-        organizations::remove_user(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn remove_user_promoter_read_only() {
+        organizations::remove_user(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn remove_user_org_admin() {
-        organizations::remove_user(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn remove_user_org_admin() {
+        organizations::remove_user(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn remove_user_box_office() {
-        organizations::remove_user(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn remove_user_box_office() {
+        organizations::remove_user(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod add_user_tests {
     use super::*;
-    #[test]
-    fn add_user_org_member() {
-        organizations::add_user(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn add_user_org_member() {
+        organizations::add_user(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn add_user_admin() {
-        organizations::add_user(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn add_user_admin() {
+        organizations::add_user(Roles::Admin, true).await;
     }
-    #[test]
-    fn add_user_user() {
-        organizations::add_user(Roles::User, false);
+    #[actix_rt::test]
+    async fn add_user_user() {
+        organizations::add_user(Roles::User, false).await;
     }
-    #[test]
-    fn add_user_org_owner() {
-        organizations::add_user(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn add_user_org_owner() {
+        organizations::add_user(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn add_user_door_person() {
-        organizations::add_user(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn add_user_door_person() {
+        organizations::add_user(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn add_user_promoter() {
-        organizations::add_user(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn add_user_promoter() {
+        organizations::add_user(Roles::Promoter, false).await;
     }
-    #[test]
-    fn add_user_promoter_read_only() {
-        organizations::add_user(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn add_user_promoter_read_only() {
+        organizations::add_user(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn add_user_org_admin() {
-        organizations::add_user(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn add_user_org_admin() {
+        organizations::add_user(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn add_user_box_office() {
-        organizations::add_user(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn add_user_box_office() {
+        organizations::add_user(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod add_artist_tests {
     use super::*;
-    #[test]
-    fn add_artist_org_member() {
-        organizations::add_artist(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn add_artist_org_member() {
+        organizations::add_artist(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn add_artist_admin() {
-        organizations::add_artist(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn add_artist_admin() {
+        organizations::add_artist(Roles::Admin, true).await;
     }
-    #[test]
-    fn add_artist_user() {
-        organizations::add_artist(Roles::User, false);
+    #[actix_rt::test]
+    async fn add_artist_user() {
+        organizations::add_artist(Roles::User, false).await;
     }
-    #[test]
-    fn add_artist_org_owner() {
-        organizations::add_artist(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn add_artist_org_owner() {
+        organizations::add_artist(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn add_artist_door_person() {
-        organizations::add_artist(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn add_artist_door_person() {
+        organizations::add_artist(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn add_artist_promoter() {
-        organizations::add_artist(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn add_artist_promoter() {
+        organizations::add_artist(Roles::Promoter, false).await;
     }
-    #[test]
-    fn add_artist_promoter_read_only() {
-        organizations::add_artist(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn add_artist_promoter_read_only() {
+        organizations::add_artist(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn add_artist_org_admin() {
-        organizations::add_artist(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn add_artist_org_admin() {
+        organizations::add_artist(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn add_artist_box_office() {
-        organizations::add_artist(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn add_artist_box_office() {
+        organizations::add_artist(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod update_tests {
     use super::*;
-    #[test]
-    fn update_org_member() {
-        organizations::update(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        organizations::update(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn update_admin() {
-        organizations::update(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        organizations::update(Roles::Admin, true).await;
     }
-    #[test]
-    fn update_user() {
-        organizations::update(Roles::User, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        organizations::update(Roles::User, false).await;
     }
-    #[test]
-    fn update_org_owner() {
-        organizations::update(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        organizations::update(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn update_door_person() {
-        organizations::update(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        organizations::update(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn update_promoter() {
-        organizations::update(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        organizations::update(Roles::Promoter, false).await;
     }
-    #[test]
-    fn update_promoter_read_only() {
-        organizations::update(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        organizations::update(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn update_org_admin() {
-        organizations::update(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        organizations::update(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn update_box_office() {
-        organizations::update(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        organizations::update(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod update_tests_with_settlement_type {
     use super::*;
-    #[test]
-    fn update_org_member() {
-        organizations::update_restricted_field("settlement_type", Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        organizations::update_restricted_field("settlement_type", Roles::OrgMember, false).await;
     }
-    #[test]
-    fn update_super() {
-        organizations::update_restricted_field("settlement_type", Roles::Super, true);
+    #[actix_rt::test]
+    async fn update_super() {
+        organizations::update_restricted_field("settlement_type", Roles::Super, true).await;
     }
-    #[test]
-    fn update_admin() {
-        organizations::update_restricted_field("settlement_type", Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        organizations::update_restricted_field("settlement_type", Roles::Admin, true).await;
     }
-    #[test]
-    fn update_user() {
-        organizations::update_restricted_field("settlement_type", Roles::User, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        organizations::update_restricted_field("settlement_type", Roles::User, false).await;
     }
-    #[test]
-    fn update_org_owner() {
-        organizations::update_restricted_field("settlement_type", Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        organizations::update_restricted_field("settlement_type", Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn update_door_person() {
-        organizations::update_restricted_field("settlement_type", Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        organizations::update_restricted_field("settlement_type", Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn update_promoter() {
-        organizations::update_restricted_field("settlement_type", Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        organizations::update_restricted_field("settlement_type", Roles::Promoter, false).await;
     }
-    #[test]
-    fn update_promoter_read_only() {
-        organizations::update_restricted_field("settlement_type", Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        organizations::update_restricted_field("settlement_type", Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn update_org_admin() {
-        organizations::update_restricted_field("settlement_type", Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        organizations::update_restricted_field("settlement_type", Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn update_box_office() {
-        organizations::update_restricted_field("settlement_type", Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        organizations::update_restricted_field("settlement_type", Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod update_tests_with_max_tickets_per_ticket_type {
     use super::*;
-    #[test]
-    fn update_org_member() {
-        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::OrgMember, false).await;
     }
-    #[test]
-    fn update_admin() {
-        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::Admin, true).await;
     }
-    #[test]
-    fn update_user() {
-        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::User, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::User, false).await;
     }
-    #[test]
-    fn update_org_owner() {
-        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn update_door_person() {
-        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn update_promoter() {
-        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::Promoter, false).await;
     }
-    #[test]
-    fn update_promoter_read_only() {
-        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn update_org_admin() {
-        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn update_box_office() {
-        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        organizations::update_restricted_field("max_instances_per_ticket_type", Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod list_organization_members_tests {
     use super::*;
-    #[test]
-    fn list_organization_members_org_member() {
-        organizations::list_organization_members(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn list_organization_members_org_member() {
+        organizations::list_organization_members(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn list_organization_members_admin() {
-        organizations::list_organization_members(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn list_organization_members_admin() {
+        organizations::list_organization_members(Roles::Admin, true).await;
     }
-    #[test]
-    fn list_organization_members_user() {
-        organizations::list_organization_members(Roles::User, false);
+    #[actix_rt::test]
+    async fn list_organization_members_user() {
+        organizations::list_organization_members(Roles::User, false).await;
     }
-    #[test]
-    fn list_organization_members_org_owner() {
-        organizations::list_organization_members(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn list_organization_members_org_owner() {
+        organizations::list_organization_members(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn list_organization_members_door_person() {
-        organizations::list_organization_members(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn list_organization_members_door_person() {
+        organizations::list_organization_members(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn list_organization_members_promoter() {
-        organizations::list_organization_members(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn list_organization_members_promoter() {
+        organizations::list_organization_members(Roles::Promoter, false).await;
     }
-    #[test]
-    fn list_organization_members_promoter_read_only() {
-        organizations::list_organization_members(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn list_organization_members_promoter_read_only() {
+        organizations::list_organization_members(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn list_organization_members_org_admin() {
-        organizations::list_organization_members(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn list_organization_members_org_admin() {
+        organizations::list_organization_members(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn list_organization_members_box_office() {
-        organizations::list_organization_members(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn list_organization_members_box_office() {
+        organizations::list_organization_members(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod show_fee_schedule_tests {
     use super::*;
-    #[test]
-    fn show_fee_schedule_org_member() {
-        organizations::show_fee_schedule(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn show_fee_schedule_org_member() {
+        organizations::show_fee_schedule(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn show_fee_schedule_admin() {
-        organizations::show_fee_schedule(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn show_fee_schedule_admin() {
+        organizations::show_fee_schedule(Roles::Admin, true).await;
     }
-    #[test]
-    fn show_fee_schedule_user() {
-        organizations::show_fee_schedule(Roles::User, false);
+    #[actix_rt::test]
+    async fn show_fee_schedule_user() {
+        organizations::show_fee_schedule(Roles::User, false).await;
     }
-    #[test]
-    fn show_fee_schedule_org_owner() {
-        organizations::show_fee_schedule(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn show_fee_schedule_org_owner() {
+        organizations::show_fee_schedule(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn show_fee_schedule_door_person() {
-        organizations::show_fee_schedule(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn show_fee_schedule_door_person() {
+        organizations::show_fee_schedule(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn show_fee_schedule_promoter() {
-        organizations::show_fee_schedule(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn show_fee_schedule_promoter() {
+        organizations::show_fee_schedule(Roles::Promoter, false).await;
     }
-    #[test]
-    fn show_fee_schedule_promoter_read_only() {
-        organizations::show_fee_schedule(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn show_fee_schedule_promoter_read_only() {
+        organizations::show_fee_schedule(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn show_fee_schedule_org_admin() {
-        organizations::show_fee_schedule(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn show_fee_schedule_org_admin() {
+        organizations::show_fee_schedule(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn show_fee_schedule_box_office() {
-        organizations::show_fee_schedule(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn show_fee_schedule_box_office() {
+        organizations::show_fee_schedule(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod add_fee_schedule_tests {
     use super::*;
-    #[test]
-    fn add_fee_schedule_org_member() {
-        organizations::add_fee_schedule(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn add_fee_schedule_org_member() {
+        organizations::add_fee_schedule(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn add_fee_schedule_admin() {
-        organizations::add_fee_schedule(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn add_fee_schedule_admin() {
+        organizations::add_fee_schedule(Roles::Admin, true).await;
     }
-    #[test]
-    fn add_fee_schedule_user() {
-        organizations::add_fee_schedule(Roles::User, false);
+    #[actix_rt::test]
+    async fn add_fee_schedule_user() {
+        organizations::add_fee_schedule(Roles::User, false).await;
     }
-    #[test]
-    fn add_fee_schedule_org_owner() {
-        organizations::add_fee_schedule(Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn add_fee_schedule_org_owner() {
+        organizations::add_fee_schedule(Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn add_fee_schedule_door_person() {
-        organizations::add_fee_schedule(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn add_fee_schedule_door_person() {
+        organizations::add_fee_schedule(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn add_fee_schedule_promoter_read_only() {
-        organizations::add_fee_schedule(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn add_fee_schedule_promoter_read_only() {
+        organizations::add_fee_schedule(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn add_fee_schedule_org_admin() {
-        organizations::add_fee_schedule(Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn add_fee_schedule_org_admin() {
+        organizations::add_fee_schedule(Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn add_fee_schedule_box_office() {
-        organizations::add_fee_schedule(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn add_fee_schedule_box_office() {
+        organizations::add_fee_schedule(Roles::OrgBoxOffice, false).await;
     }
 }

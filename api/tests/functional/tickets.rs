@@ -13,7 +13,7 @@ use bigneon_api::extractors::*;
 use bigneon_api::models::{OptionalPathParameters, PathParameters};
 use bigneon_db::prelude::*;
 
-#[test]
+#[actix_rt::test]
 pub async fn index() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -112,7 +112,7 @@ pub async fn index() {
     let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = Some(event.id);
     let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
-    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).unwrap();
+    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_data: Payload<DisplayTicket> = serde_json::from_str(&body).unwrap();
@@ -137,7 +137,7 @@ pub async fn index() {
     let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = None;
     let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
-    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).unwrap();
+    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_data: Payload<(DisplayEvent, Vec<DisplayTicket>)> = serde_json::from_str(&body).unwrap();
@@ -174,7 +174,7 @@ pub async fn index() {
     path.id = None;
     let mut parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     parameters.start_utc = Some(NaiveDate::from_ymd(2016, 7, 8).and_hms(9, 11, 11));
-    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).unwrap();
+    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_data: Payload<(DisplayEvent, Vec<DisplayTicket>)> = serde_json::from_str(&body).unwrap();
@@ -195,7 +195,7 @@ pub async fn index() {
     path.id = None;
     let mut parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     parameters.start_utc = Some(NaiveDate::from_ymd(2017, 7, 8).and_hms(9, 0, 11));
-    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user)).unwrap();
+    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user)).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_data: Payload<(DisplayEvent, Vec<DisplayTicket>)> = serde_json::from_str(&body).unwrap();
@@ -206,7 +206,7 @@ pub async fn index() {
     );
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn show() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -250,7 +250,7 @@ pub async fn show() {
     let mut path = Path::<PathParameters>::extract(&request.request).await.unwrap();
     let ticket = TicketInstance::find_for_user(user.id, conn).unwrap().remove(0);
     path.id = ticket.id;
-    let response = tickets::show((database.connection.clone().into(), path, auth_user)).unwrap();
+    let response = tickets::show((database.connection.clone().into(), path, auth_user)).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let ticket_response: ShowTicketResponse = serde_json::from_str(&body).unwrap();
@@ -282,77 +282,77 @@ pub async fn show() {
 #[cfg(test)]
 mod index_tests {
     use super::*;
-    #[test]
-    fn update_org_member() {
-        base::tickets::update(Roles::OrgMember, false, false);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        base::tickets::update(Roles::OrgMember, false, false).await;
     }
-    #[test]
-    fn update_admin() {
-        base::tickets::update(Roles::Admin, false, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        base::tickets::update(Roles::Admin, false, true).await;
     }
-    #[test]
-    fn update_user() {
-        base::tickets::update(Roles::User, false, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        base::tickets::update(Roles::User, false, false).await;
     }
-    #[test]
-    fn update_org_owner() {
-        base::tickets::update(Roles::OrgOwner, false, true);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        base::tickets::update(Roles::OrgOwner, false, true).await;
     }
-    #[test]
-    fn update_door_person() {
-        base::tickets::update(Roles::DoorPerson, false, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        base::tickets::update(Roles::DoorPerson, false, false).await;
     }
-    #[test]
-    fn update_promoter() {
-        base::tickets::update(Roles::Promoter, false, false);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        base::tickets::update(Roles::Promoter, false, false).await;
     }
-    #[test]
-    fn update_promoter_read_only() {
-        base::tickets::update(Roles::PromoterReadOnly, false, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        base::tickets::update(Roles::PromoterReadOnly, false, false).await;
     }
-    #[test]
-    fn update_org_admin() {
-        base::tickets::update(Roles::OrgAdmin, false, true);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        base::tickets::update(Roles::OrgAdmin, false, true).await;
     }
-    #[test]
-    fn update_box_office() {
-        base::tickets::update(Roles::OrgBoxOffice, false, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        base::tickets::update(Roles::OrgBoxOffice, false, false).await;
     }
-    #[test]
-    fn update_owns_order_org_member() {
-        base::tickets::update(Roles::OrgMember, true, true);
+    #[actix_rt::test]
+    async fn update_owns_order_org_member() {
+        base::tickets::update(Roles::OrgMember, true, true).await;
     }
-    #[test]
-    fn update_owns_order_admin() {
-        base::tickets::update(Roles::Admin, true, true);
+    #[actix_rt::test]
+    async fn update_owns_order_admin() {
+        base::tickets::update(Roles::Admin, true, true).await;
     }
-    #[test]
-    fn update_owns_order_user() {
-        base::tickets::update(Roles::User, true, true);
+    #[actix_rt::test]
+    async fn update_owns_order_user() {
+        base::tickets::update(Roles::User, true, true).await;
     }
-    #[test]
-    fn update_owns_order_org_owner() {
-        base::tickets::update(Roles::OrgOwner, true, true);
+    #[actix_rt::test]
+    async fn update_owns_order_org_owner() {
+        base::tickets::update(Roles::OrgOwner, true, true).await;
     }
-    #[test]
-    fn update_owns_order_door_person() {
-        base::tickets::update(Roles::DoorPerson, true, true);
+    #[actix_rt::test]
+    async fn update_owns_order_door_person() {
+        base::tickets::update(Roles::DoorPerson, true, true).await;
     }
-    #[test]
-    fn update_owns_order_promoter() {
-        base::tickets::update(Roles::Promoter, true, true);
+    #[actix_rt::test]
+    async fn update_owns_order_promoter() {
+        base::tickets::update(Roles::Promoter, true, true).await;
     }
-    #[test]
-    fn update_owns_order_promoter_read_only() {
-        base::tickets::update(Roles::PromoterReadOnly, true, true);
+    #[actix_rt::test]
+    async fn update_owns_order_promoter_read_only() {
+        base::tickets::update(Roles::PromoterReadOnly, true, true).await;
     }
-    #[test]
-    fn update_owns_order_org_admin() {
-        base::tickets::update(Roles::OrgAdmin, true, true);
+    #[actix_rt::test]
+    async fn update_owns_order_org_admin() {
+        base::tickets::update(Roles::OrgAdmin, true, true).await;
     }
-    #[test]
-    fn update_owns_order_box_office() {
-        base::tickets::update(Roles::OrgBoxOffice, true, true);
+    #[actix_rt::test]
+    async fn update_owns_order_box_office() {
+        base::tickets::update(Roles::OrgBoxOffice, true, true).await;
     }
 }
 
@@ -360,41 +360,41 @@ mod index_tests {
 mod show_other_user_ticket_tests {
     use super::*;
 
-    #[test]
-    fn show_other_user_ticket_org_member() {
-        base::tickets::show_other_user_ticket(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn show_other_user_ticket_org_member() {
+        base::tickets::show_other_user_ticket(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn show_other_user_ticket_admin() {
-        base::tickets::show_other_user_ticket(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn show_other_user_ticket_admin() {
+        base::tickets::show_other_user_ticket(Roles::Admin, true).await;
     }
-    #[test]
-    fn show_other_user_ticket_user() {
-        base::tickets::show_other_user_ticket(Roles::User, false);
+    #[actix_rt::test]
+    async fn show_other_user_ticket_user() {
+        base::tickets::show_other_user_ticket(Roles::User, false).await;
     }
-    #[test]
-    fn show_other_user_ticket_org_owner() {
-        base::tickets::show_other_user_ticket(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn show_other_user_ticket_org_owner() {
+        base::tickets::show_other_user_ticket(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn show_other_user_ticket_door_person() {
-        base::tickets::show_other_user_ticket(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn show_other_user_ticket_door_person() {
+        base::tickets::show_other_user_ticket(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn show_other_user_ticket_promoter() {
-        base::tickets::show_other_user_ticket(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn show_other_user_ticket_promoter() {
+        base::tickets::show_other_user_ticket(Roles::Promoter, true).await;
     }
-    #[test]
-    fn show_other_user_ticket_promoter_read_only() {
-        base::tickets::show_other_user_ticket(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn show_other_user_ticket_promoter_read_only() {
+        base::tickets::show_other_user_ticket(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn show_other_user_ticket_org_admin() {
-        base::tickets::show_other_user_ticket(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn show_other_user_ticket_org_admin() {
+        base::tickets::show_other_user_ticket(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn show_other_user_ticket_box_office() {
-        base::tickets::show_other_user_ticket(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn show_other_user_ticket_box_office() {
+        base::tickets::show_other_user_ticket(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -402,41 +402,41 @@ mod show_other_user_ticket_tests {
 mod show_redeem_key {
     use super::*;
 
-    #[test]
-    fn show_redeemable_ticket_org_member() {
-        base::tickets::show_redeemable_ticket(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn show_redeemable_ticket_org_member() {
+        base::tickets::show_redeemable_ticket(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn show_redeemable_ticket_admin() {
-        base::tickets::show_redeemable_ticket(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn show_redeemable_ticket_admin() {
+        base::tickets::show_redeemable_ticket(Roles::Admin, true).await;
     }
-    #[test]
-    fn show_redeemable_ticket_user() {
-        base::tickets::show_redeemable_ticket(Roles::User, false);
+    #[actix_rt::test]
+    async fn show_redeemable_ticket_user() {
+        base::tickets::show_redeemable_ticket(Roles::User, false).await;
     }
-    #[test]
-    fn show_redeemable_ticket_org_owner() {
-        base::tickets::show_redeemable_ticket(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn show_redeemable_ticket_org_owner() {
+        base::tickets::show_redeemable_ticket(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn show_redeemable_ticket_door_person() {
-        base::tickets::show_redeemable_ticket(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn show_redeemable_ticket_door_person() {
+        base::tickets::show_redeemable_ticket(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn show_redeemable_ticket_promoter() {
-        base::tickets::show_redeemable_ticket(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn show_redeemable_ticket_promoter() {
+        base::tickets::show_redeemable_ticket(Roles::Promoter, true).await;
     }
-    #[test]
-    fn show_redeemable_ticket_promoter_read_only() {
-        base::tickets::show_redeemable_ticket(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn show_redeemable_ticket_promoter_read_only() {
+        base::tickets::show_redeemable_ticket(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn show_redeemable_ticket_org_admin() {
-        base::tickets::show_redeemable_ticket(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn show_redeemable_ticket_org_admin() {
+        base::tickets::show_redeemable_ticket(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn show_redeemable_ticket_box_office() {
-        base::tickets::show_redeemable_ticket(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn show_redeemable_ticket_box_office() {
+        base::tickets::show_redeemable_ticket(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -484,7 +484,7 @@ async fn ticket_transfer_authorization() {
         database.connection.clone().into(),
         Json(ticket_transfer_request.clone()),
         auth_user.clone(),
-    ));
+    )).await;
 
     assert!(response.is_err());
 
@@ -504,7 +504,7 @@ async fn ticket_transfer_authorization() {
         Json(ticket_transfer_request.clone()),
         auth_user.clone(),
     ))
-    .unwrap();
+    .await.unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -545,9 +545,9 @@ async fn send_to_existing_user() {
         database.connection.clone().into(),
         Json(ticket_transfer_request.clone()),
         auth_sender.clone(),
-        request.extract_state(),
+        request.extract_state().await,
     ))
-    .unwrap();
+    .await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let sender_tickets = TicketInstance::find_for_user(sender.id, conn).unwrap();
@@ -580,9 +580,9 @@ async fn send_to_new_user() {
         database.connection.clone().into(),
         Json(ticket_transfer_request.clone()),
         auth_sender.clone(),
-        request.extract_state(),
+        request.extract_state().await,
     ))
-    .unwrap();
+    .await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let sender_tickets = TicketInstance::find_for_user(sender.id, conn).unwrap();
@@ -658,9 +658,9 @@ async fn receive_ticket_transfer() {
         database.connection.clone().into(),
         Json(transfer_auth.clone()),
         auth_user2.clone(),
-        request.extract_state(),
+        request.extract_state().await,
     ))
-    .unwrap();
+    .await.unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 }
@@ -722,9 +722,9 @@ async fn receive_ticket_transfer_fails_cancelled_transfer() {
         database.connection.clone().into(),
         Json(transfer.into_authorization(conn).unwrap()),
         auth_user2.clone(),
-        request.extract_state(),
+        request.extract_state().await,
     ))
-    .into();
+    .await.into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     let body = support::unwrap_body_to_string(&response).unwrap();

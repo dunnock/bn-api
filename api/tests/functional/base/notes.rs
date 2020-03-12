@@ -70,7 +70,7 @@ pub async fn index(role: Roles, filter_deleted_disabled: bool, should_test_succe
         query_parameters,
         filter_parameters,
         auth_user,
-    ));
+    )).await;
 
     let mut expected_tags: HashMap<String, Value> = HashMap::new();
     expected_tags.insert("filter_deleted".to_string(), json!(!filter_deleted_disabled));

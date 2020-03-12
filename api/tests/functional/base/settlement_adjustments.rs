@@ -24,7 +24,7 @@ pub async fn index(role: Roles, should_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = settlement.id;
 
-    let response = settlement_adjustments::index((database.connection.clone().into(), path, auth_user));
+    let response = settlement_adjustments::index((database.connection.clone().into(), path, auth_user)).await;
 
     if should_succeed {
         let response = response.unwrap();

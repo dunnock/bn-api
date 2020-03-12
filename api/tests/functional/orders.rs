@@ -17,7 +17,7 @@ use bigneon_api::models::PathParameters;
 use bigneon_db::models::*;
 use bigneon_db::schema;
 
-#[test]
+#[actix_rt::test]
 pub async fn show() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
@@ -47,7 +47,7 @@ pub async fn show() {
     assert_eq!(found_order.id, order.id);
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn show_for_box_office_purchased_user() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
@@ -82,7 +82,7 @@ pub async fn show_for_box_office_purchased_user() {
     assert_eq!(found_order.id, order.id);
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn resend_confirmation_on_draft_order() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
@@ -106,8 +106,9 @@ pub async fn resend_confirmation_on_draft_order() {
         database.connection.clone(),
         path,
         auth_user,
-        test_request.extract_state(),
+        test_request.extract_state().await,
     ))
+    .await
     .into();
 
     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
@@ -116,82 +117,82 @@ pub async fn resend_confirmation_on_draft_order() {
 #[cfg(test)]
 mod resend_confirmation_tests {
     use super::*;
-    #[test]
-    fn resend_confirmation_org_member() {
-        base::orders::resend_confirmation(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn resend_confirmation_org_member() {
+        base::orders::resend_confirmation(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn resend_confirmation_admin() {
-        base::orders::resend_confirmation(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn resend_confirmation_admin() {
+        base::orders::resend_confirmation(Roles::Admin, true).await;
     }
-    #[test]
-    fn resend_confirmation_user() {
-        base::orders::resend_confirmation(Roles::User, false);
+    #[actix_rt::test]
+    async fn resend_confirmation_user() {
+        base::orders::resend_confirmation(Roles::User, false).await;
     }
-    #[test]
-    fn resend_confirmation_org_owner() {
-        base::orders::resend_confirmation(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn resend_confirmation_org_owner() {
+        base::orders::resend_confirmation(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn resend_confirmation_door_person() {
-        base::orders::resend_confirmation(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn resend_confirmation_door_person() {
+        base::orders::resend_confirmation(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn resend_confirmation_promoter() {
-        base::orders::resend_confirmation(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn resend_confirmation_promoter() {
+        base::orders::resend_confirmation(Roles::Promoter, false).await;
     }
-    #[test]
-    fn resend_confirmation_promoter_read_only() {
-        base::orders::resend_confirmation(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn resend_confirmation_promoter_read_only() {
+        base::orders::resend_confirmation(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn resend_confirmation_org_admin() {
-        base::orders::resend_confirmation(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn resend_confirmation_org_admin() {
+        base::orders::resend_confirmation(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn resend_confirmation_box_office() {
-        base::orders::resend_confirmation(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn resend_confirmation_box_office() {
+        base::orders::resend_confirmation(Roles::OrgBoxOffice, true).await;
     }
 }
 
 #[cfg(test)]
 mod activity_tests {
     use super::*;
-    #[test]
-    fn activity_org_member() {
-        base::orders::activity(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn activity_org_member() {
+        base::orders::activity(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn activity_admin() {
-        base::orders::activity(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn activity_admin() {
+        base::orders::activity(Roles::Admin, true).await;
     }
-    #[test]
-    fn activity_user() {
-        base::orders::activity(Roles::User, false);
+    #[actix_rt::test]
+    async fn activity_user() {
+        base::orders::activity(Roles::User, false).await;
     }
-    #[test]
-    fn activity_org_owner() {
-        base::orders::activity(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn activity_org_owner() {
+        base::orders::activity(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn activity_door_person() {
-        base::orders::activity(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn activity_door_person() {
+        base::orders::activity(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn activity_promoter() {
-        base::orders::activity(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn activity_promoter() {
+        base::orders::activity(Roles::Promoter, true).await;
     }
-    #[test]
-    fn activity_promoter_read_only() {
-        base::orders::activity(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn activity_promoter_read_only() {
+        base::orders::activity(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn activity_org_admin() {
-        base::orders::activity(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn activity_org_admin() {
+        base::orders::activity(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn activity_box_office() {
-        base::orders::activity(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn activity_box_office() {
+        base::orders::activity(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -199,41 +200,41 @@ mod activity_tests {
 mod show_other_user_order_tests {
     use super::*;
 
-    #[test]
-    fn show_other_user_order_org_member() {
-        base::orders::show_other_user_order(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn show_other_user_order_org_member() {
+        base::orders::show_other_user_order(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn show_other_user_order_admin() {
-        base::orders::show_other_user_order(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn show_other_user_order_admin() {
+        base::orders::show_other_user_order(Roles::Admin, true).await;
     }
-    #[test]
-    fn show_other_user_order_user() {
-        base::orders::show_other_user_order(Roles::User, false);
+    #[actix_rt::test]
+    async fn show_other_user_order_user() {
+        base::orders::show_other_user_order(Roles::User, false).await;
     }
-    #[test]
-    fn show_other_user_order_org_owner() {
-        base::orders::show_other_user_order(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn show_other_user_order_org_owner() {
+        base::orders::show_other_user_order(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn show_other_user_order_door_person() {
-        base::orders::show_other_user_order(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn show_other_user_order_door_person() {
+        base::orders::show_other_user_order(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn show_other_user_order_promoter() {
-        base::orders::show_other_user_order(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn show_other_user_order_promoter() {
+        base::orders::show_other_user_order(Roles::Promoter, true).await;
     }
-    #[test]
-    fn show_other_user_order_promoter_read_only() {
-        base::orders::show_other_user_order(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn show_other_user_order_promoter_read_only() {
+        base::orders::show_other_user_order(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn show_other_user_order_org_admin() {
-        base::orders::show_other_user_order(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn show_other_user_order_org_admin() {
+        base::orders::show_other_user_order(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn show_other_user_order_box_office() {
-        base::orders::show_other_user_order(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn show_other_user_order_box_office() {
+        base::orders::show_other_user_order(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -241,45 +242,45 @@ mod show_other_user_order_tests {
 mod show_other_user_order_not_matching_users_organization_tests {
     use super::*;
 
-    #[test]
-    fn show_other_user_order_not_matching_users_organization_org_member() {
-        base::orders::show_other_user_order_not_matching_users_organization(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn show_other_user_order_not_matching_users_organization_org_member() {
+        base::orders::show_other_user_order_not_matching_users_organization(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn show_other_user_order_not_matching_users_organization_admin() {
-        base::orders::show_other_user_order_not_matching_users_organization(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn show_other_user_order_not_matching_users_organization_admin() {
+        base::orders::show_other_user_order_not_matching_users_organization(Roles::Admin, true).await;
     }
-    #[test]
-    fn show_other_user_order_not_matching_users_organization_user() {
-        base::orders::show_other_user_order_not_matching_users_organization(Roles::User, false);
+    #[actix_rt::test]
+    async fn show_other_user_order_not_matching_users_organization_user() {
+        base::orders::show_other_user_order_not_matching_users_organization(Roles::User, false).await;
     }
-    #[test]
-    fn show_other_user_order_not_matching_users_organization_org_owner() {
-        base::orders::show_other_user_order_not_matching_users_organization(Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn show_other_user_order_not_matching_users_organization_org_owner() {
+        base::orders::show_other_user_order_not_matching_users_organization(Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn show_other_user_order_not_matching_users_organization_door_person() {
-        base::orders::show_other_user_order_not_matching_users_organization(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn show_other_user_order_not_matching_users_organization_door_person() {
+        base::orders::show_other_user_order_not_matching_users_organization(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn show_other_user_order_not_matching_users_organization_promoter() {
-        base::orders::show_other_user_order_not_matching_users_organization(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn show_other_user_order_not_matching_users_organization_promoter() {
+        base::orders::show_other_user_order_not_matching_users_organization(Roles::Promoter, false).await;
     }
-    #[test]
-    fn show_other_user_order_not_matching_users_organization_promoter_read_only() {
-        base::orders::show_other_user_order_not_matching_users_organization(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn show_other_user_order_not_matching_users_organization_promoter_read_only() {
+        base::orders::show_other_user_order_not_matching_users_organization(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn show_other_user_order_not_matching_users_organization_org_admin() {
-        base::orders::show_other_user_order_not_matching_users_organization(Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn show_other_user_order_not_matching_users_organization_org_admin() {
+        base::orders::show_other_user_order_not_matching_users_organization(Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn show_other_user_order_not_matching_users_organization_box_office() {
-        base::orders::show_other_user_order_not_matching_users_organization(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn show_other_user_order_not_matching_users_organization_box_office() {
+        base::orders::show_other_user_order_not_matching_users_organization(Roles::OrgBoxOffice, false).await;
     }
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn show_for_draft_returns_forbidden() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
@@ -295,7 +296,7 @@ pub async fn show_for_draft_returns_forbidden() {
     support::expects_forbidden(&response, Some("You do not have access to this order"));
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn index() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
@@ -354,41 +355,41 @@ pub async fn index() {
 mod details_tests {
     use super::*;
 
-    #[test]
-    fn details_org_member() {
-        base::orders::details(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn details_org_member() {
+        base::orders::details(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn details_admin() {
-        base::orders::details(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn details_admin() {
+        base::orders::details(Roles::Admin, true).await;
     }
-    #[test]
-    fn details_user() {
-        base::orders::details(Roles::User, false);
+    #[actix_rt::test]
+    async fn details_user() {
+        base::orders::details(Roles::User, false).await;
     }
-    #[test]
-    fn details_org_owner() {
-        base::orders::details(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn details_org_owner() {
+        base::orders::details(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn details_door_person() {
-        base::orders::details(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn details_door_person() {
+        base::orders::details(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn details_promoter() {
-        base::orders::details(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn details_promoter() {
+        base::orders::details(Roles::Promoter, true).await;
     }
-    #[test]
-    fn details_promoter_read_only() {
-        base::orders::details(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn details_promoter_read_only() {
+        base::orders::details(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn details_org_admin() {
-        base::orders::details(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn details_org_admin() {
+        base::orders::details(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn details_box_office() {
-        base::orders::details(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn details_box_office() {
+        base::orders::details(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -396,89 +397,89 @@ mod details_tests {
 mod refund_tests {
     use super::*;
 
-    #[test]
-    fn refund_org_member() {
-        base::orders::refund(Roles::OrgMember, false, true);
+    #[actix_rt::test]
+    async fn refund_org_member() {
+        base::orders::refund(Roles::OrgMember, false, true).await;
     }
-    #[test]
-    fn refund_admin() {
-        base::orders::refund(Roles::Admin, false, true);
+    #[actix_rt::test]
+    async fn refund_admin() {
+        base::orders::refund(Roles::Admin, false, true).await;
     }
-    #[test]
-    fn refund_super() {
-        base::orders::refund(Roles::Super, false, true);
+    #[actix_rt::test]
+    async fn refund_super() {
+        base::orders::refund(Roles::Super, false, true).await;
     }
-    #[test]
-    fn refund_user() {
-        base::orders::refund(Roles::User, false, false);
+    #[actix_rt::test]
+    async fn refund_user() {
+        base::orders::refund(Roles::User, false, false).await;
     }
-    #[test]
-    fn refund_org_owner() {
-        base::orders::refund(Roles::OrgOwner, false, true);
+    #[actix_rt::test]
+    async fn refund_org_owner() {
+        base::orders::refund(Roles::OrgOwner, false, true).await;
     }
-    #[test]
-    fn refund_door_person() {
-        base::orders::refund(Roles::DoorPerson, false, false);
+    #[actix_rt::test]
+    async fn refund_door_person() {
+        base::orders::refund(Roles::DoorPerson, false, false).await;
     }
     #[test]
     fn refund_promoter() {
         base::orders::refund(Roles::Promoter, false, false)
     }
-    #[test]
-    fn refund_promoter_read_only() {
-        base::orders::refund(Roles::PromoterReadOnly, false, false);
+    #[actix_rt::test]
+    async fn refund_promoter_read_only() {
+        base::orders::refund(Roles::PromoterReadOnly, false, false).await;
     }
-    #[test]
-    fn refund_org_admin() {
-        base::orders::refund(Roles::OrgAdmin, false, true);
+    #[actix_rt::test]
+    async fn refund_org_admin() {
+        base::orders::refund(Roles::OrgAdmin, false, true).await;
     }
-    #[test]
-    fn refund_box_office() {
-        base::orders::refund(Roles::OrgBoxOffice, false, false);
+    #[actix_rt::test]
+    async fn refund_box_office() {
+        base::orders::refund(Roles::OrgBoxOffice, false, false).await;
     }
-    #[test]
-    fn refund_override_org_member() {
-        base::orders::refund(Roles::OrgMember, true, false);
+    #[actix_rt::test]
+    async fn refund_override_org_member() {
+        base::orders::refund(Roles::OrgMember, true, false).await;
     }
-    #[test]
-    fn refund_override_admin() {
-        base::orders::refund(Roles::Admin, true, true);
+    #[actix_rt::test]
+    async fn refund_override_admin() {
+        base::orders::refund(Roles::Admin, true, true).await;
     }
-    #[test]
-    fn refund_override_super() {
-        base::orders::refund(Roles::Super, true, true);
+    #[actix_rt::test]
+    async fn refund_override_super() {
+        base::orders::refund(Roles::Super, true, true).await;
     }
-    #[test]
-    fn refund_override_user() {
-        base::orders::refund(Roles::User, true, false);
+    #[actix_rt::test]
+    async fn refund_override_user() {
+        base::orders::refund(Roles::User, true, false).await;
     }
-    #[test]
-    fn refund_override_org_owner() {
-        base::orders::refund(Roles::OrgOwner, true, false);
+    #[actix_rt::test]
+    async fn refund_override_org_owner() {
+        base::orders::refund(Roles::OrgOwner, true, false).await;
     }
-    #[test]
-    fn refund_override_door_person() {
-        base::orders::refund(Roles::DoorPerson, true, false);
+    #[actix_rt::test]
+    async fn refund_override_door_person() {
+        base::orders::refund(Roles::DoorPerson, true, false).await;
     }
     #[test]
     fn refund_override_promoter() {
         base::orders::refund(Roles::Promoter, true, false)
     }
-    #[test]
-    fn refund_override_promoter_read_only() {
-        base::orders::refund(Roles::PromoterReadOnly, true, false);
+    #[actix_rt::test]
+    async fn refund_override_promoter_read_only() {
+        base::orders::refund(Roles::PromoterReadOnly, true, false).await;
     }
-    #[test]
-    fn refund_override_org_admin() {
-        base::orders::refund(Roles::OrgAdmin, true, false);
+    #[actix_rt::test]
+    async fn refund_override_org_admin() {
+        base::orders::refund(Roles::OrgAdmin, true, false).await;
     }
-    #[test]
-    fn refund_override_box_office() {
-        base::orders::refund(Roles::OrgBoxOffice, true, false);
+    #[actix_rt::test]
+    async fn refund_override_box_office() {
+        base::orders::refund(Roles::OrgBoxOffice, true, false).await;
     }
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn refund_for_non_refundable_tickets() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -562,9 +563,9 @@ pub async fn refund_for_non_refundable_tickets() {
         path,
         json,
         auth_user,
-        test_request.extract_state(),
+        test_request.extract_state().await,
     ))
-    .into();
+    .await.into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
@@ -585,7 +586,7 @@ pub async fn refund_for_non_refundable_tickets() {
     assert_eq!(event_fee_item.refunded_quantity, 0);
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn refund_hold_ticket() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -650,9 +651,9 @@ pub async fn refund_hold_ticket() {
         path,
         json,
         auth_user,
-        test_request.extract_state(),
+        test_request.extract_state().await,
     ))
-    .into();
+    .await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();

@@ -147,7 +147,7 @@ pub async fn index(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
-    let response = organization_invites::index((database.connection.clone().into(), path, query_parameters, auth_user));
+    let response = organization_invites::index((database.connection.clone().into(), path, query_parameters, auth_user)).await;
 
     let wrapped_expected_invites = Payload {
         data: vec![DisplayInvite {
@@ -206,7 +206,7 @@ pub async fn accept_invite_status_of_invite(role: Roles, should_test_succeed: bo
 
     let response: HttpResponse =
         organization_invites::accept_request((database.connection.into(), parameters, OptionalUser(Some(auth_user))))
-            .into();
+            .await.into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
     } else {

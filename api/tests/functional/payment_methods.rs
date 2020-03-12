@@ -1,6 +1,6 @@
 use crate::support;
 use crate::support::database::TestDatabase;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse};
+use actix_web::{http::StatusCode, HttpResponse};
 use bigneon_api::controllers::payment_methods;
 use bigneon_db::models::{DisplayPaymentMethod, PaymentProviders, Roles};
 use serde_json;

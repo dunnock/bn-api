@@ -106,7 +106,7 @@ pub async fn index(role: Roles, owns_order: bool, should_succeed: bool) {
         filter_parameters,
         path,
         auth_user.clone(),
-    ));
+    )).await;
 
     if should_succeed {
         let response = response.unwrap();
@@ -185,8 +185,9 @@ pub async fn cancel_completed_transfer(role: Roles, should_succeed: bool) {
         database.connection.clone().into(),
         path,
         auth_user.clone(),
-        test_request.extract_state(),
+        test_request.extract_state().await,
     ))
+    .await
     .into();
 
     if should_succeed {
@@ -257,8 +258,9 @@ pub async fn cancel(role: Roles, owns_order: bool, should_succeed: bool) {
         database.connection.clone().into(),
         path,
         auth_user.clone(),
-        test_request.extract_state(),
+        test_request.extract_state().await,
     ))
+    .await
     .into();
 
     if should_succeed {

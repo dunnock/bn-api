@@ -2,7 +2,7 @@ use crate::jwt::{decode, encode, Header, Validation};
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse};
+use actix_web::{http::StatusCode, HttpResponse};
 use bigneon_api::auth::{claims::AccessToken, claims::RefreshToken, TokenResponse};
 use bigneon_api::controllers::auth;
 use bigneon_api::controllers::auth::{LoginRequest, RefreshRequest};
@@ -32,6 +32,7 @@ async fn token() {
         json,
         RequestInfo { user_agent: None },
     ))
+    .await
     .unwrap();
 
     let access_token = decode::<AccessToken>(
@@ -67,7 +68,7 @@ async fn token_invalid_email() {
         database.connection.into(),
         json,
         RequestInfo { user_agent: None },
-    ));
+    )).await;
 
     assert!(response.is_err());
     assert_eq!("Email or password incorrect", response.err().unwrap().to_string());
@@ -86,7 +87,7 @@ async fn token_incorrect_password() {
         database.connection.into(),
         json,
         RequestInfo { user_agent: None },
-    ));
+    )).await;
 
     assert!(response.is_err());
     assert_eq!("Email or password incorrect", response.err().unwrap().to_string());

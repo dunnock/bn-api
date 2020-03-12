@@ -147,7 +147,7 @@ async fn show_hold_for_user() {
         path,
         OptionalUser(Some(auth_user.clone())),
     )
-    .into();
+    .await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let redemption_code_response: RedemptionCodeResponse = serde_json::from_str(&body).unwrap();

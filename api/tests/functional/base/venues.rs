@@ -205,7 +205,7 @@ pub async fn show_from_organizations(role: Option<Roles>, should_succeed: bool) 
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
         venues::show_from_organizations((database.connection.into(), path, query_parameters, OptionalUser(user)))
-            .into();
+            .await.into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);

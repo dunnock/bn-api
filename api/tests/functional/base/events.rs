@@ -44,8 +44,9 @@ pub async fn clone(role: Roles, should_test_succeed: bool) {
         json,
         path_parameters,
         auth_user,
-        test_request.extract_state(),
+        test_request.extract_state().await,
     ))
+    .await
     .into();
 
     if should_test_succeed {
@@ -100,9 +101,10 @@ pub async fn redeem_ticket(role: Roles, should_test_succeed: bool) {
         path,
         Json(request_data),
         auth_user.clone(),
-        request.extract_state(),
+        request.extract_state().await,
         CacheDatabase { inner: None },
     ))
+    .await
     .into();
 
     if should_test_succeed {
@@ -118,9 +120,10 @@ pub async fn redeem_ticket(role: Roles, should_test_succeed: bool) {
             path2,
             Json(request_data),
             auth_user,
-            request.extract_state(),
+            request.extract_state().await,
             CacheDatabase { inner: None },
         ))
+        .await
         .into();
         let ticket = TicketInstance::find(ticket.id, conn).unwrap();
         assert_eq!(ticket.check_in_source, Some(CheckInSource::Scanned));
@@ -170,7 +173,7 @@ pub async fn export_event_data(role: Roles, should_test_succeed: bool, past_or_u
     };
     let test_request = TestRequest::create_with_uri(&uri);
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
-    let response = events::export_event_data((database.connection.into(), path, query_parameters, auth_user));
+    let response = events::export_event_data((database.connection.into(), path, query_parameters, auth_user)).await;
 
     if should_test_succeed {
         let response = response.unwrap();
@@ -261,7 +264,7 @@ pub async fn show_box_office_pricing(role: Roles, should_test_succeed: bool) {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -270,6 +273,7 @@ pub async fn show_box_office_pricing(role: Roles, should_test_succeed: bool) {
             user_agent: Some("test".to_string()),
         },
     ))
+    .await
     .into();
 
     if should_test_succeed {
@@ -443,6 +447,7 @@ pub async fn list_interested_users(role: Roles, should_test_succeed: bool) {
         query_parameters,
         primary_user,
     ))
+    .await
     .into();
     let response_body = support::unwrap_body_to_string(&response).unwrap();
     //Construct expected output
@@ -553,6 +558,7 @@ pub async fn update_artists(role: Roles, should_test_succeed: bool) {
         Json(payload),
         auth_user.clone(),
     ))
+    .await
     .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
@@ -625,12 +631,13 @@ pub async fn dashboard(role: Roles, should_test_succeed: bool) {
     path_parameters.id = event.id;
 
     let response: HttpResponse = events::dashboard((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path_parameters,
         query_parameters,
         auth_user.clone(),
     ))
+    .await
     .into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -885,7 +892,7 @@ pub async fn holds(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub async fn expected_show_json(
+pub fn expected_show_json(
     role: Roles,
     event: Event,
     organization: Organization,

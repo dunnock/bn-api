@@ -2,7 +2,7 @@ use crate::jwt::{decode, Validation};
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse};
+use actix_web::{http::StatusCode, HttpResponse};
 use bigneon_api::auth::{claims::AccessToken, claims::RefreshToken, TokenResponse};
 use bigneon_api::controllers::password_resets::{self, CreatePasswordResetParameters, UpdatePasswordResetParameters};
 use bigneon_api::db::Connection as BigNeonConnection;

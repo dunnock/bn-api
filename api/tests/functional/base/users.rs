@@ -135,7 +135,7 @@ pub async fn activity(role: Roles, should_test_true: bool) {
         query_parameters,
         activity_parameters,
         auth_user.clone(),
-    ));
+    )).await;
 
     if should_test_true {
         let response = response.unwrap();
@@ -217,7 +217,7 @@ pub async fn history(role: Roles, should_test_true: bool) {
         path,
         query_parameters,
         auth_user.clone(),
-    ));
+    )).await;
 
     if should_test_true {
         let response = response.unwrap();
@@ -319,7 +319,7 @@ pub async fn show_push_notification_tokens_for_user_id(role: Roles, should_test_
 
     let response: HttpResponse =
         users::show_push_notification_tokens_for_user_id((database.connection.clone().into(), path, auth_user.clone()))
-            .into();
+            .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_true {

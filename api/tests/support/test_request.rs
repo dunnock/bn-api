@@ -61,7 +61,7 @@ impl TestRequest {
     }
 
     pub async fn extract_state(&self) -> Data<AppState> {
-        Data::<AppState>::extract(&self.request).await
+        Data::extract(&self.request).await.unwrap()
     }
 }
 

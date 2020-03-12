@@ -13,205 +13,205 @@ use bigneon_db::models::*;
 #[cfg(test)]
 mod index_tests {
     use super::*;
-    #[test]
-    fn index_org_member() {
-        base::comps::index(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn index_org_member() {
+        base::comps::index(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn index_admin() {
-        base::comps::index(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn index_admin() {
+        base::comps::index(Roles::Admin, true).await;
     }
-    #[test]
-    fn index_user() {
-        base::comps::index(Roles::User, false);
+    #[actix_rt::test]
+    async fn index_user() {
+        base::comps::index(Roles::User, false).await;
     }
-    #[test]
-    fn index_org_owner() {
-        base::comps::index(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn index_org_owner() {
+        base::comps::index(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn index_door_person() {
-        base::comps::index(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn index_door_person() {
+        base::comps::index(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn index_promoter() {
-        base::comps::index(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn index_promoter() {
+        base::comps::index(Roles::Promoter, true).await;
     }
-    #[test]
-    fn index_promoter_read_only() {
-        base::comps::index(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn index_promoter_read_only() {
+        base::comps::index(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn index_org_admin() {
-        base::comps::index(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn index_org_admin() {
+        base::comps::index(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn index_box_office() {
-        base::comps::index(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn index_box_office() {
+        base::comps::index(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod show_tests {
     use super::*;
-    #[test]
-    fn show_org_member() {
-        base::comps::show(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn show_org_member() {
+        base::comps::show(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn show_admin() {
-        base::comps::show(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn show_admin() {
+        base::comps::show(Roles::Admin, true).await;
     }
-    #[test]
-    fn show_user() {
-        base::comps::show(Roles::User, false);
+    #[actix_rt::test]
+    async fn show_user() {
+        base::comps::show(Roles::User, false).await;
     }
-    #[test]
-    fn show_org_owner() {
-        base::comps::show(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn show_org_owner() {
+        base::comps::show(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn show_door_person() {
-        base::comps::show(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn show_door_person() {
+        base::comps::show(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn show_promoter() {
-        base::comps::show(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn show_promoter() {
+        base::comps::show(Roles::Promoter, true).await;
     }
-    #[test]
-    fn show_promoter_read_only() {
-        base::comps::show(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn show_promoter_read_only() {
+        base::comps::show(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn show_org_admin() {
-        base::comps::show(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn show_org_admin() {
+        base::comps::show(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn show_box_office() {
-        base::comps::show(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn show_box_office() {
+        base::comps::show(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod create_tests {
     use super::*;
-    #[test]
-    fn create_org_member() {
-        base::comps::create(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn create_org_member() {
+        base::comps::create(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn create_admin() {
-        base::comps::create(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn create_admin() {
+        base::comps::create(Roles::Admin, true).await;
     }
-    #[test]
-    fn create_user() {
-        base::comps::create(Roles::User, false);
+    #[actix_rt::test]
+    async fn create_user() {
+        base::comps::create(Roles::User, false).await;
     }
-    #[test]
-    fn create_org_owner() {
-        base::comps::create(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn create_org_owner() {
+        base::comps::create(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn create_door_person() {
-        base::comps::create(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn create_door_person() {
+        base::comps::create(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn create_promoter() {
-        base::comps::create(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn create_promoter() {
+        base::comps::create(Roles::Promoter, true).await;
     }
-    #[test]
-    fn create_promoter_read_only() {
-        base::comps::create(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn create_promoter_read_only() {
+        base::comps::create(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn create_org_admin() {
-        base::comps::create(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn create_org_admin() {
+        base::comps::create(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn create_box_office() {
-        base::comps::create(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn create_box_office() {
+        base::comps::create(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod update_tests {
     use super::*;
-    #[test]
-    fn update_org_member() {
-        base::comps::update(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        base::comps::update(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn update_admin() {
-        base::comps::update(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        base::comps::update(Roles::Admin, true).await;
     }
-    #[test]
-    fn update_user() {
-        base::comps::update(Roles::User, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        base::comps::update(Roles::User, false).await;
     }
-    #[test]
-    fn update_org_owner() {
-        base::comps::update(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        base::comps::update(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn update_door_person() {
-        base::comps::update(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        base::comps::update(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn update_promoter() {
-        base::comps::update(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        base::comps::update(Roles::Promoter, true).await;
     }
-    #[test]
-    fn update_promoter_read_only() {
-        base::comps::update(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        base::comps::update(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn update_org_admin() {
-        base::comps::update(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        base::comps::update(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn update_box_office() {
-        base::comps::update(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        base::comps::update(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod destroy_tests {
     use super::*;
-    #[test]
-    fn destroy_org_member() {
-        base::comps::destroy(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn destroy_org_member() {
+        base::comps::destroy(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn destroy_admin() {
-        base::comps::destroy(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn destroy_admin() {
+        base::comps::destroy(Roles::Admin, true).await;
     }
-    #[test]
-    fn destroy_user() {
-        base::comps::destroy(Roles::User, false);
+    #[actix_rt::test]
+    async fn destroy_user() {
+        base::comps::destroy(Roles::User, false).await;
     }
-    #[test]
-    fn destroy_org_owner() {
-        base::comps::destroy(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn destroy_org_owner() {
+        base::comps::destroy(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn destroy_door_person() {
-        base::comps::destroy(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn destroy_door_person() {
+        base::comps::destroy(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn destroy_promoter() {
-        base::comps::destroy(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn destroy_promoter() {
+        base::comps::destroy(Roles::Promoter, true).await;
     }
-    #[test]
-    fn destroy_promoter_read_only() {
-        base::comps::destroy(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn destroy_promoter_read_only() {
+        base::comps::destroy(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn destroy_org_admin() {
-        base::comps::destroy(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn destroy_org_admin() {
+        base::comps::destroy(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn destroy_box_office() {
-        base::comps::destroy(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn destroy_box_office() {
+        base::comps::destroy(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -243,7 +243,7 @@ async fn create_with_validation_errors() {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = hold.id;
 
-    let response = comps::create((database.connection.clone(), json, path, auth_user));
+    let response = comps::create((database.connection.clone(), json, path, auth_user)).await;
     let err = response.err().unwrap();
 
     let response: HttpResponse = err.error_response();

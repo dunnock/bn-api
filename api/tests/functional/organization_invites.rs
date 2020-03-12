@@ -11,209 +11,209 @@ use bigneon_db::models::*;
 #[cfg(test)]
 mod create_tests {
     use super::*;
-    #[test]
-    fn create_org_member() {
-        base::organization_invites::create(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn create_org_member() {
+        base::organization_invites::create(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn create_admin() {
-        base::organization_invites::create(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn create_admin() {
+        base::organization_invites::create(Roles::Admin, true).await;
     }
-    #[test]
-    fn create_user() {
-        base::organization_invites::create(Roles::User, false);
+    #[actix_rt::test]
+    async fn create_user() {
+        base::organization_invites::create(Roles::User, false).await;
     }
-    #[test]
-    fn create_org_owner() {
-        base::organization_invites::create(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn create_org_owner() {
+        base::organization_invites::create(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn create_door_person() {
-        base::organization_invites::create(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn create_door_person() {
+        base::organization_invites::create(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn create_promoter() {
-        base::organization_invites::create(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn create_promoter() {
+        base::organization_invites::create(Roles::Promoter, false).await;
     }
-    #[test]
-    fn create_promoter_read_only() {
-        base::organization_invites::create(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn create_promoter_read_only() {
+        base::organization_invites::create(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn create_org_admin() {
-        base::organization_invites::create(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn create_org_admin() {
+        base::organization_invites::create(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn create_box_office() {
-        base::organization_invites::create(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn create_box_office() {
+        base::organization_invites::create(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod index_tests {
     use super::*;
-    #[test]
-    fn index_org_member() {
-        base::organization_invites::index(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn index_org_member() {
+        base::organization_invites::index(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn index_admin() {
-        base::organization_invites::index(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn index_admin() {
+        base::organization_invites::index(Roles::Admin, true).await;
     }
-    #[test]
-    fn index_user() {
-        base::organization_invites::index(Roles::User, false);
+    #[actix_rt::test]
+    async fn index_user() {
+        base::organization_invites::index(Roles::User, false).await;
     }
-    #[test]
-    fn index_org_owner() {
-        base::organization_invites::index(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn index_org_owner() {
+        base::organization_invites::index(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn index_door_person() {
-        base::organization_invites::index(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn index_door_person() {
+        base::organization_invites::index(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn index_promoter() {
-        base::organization_invites::index(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn index_promoter() {
+        base::organization_invites::index(Roles::Promoter, false).await;
     }
-    #[test]
-    fn index_promoter_read_only() {
-        base::organization_invites::index(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn index_promoter_read_only() {
+        base::organization_invites::index(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn index_org_admin() {
-        base::organization_invites::index(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn index_org_admin() {
+        base::organization_invites::index(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn index_box_office() {
-        base::organization_invites::index(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn index_box_office() {
+        base::organization_invites::index(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod destroy_tests {
     use super::*;
-    #[test]
-    fn destroy_org_member() {
-        base::organization_invites::destroy(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn destroy_org_member() {
+        base::organization_invites::destroy(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn destroy_admin() {
-        base::organization_invites::destroy(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn destroy_admin() {
+        base::organization_invites::destroy(Roles::Admin, true).await;
     }
-    #[test]
-    fn destroy_user() {
-        base::organization_invites::destroy(Roles::User, false);
+    #[actix_rt::test]
+    async fn destroy_user() {
+        base::organization_invites::destroy(Roles::User, false).await;
     }
-    #[test]
-    fn destroy_org_owner() {
-        base::organization_invites::destroy(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn destroy_org_owner() {
+        base::organization_invites::destroy(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn destroy_door_person() {
-        base::organization_invites::destroy(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn destroy_door_person() {
+        base::organization_invites::destroy(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn destroy_promoter() {
-        base::organization_invites::destroy(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn destroy_promoter() {
+        base::organization_invites::destroy(Roles::Promoter, false).await;
     }
-    #[test]
-    fn destroy_promoter_read_only() {
-        base::organization_invites::destroy(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn destroy_promoter_read_only() {
+        base::organization_invites::destroy(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn destroy_org_admin() {
-        base::organization_invites::destroy(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn destroy_org_admin() {
+        base::organization_invites::destroy(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn destroy_box_office() {
-        base::organization_invites::destroy(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn destroy_box_office() {
+        base::organization_invites::destroy(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod create_for_new_user_tests {
     use super::*;
-    #[test]
-    fn create_for_new_user_org_member() {
-        base::organization_invites::create_for_new_user(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn create_for_new_user_org_member() {
+        base::organization_invites::create_for_new_user(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn create_for_new_user_admin() {
-        base::organization_invites::create_for_new_user(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn create_for_new_user_admin() {
+        base::organization_invites::create_for_new_user(Roles::Admin, true).await;
     }
-    #[test]
-    fn create_for_new_user_user() {
-        base::organization_invites::create_for_new_user(Roles::User, false);
+    #[actix_rt::test]
+    async fn create_for_new_user_user() {
+        base::organization_invites::create_for_new_user(Roles::User, false).await;
     }
-    #[test]
-    fn create_for_new_user_org_owner() {
-        base::organization_invites::create_for_new_user(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn create_for_new_user_org_owner() {
+        base::organization_invites::create_for_new_user(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn create_for_new_user_door_person() {
-        base::organization_invites::create_for_new_user(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn create_for_new_user_door_person() {
+        base::organization_invites::create_for_new_user(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn create_for_new_user_promoter() {
-        base::organization_invites::create_for_new_user(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn create_for_new_user_promoter() {
+        base::organization_invites::create_for_new_user(Roles::Promoter, false).await;
     }
-    #[test]
-    fn create_for_new_user_promoter_read_only() {
-        base::organization_invites::create_for_new_user(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn create_for_new_user_promoter_read_only() {
+        base::organization_invites::create_for_new_user(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn create_for_new_user_org_admin() {
-        base::organization_invites::create_for_new_user(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn create_for_new_user_org_admin() {
+        base::organization_invites::create_for_new_user(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn create_for_new_user_box_office() {
-        base::organization_invites::create_for_new_user(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn create_for_new_user_box_office() {
+        base::organization_invites::create_for_new_user(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod accept_tests {
     use super::*;
-    #[test]
-    fn accept_org_member() {
-        base::organization_invites::accept_invite_status_of_invite(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn accept_org_member() {
+        base::organization_invites::accept_invite_status_of_invite(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn accept_admin() {
-        base::organization_invites::accept_invite_status_of_invite(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn accept_admin() {
+        base::organization_invites::accept_invite_status_of_invite(Roles::Admin, true).await;
     }
-    #[test]
-    fn accept_user() {
-        base::organization_invites::accept_invite_status_of_invite(Roles::User, true);
+    #[actix_rt::test]
+    async fn accept_user() {
+        base::organization_invites::accept_invite_status_of_invite(Roles::User, true).await;
     }
-    #[test]
-    fn accept_org_owner() {
-        base::organization_invites::accept_invite_status_of_invite(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn accept_org_owner() {
+        base::organization_invites::accept_invite_status_of_invite(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn accept_door_person() {
-        base::organization_invites::accept_invite_status_of_invite(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn accept_door_person() {
+        base::organization_invites::accept_invite_status_of_invite(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn accept_promoter() {
-        base::organization_invites::accept_invite_status_of_invite(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn accept_promoter() {
+        base::organization_invites::accept_invite_status_of_invite(Roles::Promoter, true).await;
     }
-    #[test]
-    fn accept_promoter_read_only() {
-        base::organization_invites::accept_invite_status_of_invite(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn accept_promoter_read_only() {
+        base::organization_invites::accept_invite_status_of_invite(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn accept_org_admin() {
-        base::organization_invites::accept_invite_status_of_invite(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn accept_org_admin() {
+        base::organization_invites::accept_invite_status_of_invite(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn accept_box_office() {
-        base::organization_invites::accept_invite_status_of_invite(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn accept_box_office() {
+        base::organization_invites::accept_invite_status_of_invite(Roles::OrgBoxOffice, true).await;
     }
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn accept_invite_for_other_email_succeeds() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
@@ -243,11 +243,11 @@ pub async fn accept_invite_for_other_email_succeeds() {
 
     let response: HttpResponse =
         organization_invites::accept_request((database.connection.into(), parameters, OptionalUser(Some(auth_user))))
-            .into();
+            .await.into();
     assert_eq!(response.status(), StatusCode::OK);
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn accept_invite_for_user_id_succeeds() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
@@ -278,11 +278,11 @@ pub async fn accept_invite_for_user_id_succeeds() {
 
     let response: HttpResponse =
         organization_invites::accept_request((database.connection.into(), parameters, OptionalUser(Some(auth_user))))
-            .into();
+            .await.into();
     assert_eq!(response.status(), StatusCode::OK);
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn accept_invite_for_other_user_id_fails() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
@@ -312,7 +312,7 @@ pub async fn accept_invite_for_other_user_id_fails() {
 
     let response: HttpResponse =
         organization_invites::accept_request((database.connection.into(), parameters, OptionalUser(Some(auth_user))))
-            .into();
+            .await.into();
     support::expects_unauthorized(&response);
 }
 

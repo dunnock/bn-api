@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use std::env;
 use uuid::Uuid;
 
-#[test]
+#[actix_rt::test]
 pub async fn index() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -70,11 +70,12 @@ pub async fn index() {
     let test_request = TestRequest::create_with_uri("/events?query=New");
     let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         parameters,
         OptionalUser(None),
     ))
+    .await
     .into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
@@ -103,7 +104,7 @@ pub async fn index() {
     //    assert!(cache_control_headers.is_ok());
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn index_for_user() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -156,12 +157,12 @@ pub async fn index_for_user() {
     let test_request = TestRequest::create_with_uri("/events?query=New");
     let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         parameters,
         OptionalUser(Some(auth_user)),
     ))
-    .into();
+    .await.into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
 
@@ -183,7 +184,7 @@ pub async fn index_for_user() {
     assert_eq!(body, expected_json);
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn index_with_draft_for_organization_user() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -217,12 +218,12 @@ pub async fn index_with_draft_for_organization_user() {
     let test_request = TestRequest::create_with_uri("/events?query=New");
     let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         parameters,
         OptionalUser(Some(auth_user)),
     ))
-    .into();
+    .await.into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
 
@@ -245,7 +246,7 @@ pub async fn index_with_draft_for_organization_user() {
     assert_eq!(body, expected_json);
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn index_with_draft_for_user_ignores_drafts() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -276,12 +277,12 @@ pub async fn index_with_draft_for_user_ignores_drafts() {
     let test_request = TestRequest::create_with_uri("/events?query=New");
     let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         parameters,
         OptionalUser(Some(auth_user)),
     ))
-    .into();
+    .await.into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
     let mut expected_tags: HashMap<String, Value> = HashMap::new();
@@ -302,7 +303,7 @@ pub async fn index_with_draft_for_user_ignores_drafts() {
     assert_eq!(body, expected_json);
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn index_search_with_filter() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -359,12 +360,12 @@ pub async fn index_search_with_filter() {
     let test_request = TestRequest::create_with_uri("/events?query=NewEvent1");
     let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         parameters,
         OptionalUser(None),
     ))
-    .into();
+    .await.into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
     let mut expected_tags: HashMap<String, Value> = HashMap::new();
@@ -428,7 +429,7 @@ async fn show() {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -437,7 +438,7 @@ async fn show() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -488,7 +489,7 @@ async fn show_ended_event() {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -497,7 +498,7 @@ async fn show_ended_event() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -525,7 +526,7 @@ async fn show_future_published_no_preview() {
     path.id = event_id.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -534,7 +535,7 @@ async fn show_future_published_no_preview() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
@@ -572,7 +573,7 @@ async fn show_from_slug() {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -581,7 +582,7 @@ async fn show_from_slug() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -595,7 +596,7 @@ async fn show_from_slug() {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -604,7 +605,7 @@ async fn show_from_slug() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
     //Now try recreate the event with the same name, the slug should change
@@ -634,7 +635,7 @@ async fn show_from_slug() {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -643,7 +644,7 @@ async fn show_from_slug() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -685,7 +686,7 @@ async fn show_future_published_with_preview() {
     path.id = event_id.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -694,7 +695,7 @@ async fn show_future_published_with_preview() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -723,7 +724,7 @@ async fn show_deleted_event() {
     path.id = event_id.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -732,7 +733,7 @@ async fn show_deleted_event() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
@@ -793,7 +794,7 @@ async fn show_private() {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -802,7 +803,7 @@ async fn show_private() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -827,7 +828,7 @@ async fn show_private() {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -836,7 +837,7 @@ async fn show_private() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -846,7 +847,7 @@ async fn show_private() {
     path.id = private_event_id.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -855,7 +856,7 @@ async fn show_private() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
     let test_request = TestRequest::create_with_uri(&format!(
@@ -867,7 +868,7 @@ async fn show_private() {
     path.id = private_event_id.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -876,7 +877,7 @@ async fn show_private() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -942,7 +943,7 @@ async fn show_with_cancelled_ticket_type() {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -951,7 +952,7 @@ async fn show_with_cancelled_ticket_type() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -1012,7 +1013,7 @@ async fn show_with_access_restricted_ticket_type_and_no_code() {
     assert_eq!(query_parameters.redemption_code, None);
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -1021,7 +1022,7 @@ async fn show_with_access_restricted_ticket_type_and_no_code() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -1085,7 +1086,7 @@ async fn show_with_access_restricted_ticket_type_and_access_code() {
     assert_eq!(query_parameters.redemption_code, Some(code.redemption_code));
 
     let response: HttpResponse = events::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -1094,7 +1095,7 @@ async fn show_with_access_restricted_ticket_type_and_access_code() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -1131,7 +1132,7 @@ async fn show_with_visibility_always_before_sale() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let result: EventShowResult = support::unwrap_body_to_object(&response).unwrap();
@@ -1172,7 +1173,7 @@ async fn show_with_visibility_always_before_sale_pricing() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let result: EventShowResult = support::unwrap_body_to_object(&response).unwrap();
@@ -1214,7 +1215,7 @@ async fn show_with_visibility_always_after_sale() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let result: EventShowResult = support::unwrap_body_to_object(&response).unwrap();
@@ -1253,7 +1254,7 @@ async fn show_with_hidden_ticket_type() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let result: EventShowResult = support::unwrap_body_to_object(&response).unwrap();
@@ -1264,54 +1265,54 @@ async fn show_with_hidden_ticket_type() {
 mod clone_tests {
     use super::*;
 
-    #[test]
-    fn clone_org_member() {
-        base::events::clone(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn clone_org_member() {
+        base::events::clone(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn clone_admin() {
-        base::events::clone(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn clone_admin() {
+        base::events::clone(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn clone_super() {
-        base::events::clone(Roles::Super, true);
+    #[actix_rt::test]
+    async fn clone_super() {
+        base::events::clone(Roles::Super, true).await;
     }
 
-    #[test]
-    fn clone_user() {
-        base::events::clone(Roles::User, false);
+    #[actix_rt::test]
+    async fn clone_user() {
+        base::events::clone(Roles::User, false).await;
     }
 
-    #[test]
-    fn clone_org_owner() {
-        base::events::clone(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn clone_org_owner() {
+        base::events::clone(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn clone_door_person() {
-        base::events::clone(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn clone_door_person() {
+        base::events::clone(Roles::DoorPerson, false).await;
     }
 
-    #[test]
-    fn clone_promoter() {
-        base::events::clone(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn clone_promoter() {
+        base::events::clone(Roles::Promoter, false).await;
     }
 
-    #[test]
-    fn clone_promoter_read_only() {
-        base::events::clone(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn clone_promoter_read_only() {
+        base::events::clone(Roles::PromoterReadOnly, false).await;
     }
 
-    #[test]
-    fn clone_org_admin() {
-        base::events::clone(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn clone_org_admin() {
+        base::events::clone(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn clone_box_office() {
-        base::events::clone(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn clone_box_office() {
+        base::events::clone(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -1319,49 +1320,49 @@ mod clone_tests {
 mod show_box_office_pricing_tests {
     use super::*;
 
-    #[test]
-    fn show_box_office_pricing_org_member() {
-        base::events::show_box_office_pricing(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn show_box_office_pricing_org_member() {
+        base::events::show_box_office_pricing(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn show_box_office_pricing_admin() {
-        base::events::show_box_office_pricing(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn show_box_office_pricing_admin() {
+        base::events::show_box_office_pricing(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn show_box_office_pricing_user() {
-        base::events::show_box_office_pricing(Roles::User, false);
+    #[actix_rt::test]
+    async fn show_box_office_pricing_user() {
+        base::events::show_box_office_pricing(Roles::User, false).await;
     }
 
-    #[test]
-    fn show_box_office_pricing_org_owner() {
-        base::events::show_box_office_pricing(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn show_box_office_pricing_org_owner() {
+        base::events::show_box_office_pricing(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn show_box_office_pricing_door_person() {
-        base::events::show_box_office_pricing(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn show_box_office_pricing_door_person() {
+        base::events::show_box_office_pricing(Roles::DoorPerson, false).await;
     }
 
-    #[test]
-    fn show_box_office_pricing_promoter() {
-        base::events::show_box_office_pricing(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn show_box_office_pricing_promoter() {
+        base::events::show_box_office_pricing(Roles::Promoter, false).await;
     }
 
-    #[test]
-    fn show_box_office_pricing_promoter_read_only() {
-        base::events::show_box_office_pricing(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn show_box_office_pricing_promoter_read_only() {
+        base::events::show_box_office_pricing(Roles::PromoterReadOnly, false).await;
     }
 
-    #[test]
-    fn show_box_office_pricing_org_admin() {
-        base::events::show_box_office_pricing(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn show_box_office_pricing_org_admin() {
+        base::events::show_box_office_pricing(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn show_box_office_pricing_box_office() {
-        base::events::show_box_office_pricing(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn show_box_office_pricing_box_office() {
+        base::events::show_box_office_pricing(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -1369,49 +1370,49 @@ mod show_box_office_pricing_tests {
 mod dashboard_tests {
     use super::*;
 
-    #[test]
-    fn dashboard_org_member() {
-        base::events::dashboard(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn dashboard_org_member() {
+        base::events::dashboard(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn dashboard_admin() {
-        base::events::dashboard(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn dashboard_admin() {
+        base::events::dashboard(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn dashboard_user() {
-        base::events::dashboard(Roles::User, false);
+    #[actix_rt::test]
+    async fn dashboard_user() {
+        base::events::dashboard(Roles::User, false).await;
     }
 
-    #[test]
-    fn dashboard_org_owner() {
-        base::events::dashboard(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn dashboard_org_owner() {
+        base::events::dashboard(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn dashboard_door_person() {
-        base::events::dashboard(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn dashboard_door_person() {
+        base::events::dashboard(Roles::DoorPerson, true).await;
     }
 
-    #[test]
-    fn dashboard_promoter() {
-        base::events::dashboard(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn dashboard_promoter() {
+        base::events::dashboard(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn dashboard_promoter_read_only() {
-        base::events::dashboard(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn dashboard_promoter_read_only() {
+        base::events::dashboard(Roles::PromoterReadOnly, true).await;
     }
 
-    #[test]
-    fn dashboard_org_admin() {
-        base::events::dashboard(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn dashboard_org_admin() {
+        base::events::dashboard(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn dashboard_box_office() {
-        base::events::dashboard(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn dashboard_box_office() {
+        base::events::dashboard(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -1419,49 +1420,49 @@ mod dashboard_tests {
 mod create_tests {
     use super::*;
 
-    #[test]
-    fn create_org_member() {
-        base::events::create(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn create_org_member() {
+        base::events::create(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn create_admin() {
-        base::events::create(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn create_admin() {
+        base::events::create(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn create_user() {
-        base::events::create(Roles::User, false);
+    #[actix_rt::test]
+    async fn create_user() {
+        base::events::create(Roles::User, false).await;
     }
 
-    #[test]
-    fn create_org_owner() {
-        base::events::create(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn create_org_owner() {
+        base::events::create(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn create_door_person() {
-        base::events::create(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn create_door_person() {
+        base::events::create(Roles::DoorPerson, false).await;
     }
 
-    #[test]
-    fn create_promoter() {
-        base::events::create(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn create_promoter() {
+        base::events::create(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn create_promoter_read_only() {
-        base::events::create(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn create_promoter_read_only() {
+        base::events::create(Roles::PromoterReadOnly, false).await;
     }
 
-    #[test]
-    fn create_org_admin() {
-        base::events::create(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn create_org_admin() {
+        base::events::create(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn create_box_office() {
-        base::events::create(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn create_box_office() {
+        base::events::create(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -1469,49 +1470,49 @@ mod create_tests {
 mod update_tests {
     use super::*;
 
-    #[test]
-    fn update_org_member() {
-        base::events::update(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        base::events::update(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn update_admin() {
-        base::events::update(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        base::events::update(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn update_user() {
-        base::events::update(Roles::User, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        base::events::update(Roles::User, false).await;
     }
 
-    #[test]
-    fn update_org_owner() {
-        base::events::update(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        base::events::update(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn update_door_person() {
-        base::events::update(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        base::events::update(Roles::DoorPerson, false).await;
     }
 
-    #[test]
-    fn update_promoter() {
-        base::events::update(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        base::events::update(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn update_promoter_read_only() {
-        base::events::update(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        base::events::update(Roles::PromoterReadOnly, false).await;
     }
 
-    #[test]
-    fn update_org_admin() {
-        base::events::update(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        base::events::update(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn update_box_office() {
-        base::events::update(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        base::events::update(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -1519,49 +1520,49 @@ mod update_tests {
 mod cancel_tests {
     use super::*;
 
-    #[test]
-    fn cancel_org_member() {
-        base::events::cancel(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn cancel_org_member() {
+        base::events::cancel(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn cancel_admin() {
-        base::events::cancel(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn cancel_admin() {
+        base::events::cancel(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn cancel_user() {
-        base::events::cancel(Roles::User, false);
+    #[actix_rt::test]
+    async fn cancel_user() {
+        base::events::cancel(Roles::User, false).await;
     }
 
-    #[test]
-    fn cancel_org_owner() {
-        base::events::cancel(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn cancel_org_owner() {
+        base::events::cancel(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn cancel_door_person() {
-        base::events::cancel(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn cancel_door_person() {
+        base::events::cancel(Roles::DoorPerson, false).await;
     }
 
-    #[test]
-    fn cancel_promoter() {
-        base::events::cancel(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn cancel_promoter() {
+        base::events::cancel(Roles::Promoter, false).await;
     }
 
-    #[test]
-    fn cancel_promoter_read_only() {
-        base::events::cancel(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn cancel_promoter_read_only() {
+        base::events::cancel(Roles::PromoterReadOnly, false).await;
     }
 
-    #[test]
-    fn cancel_org_admin() {
-        base::events::cancel(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn cancel_org_admin() {
+        base::events::cancel(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn cancel_box_office() {
-        base::events::cancel(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn cancel_box_office() {
+        base::events::cancel(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -1569,49 +1570,49 @@ mod cancel_tests {
 mod delete_tests {
     use super::*;
 
-    #[test]
-    fn delete_org_member() {
-        base::events::delete(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn delete_org_member() {
+        base::events::delete(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn delete_admin() {
-        base::events::delete(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn delete_admin() {
+        base::events::delete(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn delete_user() {
-        base::events::delete(Roles::User, false);
+    #[actix_rt::test]
+    async fn delete_user() {
+        base::events::delete(Roles::User, false).await;
     }
 
-    #[test]
-    fn delete_org_owner() {
-        base::events::delete(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn delete_org_owner() {
+        base::events::delete(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn delete_door_person() {
-        base::events::delete(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn delete_door_person() {
+        base::events::delete(Roles::DoorPerson, false).await;
     }
 
-    #[test]
-    fn delete_promoter() {
-        base::events::delete(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn delete_promoter() {
+        base::events::delete(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn delete_promoter_read_only() {
-        base::events::delete(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn delete_promoter_read_only() {
+        base::events::delete(Roles::PromoterReadOnly, false).await;
     }
 
-    #[test]
-    fn delete_org_admin() {
-        base::events::delete(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn delete_org_admin() {
+        base::events::delete(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn delete_box_office() {
-        base::events::delete(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn delete_box_office() {
+        base::events::delete(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -1619,29 +1620,29 @@ mod delete_tests {
 mod add_artist_tests {
     use super::*;
 
-    #[test]
-    fn add_artist_org_member() {
-        base::events::add_artist(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn add_artist_org_member() {
+        base::events::add_artist(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn add_artist_admin() {
-        base::events::add_artist(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn add_artist_admin() {
+        base::events::add_artist(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn add_artist_user() {
-        base::events::add_artist(Roles::User, false);
+    #[actix_rt::test]
+    async fn add_artist_user() {
+        base::events::add_artist(Roles::User, false).await;
     }
 
-    #[test]
-    fn add_artist_org_owner() {
-        base::events::add_artist(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn add_artist_org_owner() {
+        base::events::add_artist(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn add_artist_door_person() {
-        base::events::add_artist(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn add_artist_door_person() {
+        base::events::add_artist(Roles::DoorPerson, false).await;
     }
 
     #[test]
@@ -1649,19 +1650,19 @@ mod add_artist_tests {
         base::events::add_artist(Roles::Promoter, true)
     }
 
-    #[test]
-    fn add_artist_promoter_read_only() {
-        base::events::add_artist(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn add_artist_promoter_read_only() {
+        base::events::add_artist(Roles::PromoterReadOnly, false).await;
     }
 
-    #[test]
-    fn add_artist_org_admin() {
-        base::events::add_artist(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn add_artist_org_admin() {
+        base::events::add_artist(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn add_artist_box_office() {
-        base::events::add_artist(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn add_artist_box_office() {
+        base::events::add_artist(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -1669,49 +1670,49 @@ mod add_artist_tests {
 mod list_interested_users_tests {
     use super::*;
 
-    #[test]
-    fn list_interested_users_org_member() {
-        base::events::list_interested_users(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn list_interested_users_org_member() {
+        base::events::list_interested_users(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn list_interested_users_admin() {
-        base::events::list_interested_users(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn list_interested_users_admin() {
+        base::events::list_interested_users(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn list_interested_users_user() {
-        base::events::list_interested_users(Roles::User, true);
+    #[actix_rt::test]
+    async fn list_interested_users_user() {
+        base::events::list_interested_users(Roles::User, true).await;
     }
 
-    #[test]
-    fn list_interested_users_org_owner() {
-        base::events::list_interested_users(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn list_interested_users_org_owner() {
+        base::events::list_interested_users(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn list_interested_users_door_person() {
-        base::events::list_interested_users(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn list_interested_users_door_person() {
+        base::events::list_interested_users(Roles::DoorPerson, true).await;
     }
 
-    #[test]
-    fn list_interested_users_promoter() {
-        base::events::list_interested_users(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn list_interested_users_promoter() {
+        base::events::list_interested_users(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn list_interested_users_promoter_read_only() {
-        base::events::list_interested_users(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn list_interested_users_promoter_read_only() {
+        base::events::list_interested_users(Roles::PromoterReadOnly, true).await;
     }
 
-    #[test]
-    fn list_interested_users_org_admin() {
-        base::events::list_interested_users(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn list_interested_users_org_admin() {
+        base::events::list_interested_users(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn list_interested_users_box_office() {
-        base::events::list_interested_users(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn list_interested_users_box_office() {
+        base::events::list_interested_users(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -1719,49 +1720,49 @@ mod list_interested_users_tests {
 mod add_interest_tests {
     use super::*;
 
-    #[test]
-    fn add_interest_org_member() {
-        base::events::add_interest(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn add_interest_org_member() {
+        base::events::add_interest(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn add_interest_admin() {
-        base::events::add_interest(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn add_interest_admin() {
+        base::events::add_interest(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn add_interest_user() {
-        base::events::add_interest(Roles::User, true);
+    #[actix_rt::test]
+    async fn add_interest_user() {
+        base::events::add_interest(Roles::User, true).await;
     }
 
-    #[test]
-    fn add_interest_org_owner() {
-        base::events::add_interest(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn add_interest_org_owner() {
+        base::events::add_interest(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn add_interest_door_person() {
-        base::events::add_interest(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn add_interest_door_person() {
+        base::events::add_interest(Roles::DoorPerson, true).await;
     }
 
-    #[test]
-    fn add_interest_promoter() {
-        base::events::add_interest(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn add_interest_promoter() {
+        base::events::add_interest(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn add_interest_promoter_read_only() {
-        base::events::add_interest(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn add_interest_promoter_read_only() {
+        base::events::add_interest(Roles::PromoterReadOnly, true).await;
     }
 
-    #[test]
-    fn add_interest_org_admin() {
-        base::events::add_interest(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn add_interest_org_admin() {
+        base::events::add_interest(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn add_interest_box_office() {
-        base::events::add_interest(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn add_interest_box_office() {
+        base::events::add_interest(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -1769,49 +1770,49 @@ mod add_interest_tests {
 mod remove_interest_tests {
     use super::*;
 
-    #[test]
-    fn remove_interest_org_member() {
-        base::events::remove_interest(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn remove_interest_org_member() {
+        base::events::remove_interest(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn remove_interest_admin() {
-        base::events::remove_interest(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn remove_interest_admin() {
+        base::events::remove_interest(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn remove_interest_user() {
-        base::events::remove_interest(Roles::User, true);
+    #[actix_rt::test]
+    async fn remove_interest_user() {
+        base::events::remove_interest(Roles::User, true).await;
     }
 
-    #[test]
-    fn remove_interest_org_owner() {
-        base::events::remove_interest(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn remove_interest_org_owner() {
+        base::events::remove_interest(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn remove_interest_door_person() {
-        base::events::remove_interest(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn remove_interest_door_person() {
+        base::events::remove_interest(Roles::DoorPerson, true).await;
     }
 
-    #[test]
-    fn remove_interest_promoter() {
-        base::events::remove_interest(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn remove_interest_promoter() {
+        base::events::remove_interest(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn remove_interest_promoter_read_only() {
-        base::events::remove_interest(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn remove_interest_promoter_read_only() {
+        base::events::remove_interest(Roles::PromoterReadOnly, true).await;
     }
 
-    #[test]
-    fn remove_interest_org_admin() {
-        base::events::remove_interest(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn remove_interest_org_admin() {
+        base::events::remove_interest(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn remove_interest_box_office() {
-        base::events::remove_interest(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn remove_interest_box_office() {
+        base::events::remove_interest(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -1819,49 +1820,49 @@ mod remove_interest_tests {
 mod update_artists_tests {
     use super::*;
 
-    #[test]
-    fn update_artists_org_member() {
-        base::events::update_artists(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn update_artists_org_member() {
+        base::events::update_artists(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn update_artists_admin() {
-        base::events::update_artists(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_artists_admin() {
+        base::events::update_artists(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn update_artists_user() {
-        base::events::update_artists(Roles::User, false);
+    #[actix_rt::test]
+    async fn update_artists_user() {
+        base::events::update_artists(Roles::User, false).await;
     }
 
-    #[test]
-    fn update_artists_org_owner() {
-        base::events::update_artists(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn update_artists_org_owner() {
+        base::events::update_artists(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn update_artists_door_person() {
-        base::events::update_artists(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_artists_door_person() {
+        base::events::update_artists(Roles::DoorPerson, false).await;
     }
 
-    #[test]
-    fn update_artists_promoter() {
-        base::events::update_artists(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn update_artists_promoter() {
+        base::events::update_artists(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn update_artists_promoter_read_only() {
-        base::events::update_artists(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_artists_promoter_read_only() {
+        base::events::update_artists(Roles::PromoterReadOnly, false).await;
     }
 
-    #[test]
-    fn update_artists_org_admin() {
-        base::events::update_artists(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn update_artists_org_admin() {
+        base::events::update_artists(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn update_artists_box_office() {
-        base::events::update_artists(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_artists_box_office() {
+        base::events::update_artists(Roles::OrgBoxOffice, false).await;
     }
 }
 
@@ -1869,49 +1870,49 @@ mod update_artists_tests {
 mod guest_list_tests {
     use super::*;
 
-    #[test]
-    fn guest_list_org_member() {
-        base::events::guest_list(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn guest_list_org_member() {
+        base::events::guest_list(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn guest_list_admin() {
-        base::events::guest_list(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn guest_list_admin() {
+        base::events::guest_list(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn guest_list_user() {
-        base::events::guest_list(Roles::User, false);
+    #[actix_rt::test]
+    async fn guest_list_user() {
+        base::events::guest_list(Roles::User, false).await;
     }
 
-    #[test]
-    fn guest_list_org_owner() {
-        base::events::guest_list(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn guest_list_org_owner() {
+        base::events::guest_list(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn guest_list_door_person() {
-        base::events::guest_list(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn guest_list_door_person() {
+        base::events::guest_list(Roles::DoorPerson, true).await;
     }
 
-    #[test]
-    fn guest_list_promoter() {
-        base::events::guest_list(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn guest_list_promoter() {
+        base::events::guest_list(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn guest_list_promoter_read_only() {
-        base::events::guest_list(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn guest_list_promoter_read_only() {
+        base::events::guest_list(Roles::PromoterReadOnly, true).await;
     }
 
-    #[test]
-    fn guest_list_org_admin() {
-        base::events::guest_list(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn guest_list_org_admin() {
+        base::events::guest_list(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn guest_list_box_office() {
-        base::events::guest_list(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn guest_list_box_office() {
+        base::events::guest_list(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -1919,49 +1920,49 @@ mod guest_list_tests {
 mod codes_tests {
     use super::*;
 
-    #[test]
-    fn codes_org_member() {
-        base::events::codes(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn codes_org_member() {
+        base::events::codes(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn codes_admin() {
-        base::events::codes(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn codes_admin() {
+        base::events::codes(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn codes_user() {
-        base::events::codes(Roles::User, false);
+    #[actix_rt::test]
+    async fn codes_user() {
+        base::events::codes(Roles::User, false).await;
     }
 
-    #[test]
-    fn codes_org_owner() {
-        base::events::codes(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn codes_org_owner() {
+        base::events::codes(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn codes_door_person() {
-        base::events::codes(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn codes_door_person() {
+        base::events::codes(Roles::DoorPerson, true).await;
     }
 
-    #[test]
-    fn codes_promoter() {
-        base::events::codes(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn codes_promoter() {
+        base::events::codes(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn codes_promoter_read_only() {
-        base::events::codes(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn codes_promoter_read_only() {
+        base::events::codes(Roles::PromoterReadOnly, true).await;
     }
 
-    #[test]
-    fn codes_org_admin() {
-        base::events::codes(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn codes_org_admin() {
+        base::events::codes(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn codes_box_office() {
-        base::events::codes(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn codes_box_office() {
+        base::events::codes(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -1969,49 +1970,49 @@ mod codes_tests {
 mod holds_tests {
     use super::*;
 
-    #[test]
-    fn holds_org_member() {
-        base::events::holds(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn holds_org_member() {
+        base::events::holds(Roles::OrgMember, true).await;
     }
 
-    #[test]
-    fn holds_admin() {
-        base::events::holds(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn holds_admin() {
+        base::events::holds(Roles::Admin, true).await;
     }
 
-    #[test]
-    fn holds_user() {
-        base::events::holds(Roles::User, false);
+    #[actix_rt::test]
+    async fn holds_user() {
+        base::events::holds(Roles::User, false).await;
     }
 
-    #[test]
-    fn holds_org_owner() {
-        base::events::holds(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn holds_org_owner() {
+        base::events::holds(Roles::OrgOwner, true).await;
     }
 
-    #[test]
-    fn holds_door_person() {
-        base::events::holds(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn holds_door_person() {
+        base::events::holds(Roles::DoorPerson, true).await;
     }
 
-    #[test]
-    fn holds_promoter() {
-        base::events::holds(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn holds_promoter() {
+        base::events::holds(Roles::Promoter, true).await;
     }
 
-    #[test]
-    fn holds_promoter_read_only() {
-        base::events::holds(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn holds_promoter_read_only() {
+        base::events::holds(Roles::PromoterReadOnly, true).await;
     }
 
-    #[test]
-    fn holds_org_admin() {
-        base::events::holds(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn holds_org_admin() {
+        base::events::holds(Roles::OrgAdmin, true).await;
     }
 
-    #[test]
-    fn holds_box_office() {
-        base::events::holds(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn holds_box_office() {
+        base::events::holds(Roles::OrgBoxOffice, true).await;
     }
 }
 
@@ -2019,64 +2020,64 @@ mod holds_tests {
 mod export_event_data_tests {
     use super::*;
 
-    #[test]
-    fn export_event_data_org_member() {
-        base::events::export_event_data(Roles::OrgMember, false, None);
+    #[actix_rt::test]
+    async fn export_event_data_org_member() {
+        base::events::export_event_data(Roles::OrgMember, false, None).await;
     }
 
-    #[test]
-    fn export_event_data_admin() {
-        base::events::export_event_data(Roles::Admin, true, None);
+    #[actix_rt::test]
+    async fn export_event_data_admin() {
+        base::events::export_event_data(Roles::Admin, true, None).await;
     }
 
-    #[test]
-    fn export_event_data_user() {
-        base::events::export_event_data(Roles::User, false, None);
+    #[actix_rt::test]
+    async fn export_event_data_user() {
+        base::events::export_event_data(Roles::User, false, None).await;
     }
 
-    #[test]
-    fn export_event_data_org_owner() {
-        base::events::export_event_data(Roles::OrgOwner, true, None);
+    #[actix_rt::test]
+    async fn export_event_data_org_owner() {
+        base::events::export_event_data(Roles::OrgOwner, true, None).await;
     }
 
-    #[test]
-    fn export_event_data_door_person() {
-        base::events::export_event_data(Roles::DoorPerson, false, None);
+    #[actix_rt::test]
+    async fn export_event_data_door_person() {
+        base::events::export_event_data(Roles::DoorPerson, false, None).await;
     }
 
-    #[test]
-    fn export_event_data_promoter() {
-        base::events::export_event_data(Roles::Promoter, false, None);
+    #[actix_rt::test]
+    async fn export_event_data_promoter() {
+        base::events::export_event_data(Roles::Promoter, false, None).await;
     }
 
-    #[test]
-    fn export_event_data_promoter_read_only() {
-        base::events::export_event_data(Roles::PromoterReadOnly, false, None);
+    #[actix_rt::test]
+    async fn export_event_data_promoter_read_only() {
+        base::events::export_event_data(Roles::PromoterReadOnly, false, None).await;
     }
 
-    #[test]
-    fn export_event_data_org_admin() {
-        base::events::export_event_data(Roles::OrgAdmin, true, None);
+    #[actix_rt::test]
+    async fn export_event_data_org_admin() {
+        base::events::export_event_data(Roles::OrgAdmin, true, None).await;
     }
 
-    #[test]
-    fn export_event_data_box_office() {
-        base::events::export_event_data(Roles::OrgBoxOffice, false, None);
+    #[actix_rt::test]
+    async fn export_event_data_box_office() {
+        base::events::export_event_data(Roles::OrgBoxOffice, false, None).await;
     }
 
-    #[test]
-    fn export_event_data_event_data_exporter() {
-        base::events::export_event_data(Roles::PrismIntegration, true, None);
+    #[actix_rt::test]
+    async fn export_event_data_event_data_exporter() {
+        base::events::export_event_data(Roles::PrismIntegration, true, None).await;
     }
 
-    #[test]
-    fn export_event_data_event_data_exporter_past() {
-        base::events::export_event_data(Roles::PrismIntegration, true, Some(PastOrUpcoming::Past));
+    #[actix_rt::test]
+    async fn export_event_data_event_data_exporter_past() {
+        base::events::export_event_data(Roles::PrismIntegration, true, Some(PastOrUpcoming::Past)).await;
     }
 
-    #[test]
-    fn export_event_data_event_data_exporter_upcoming() {
-        base::events::export_event_data(Roles::PrismIntegration, true, Some(PastOrUpcoming::Upcoming));
+    #[actix_rt::test]
+    async fn export_event_data_event_data_exporter_upcoming() {
+        base::events::export_event_data(Roles::PrismIntegration, true, Some(PastOrUpcoming::Upcoming)).await;
     }
 }
 
@@ -2084,45 +2085,45 @@ mod export_event_data_tests {
 mod redeem_ticket {
     use super::*;
 
-    #[test]
-    fn redeem_ticket_org_member() {
-        base::events::redeem_ticket(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn redeem_ticket_org_member() {
+        base::events::redeem_ticket(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn redeem_ticket_admin() {
-        base::events::redeem_ticket(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn redeem_ticket_admin() {
+        base::events::redeem_ticket(Roles::Admin, true).await;
     }
-    #[test]
-    fn redeem_ticket_user() {
-        base::events::redeem_ticket(Roles::User, false);
+    #[actix_rt::test]
+    async fn redeem_ticket_user() {
+        base::events::redeem_ticket(Roles::User, false).await;
     }
-    #[test]
-    fn redeem_ticket_org_owner() {
-        base::events::redeem_ticket(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn redeem_ticket_org_owner() {
+        base::events::redeem_ticket(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn redeem_ticket_door_person() {
-        base::events::redeem_ticket(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn redeem_ticket_door_person() {
+        base::events::redeem_ticket(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn redeem_ticket_promoter() {
-        base::events::redeem_ticket(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn redeem_ticket_promoter() {
+        base::events::redeem_ticket(Roles::Promoter, false).await;
     }
-    #[test]
-    fn redeem_ticket_promoter_read_only() {
-        base::events::redeem_ticket(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn redeem_ticket_promoter_read_only() {
+        base::events::redeem_ticket(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn redeem_ticket_org_admin() {
-        base::events::redeem_ticket(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn redeem_ticket_org_admin() {
+        base::events::redeem_ticket(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn redeem_ticket_box_office() {
-        base::events::redeem_ticket(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn redeem_ticket_box_office() {
+        base::events::redeem_ticket(Roles::OrgBoxOffice, true).await;
     }
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn delete_fails_has_ticket_in_cart() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
@@ -2241,7 +2242,7 @@ async fn dashboard_with_default_range() {
     path_parameters.id = event.id;
 
     let response: HttpResponse = events::dashboard((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path_parameters,
         query_parameters,
@@ -2263,7 +2264,7 @@ async fn dashboard_with_default_range() {
     );
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn show_from_organizations_past() {
     let database = TestDatabase::new();
 
@@ -2294,7 +2295,7 @@ pub async fn show_from_organizations_past() {
     let test_request = TestRequest::create_with_uri(&format!("/events?past_or_upcoming=Past"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response =
-        events::show_from_organizations((database.connection.into(), path, query_parameters, auth_user)).unwrap();
+        events::show_from_organizations((database.connection.into(), path, query_parameters, auth_user)).await.unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(
@@ -2303,7 +2304,7 @@ pub async fn show_from_organizations_past() {
     );
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn show_from_organizations_upcoming() {
     let database = TestDatabase::new();
 
@@ -2333,7 +2334,7 @@ pub async fn show_from_organizations_upcoming() {
     let test_request = TestRequest::create_with_uri(&format!("/events?past_or_upcoming=Upcoming"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response =
-        events::show_from_organizations((database.connection.into(), path, query_parameters, auth_user)).unwrap();
+        events::show_from_organizations((database.connection.into(), path, query_parameters, auth_user)).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(
         expected_events,

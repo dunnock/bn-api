@@ -60,7 +60,7 @@ async fn index_with_org_linked_and_private_venues() {
         query_parameters,
         OptionalUser(Some(auth_user.clone())),
     ))
-    .into();
+    .await.into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, expected_json);
@@ -80,7 +80,7 @@ async fn index_with_org_linked_and_private_venues() {
         query_parameters,
         OptionalUser(Some(auth_user)),
     ))
-    .into();
+    .await.into();
     let wrapped_expected_venues = Payload {
         data: expected_venues,
         paging: Paging {
@@ -97,7 +97,7 @@ async fn index_with_org_linked_and_private_venues() {
     assert_eq!(body, expected_json);
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn show() {
     let database = TestDatabase::new();
     let venue = database.create_venue().finish();
@@ -116,295 +116,295 @@ pub async fn show() {
 #[cfg(test)]
 mod index_tests {
     use super::*;
-    #[test]
-    fn index_org_member() {
-        base::venues::index(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn index_org_member() {
+        base::venues::index(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn index_admin() {
-        base::venues::index(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn index_admin() {
+        base::venues::index(Roles::Admin, true).await;
     }
-    #[test]
-    fn index_user() {
-        base::venues::index(Roles::User, true);
+    #[actix_rt::test]
+    async fn index_user() {
+        base::venues::index(Roles::User, true).await;
     }
-    #[test]
-    fn index_org_owner() {
-        base::venues::index(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn index_org_owner() {
+        base::venues::index(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn index_door_person() {
-        base::venues::index(Roles::DoorPerson, true);
+    #[actix_rt::test]
+    async fn index_door_person() {
+        base::venues::index(Roles::DoorPerson, true).await;
     }
-    #[test]
-    fn index_promoter() {
-        base::venues::index(Roles::Promoter, true);
+    #[actix_rt::test]
+    async fn index_promoter() {
+        base::venues::index(Roles::Promoter, true).await;
     }
-    #[test]
-    fn index_promoter_read_only() {
-        base::venues::index(Roles::PromoterReadOnly, true);
+    #[actix_rt::test]
+    async fn index_promoter_read_only() {
+        base::venues::index(Roles::PromoterReadOnly, true).await;
     }
-    #[test]
-    fn index_org_admin() {
-        base::venues::index(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn index_org_admin() {
+        base::venues::index(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn index_box_office() {
-        base::venues::index(Roles::OrgBoxOffice, true);
+    #[actix_rt::test]
+    async fn index_box_office() {
+        base::venues::index(Roles::OrgBoxOffice, true).await;
     }
 }
 
 #[cfg(test)]
 mod create_tests {
     use super::*;
-    #[test]
-    fn create_org_member() {
-        base::venues::create(Roles::OrgMember, true);
+    #[actix_rt::test]
+    async fn create_org_member() {
+        base::venues::create(Roles::OrgMember, true).await;
     }
-    #[test]
-    fn create_admin() {
-        base::venues::create(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn create_admin() {
+        base::venues::create(Roles::Admin, true).await;
     }
-    #[test]
-    fn create_user() {
-        base::venues::create(Roles::User, false);
+    #[actix_rt::test]
+    async fn create_user() {
+        base::venues::create(Roles::User, false).await;
     }
-    #[test]
-    fn create_org_owner() {
-        base::venues::create(Roles::OrgOwner, true);
+    #[actix_rt::test]
+    async fn create_org_owner() {
+        base::venues::create(Roles::OrgOwner, true).await;
     }
-    #[test]
-    fn create_door_person() {
-        base::venues::create(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn create_door_person() {
+        base::venues::create(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn create_promoter() {
-        base::venues::create(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn create_promoter() {
+        base::venues::create(Roles::Promoter, false).await;
     }
-    #[test]
-    fn create_promoter_read_only() {
-        base::venues::create(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn create_promoter_read_only() {
+        base::venues::create(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn create_org_admin() {
-        base::venues::create(Roles::OrgAdmin, true);
+    #[actix_rt::test]
+    async fn create_org_admin() {
+        base::venues::create(Roles::OrgAdmin, true).await;
     }
-    #[test]
-    fn create_box_office() {
-        base::venues::create(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn create_box_office() {
+        base::venues::create(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod toggle_privacy_tests {
     use super::*;
-    #[test]
-    fn toggle_privacy_org_member() {
-        base::venues::toggle_privacy(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn toggle_privacy_org_member() {
+        base::venues::toggle_privacy(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn toggle_privacy_admin() {
-        base::venues::toggle_privacy(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn toggle_privacy_admin() {
+        base::venues::toggle_privacy(Roles::Admin, true).await;
     }
-    #[test]
-    fn toggle_privacy_user() {
-        base::venues::toggle_privacy(Roles::User, false);
+    #[actix_rt::test]
+    async fn toggle_privacy_user() {
+        base::venues::toggle_privacy(Roles::User, false).await;
     }
-    #[test]
-    fn toggle_privacy_org_owner() {
-        base::venues::toggle_privacy(Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn toggle_privacy_org_owner() {
+        base::venues::toggle_privacy(Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn toggle_privacy_door_person() {
-        base::venues::toggle_privacy(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn toggle_privacy_door_person() {
+        base::venues::toggle_privacy(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn toggle_privacy_promoter() {
-        base::venues::toggle_privacy(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn toggle_privacy_promoter() {
+        base::venues::toggle_privacy(Roles::Promoter, false).await;
     }
-    #[test]
-    fn toggle_privacy_promoter_read_only() {
-        base::venues::toggle_privacy(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn toggle_privacy_promoter_read_only() {
+        base::venues::toggle_privacy(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn toggle_privacy_org_admin() {
-        base::venues::toggle_privacy(Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn toggle_privacy_org_admin() {
+        base::venues::toggle_privacy(Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn toggle_privacy_box_office() {
-        base::venues::toggle_privacy(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn toggle_privacy_box_office() {
+        base::venues::toggle_privacy(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod update_tests {
     use super::*;
-    #[test]
-    fn update_org_member() {
-        base::venues::update(Roles::OrgMember, false);
+    #[actix_rt::test]
+    async fn update_org_member() {
+        base::venues::update(Roles::OrgMember, false).await;
     }
-    #[test]
-    fn update_admin() {
-        base::venues::update(Roles::Admin, true);
+    #[actix_rt::test]
+    async fn update_admin() {
+        base::venues::update(Roles::Admin, true).await;
     }
-    #[test]
-    fn update_user() {
-        base::venues::update(Roles::User, false);
+    #[actix_rt::test]
+    async fn update_user() {
+        base::venues::update(Roles::User, false).await;
     }
-    #[test]
-    fn update_org_owner() {
-        base::venues::update(Roles::OrgOwner, false);
+    #[actix_rt::test]
+    async fn update_org_owner() {
+        base::venues::update(Roles::OrgOwner, false).await;
     }
-    #[test]
-    fn update_door_person() {
-        base::venues::update(Roles::DoorPerson, false);
+    #[actix_rt::test]
+    async fn update_door_person() {
+        base::venues::update(Roles::DoorPerson, false).await;
     }
-    #[test]
-    fn update_promoter() {
-        base::venues::update(Roles::Promoter, false);
+    #[actix_rt::test]
+    async fn update_promoter() {
+        base::venues::update(Roles::Promoter, false).await;
     }
-    #[test]
-    fn update_promoter_read_only() {
-        base::venues::update(Roles::PromoterReadOnly, false);
+    #[actix_rt::test]
+    async fn update_promoter_read_only() {
+        base::venues::update(Roles::PromoterReadOnly, false).await;
     }
-    #[test]
-    fn update_org_admin() {
-        base::venues::update(Roles::OrgAdmin, false);
+    #[actix_rt::test]
+    async fn update_org_admin() {
+        base::venues::update(Roles::OrgAdmin, false).await;
     }
-    #[test]
-    fn update_box_office() {
-        base::venues::update(Roles::OrgBoxOffice, false);
+    #[actix_rt::test]
+    async fn update_box_office() {
+        base::venues::update(Roles::OrgBoxOffice, false).await;
     }
 }
 
 #[cfg(test)]
 mod update_with_organization_tests {
     use super::*;
-    #[test]
-    fn update_with_organization_org_member() {
-        base::venues::update_with_organization(Roles::OrgMember, true, true);
+    #[actix_rt::test]
+    async fn update_with_organization_org_member() {
+        base::venues::update_with_organization(Roles::OrgMember, true, true).await;
     }
-    #[test]
-    fn update_with_organization_admin() {
-        base::venues::update_with_organization(Roles::Admin, true, true);
+    #[actix_rt::test]
+    async fn update_with_organization_admin() {
+        base::venues::update_with_organization(Roles::Admin, true, true).await;
     }
-    #[test]
-    fn update_with_organization_user() {
-        base::venues::update_with_organization(Roles::User, false, true);
+    #[actix_rt::test]
+    async fn update_with_organization_user() {
+        base::venues::update_with_organization(Roles::User, false, true).await;
     }
-    #[test]
-    fn update_with_organization_org_owner() {
-        base::venues::update_with_organization(Roles::OrgOwner, true, true);
+    #[actix_rt::test]
+    async fn update_with_organization_org_owner() {
+        base::venues::update_with_organization(Roles::OrgOwner, true, true).await;
     }
-    #[test]
-    fn update_with_organization_door_person() {
-        base::venues::update_with_organization(Roles::DoorPerson, false, true);
+    #[actix_rt::test]
+    async fn update_with_organization_door_person() {
+        base::venues::update_with_organization(Roles::DoorPerson, false, true).await;
     }
-    #[test]
-    fn update_with_organization_promoter() {
-        base::venues::update_with_organization(Roles::Promoter, false, true);
+    #[actix_rt::test]
+    async fn update_with_organization_promoter() {
+        base::venues::update_with_organization(Roles::Promoter, false, true).await;
     }
-    #[test]
-    fn update_with_organization_promoter_read_only() {
-        base::venues::update_with_organization(Roles::PromoterReadOnly, false, true);
+    #[actix_rt::test]
+    async fn update_with_organization_promoter_read_only() {
+        base::venues::update_with_organization(Roles::PromoterReadOnly, false, true).await;
     }
-    #[test]
-    fn update_with_organization_org_admin() {
-        base::venues::update_with_organization(Roles::OrgAdmin, true, true);
+    #[actix_rt::test]
+    async fn update_with_organization_org_admin() {
+        base::venues::update_with_organization(Roles::OrgAdmin, true, true).await;
     }
-    #[test]
-    fn update_with_organization_box_office() {
-        base::venues::update_with_organization(Roles::OrgBoxOffice, false, true);
+    #[actix_rt::test]
+    async fn update_with_organization_box_office() {
+        base::venues::update_with_organization(Roles::OrgBoxOffice, false, true).await;
     }
 }
 
 #[cfg(test)]
 mod update_public_venue_with_organization_tests {
     use super::*;
-    #[test]
-    fn update_public_venue_with_organization_org_member() {
-        base::venues::update_with_organization(Roles::OrgMember, false, false);
+    #[actix_rt::test]
+    async fn update_public_venue_with_organization_org_member() {
+        base::venues::update_with_organization(Roles::OrgMember, false, false).await;
     }
-    #[test]
-    fn update_public_venue_with_organization_admin() {
-        base::venues::update_with_organization(Roles::Admin, true, false);
+    #[actix_rt::test]
+    async fn update_public_venue_with_organization_admin() {
+        base::venues::update_with_organization(Roles::Admin, true, false).await;
     }
-    #[test]
-    fn update_public_venue_with_organization_user() {
-        base::venues::update_with_organization(Roles::User, false, false);
+    #[actix_rt::test]
+    async fn update_public_venue_with_organization_user() {
+        base::venues::update_with_organization(Roles::User, false, false).await;
     }
-    #[test]
-    fn update_public_venue_with_organization_org_owner() {
-        base::venues::update_with_organization(Roles::OrgOwner, false, false);
+    #[actix_rt::test]
+    async fn update_public_venue_with_organization_org_owner() {
+        base::venues::update_with_organization(Roles::OrgOwner, false, false).await;
     }
-    #[test]
-    fn update_public_with_organization_door_person() {
-        base::venues::update_with_organization(Roles::DoorPerson, false, false);
+    #[actix_rt::test]
+    async fn update_public_with_organization_door_person() {
+        base::venues::update_with_organization(Roles::DoorPerson, false, false).await;
     }
-    #[test]
-    fn update_public_with_organization_promoter() {
-        base::venues::update_with_organization(Roles::Promoter, false, false);
+    #[actix_rt::test]
+    async fn update_public_with_organization_promoter() {
+        base::venues::update_with_organization(Roles::Promoter, false, false).await;
     }
-    #[test]
-    fn update_public_with_organization_promoter_read_only() {
-        base::venues::update_with_organization(Roles::PromoterReadOnly, false, false);
+    #[actix_rt::test]
+    async fn update_public_with_organization_promoter_read_only() {
+        base::venues::update_with_organization(Roles::PromoterReadOnly, false, false).await;
     }
-    #[test]
-    fn update_public_with_organization_org_admin() {
-        base::venues::update_with_organization(Roles::OrgAdmin, false, false);
+    #[actix_rt::test]
+    async fn update_public_with_organization_org_admin() {
+        base::venues::update_with_organization(Roles::OrgAdmin, false, false).await;
     }
-    #[test]
-    fn update_public_with_organization_box_office() {
-        base::venues::update_with_organization(Roles::OrgBoxOffice, false, false);
+    #[actix_rt::test]
+    async fn update_public_with_organization_box_office() {
+        base::venues::update_with_organization(Roles::OrgBoxOffice, false, false).await;
     }
 }
 
 #[cfg(test)]
 mod show_from_organizations_tests {
     use super::*;
-    #[test]
-    fn show_from_organizations_org_member() {
-        base::venues::show_from_organizations(Some(Roles::OrgMember), true);
+    #[actix_rt::test]
+    async fn show_from_organizations_org_member() {
+        base::venues::show_from_organizations(Some(Roles::OrgMember), true).await;
     }
-    #[test]
-    fn show_from_organizations_admin() {
-        base::venues::show_from_organizations(Some(Roles::Admin), true);
+    #[actix_rt::test]
+    async fn show_from_organizations_admin() {
+        base::venues::show_from_organizations(Some(Roles::Admin), true).await;
     }
-    #[test]
-    fn show_from_organizations_user() {
-        base::venues::show_from_organizations(Some(Roles::User), true);
+    #[actix_rt::test]
+    async fn show_from_organizations_user() {
+        base::venues::show_from_organizations(Some(Roles::User), true).await;
     }
-    #[test]
-    fn show_from_organizations_org_owner() {
-        base::venues::show_from_organizations(Some(Roles::OrgOwner), true);
+    #[actix_rt::test]
+    async fn show_from_organizations_org_owner() {
+        base::venues::show_from_organizations(Some(Roles::OrgOwner), true).await;
     }
-    #[test]
-    fn show_from_organizations_no_user() {
-        base::venues::show_from_organizations(None, true);
+    #[actix_rt::test]
+    async fn show_from_organizations_no_user() {
+        base::venues::show_from_organizations(None, true).await;
     }
-    #[test]
-    fn show_from_organizations_door_person() {
-        base::venues::show_from_organizations(Some(Roles::DoorPerson), true);
+    #[actix_rt::test]
+    async fn show_from_organizations_door_person() {
+        base::venues::show_from_organizations(Some(Roles::DoorPerson), true).await;
     }
-    #[test]
-    fn show_from_organizations_promoter() {
-        base::venues::show_from_organizations(Some(Roles::Promoter), true);
+    #[actix_rt::test]
+    async fn show_from_organizations_promoter() {
+        base::venues::show_from_organizations(Some(Roles::Promoter), true).await;
     }
-    #[test]
-    fn show_from_organizations_promoter_read_only() {
-        base::venues::show_from_organizations(Some(Roles::PromoterReadOnly), true);
+    #[actix_rt::test]
+    async fn show_from_organizations_promoter_read_only() {
+        base::venues::show_from_organizations(Some(Roles::PromoterReadOnly), true).await;
     }
-    #[test]
-    fn show_from_organizations_org_admin() {
-        base::venues::show_from_organizations(Some(Roles::OrgAdmin), true);
+    #[actix_rt::test]
+    async fn show_from_organizations_org_admin() {
+        base::venues::show_from_organizations(Some(Roles::OrgAdmin), true).await;
     }
-    #[test]
-    fn show_from_organizations_box_office() {
-        base::venues::show_from_organizations(Some(Roles::OrgBoxOffice), true);
+    #[actix_rt::test]
+    async fn show_from_organizations_box_office() {
+        base::venues::show_from_organizations(Some(Roles::OrgBoxOffice), true).await;
     }
 }
 
-#[test]
+#[actix_rt::test]
 pub async fn show_from_organizations_private_venue_same_org() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
@@ -455,7 +455,7 @@ pub async fn show_from_organizations_private_venue_same_org() {
         query_parameters,
         OptionalUser(Some(auth_user)),
     ))
-    .into();
+    .await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();

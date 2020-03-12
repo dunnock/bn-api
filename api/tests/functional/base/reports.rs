@@ -94,7 +94,7 @@ pub async fn box_office_sales_summary(role: Roles, should_succeed: bool) {
     path.id = organization.id;
     let query = Query::<ReportQueryParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
-        reports::box_office_sales_summary((database.connection.clone().into(), query, path, auth_user)).await.into();
+        reports::box_office_sales_summary((database.connection.clone().into(), query, path, auth_user)).into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);

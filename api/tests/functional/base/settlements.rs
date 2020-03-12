@@ -70,7 +70,7 @@ pub async fn index(role: Roles, should_succeed: bool) {
     path.id = organization.id;
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
 
-    let response = settlements::index((database.connection.clone().into(), query_parameters, path, auth_user));
+    let response = settlements::index((database.connection.clone().into(), query_parameters, path, auth_user)).await;
 
     if should_succeed {
         let response = response.unwrap();

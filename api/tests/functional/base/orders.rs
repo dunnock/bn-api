@@ -45,8 +45,9 @@ pub async fn resend_confirmation(role: Roles, should_succeed: bool) {
         database.connection.clone(),
         path,
         auth_user,
-        test_request.extract_state(),
+        test_request.extract_state().await,
     ))
+    .await
     .into();
 
     if should_succeed {
@@ -145,7 +146,7 @@ pub async fn activity(role: Roles, should_test_true: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
     let response: Result<WebPayload<ActivityItem>, BigNeonError> =
-        orders::activity((database.connection.clone().into(), path, auth_user.clone()));
+        orders::activity((database.connection.clone().into(), path, auth_user.clone())).await;
 
     if should_test_true {
         let response = response.unwrap();
@@ -434,8 +435,9 @@ pub async fn refund(role: Roles, manual_override: bool, should_succeed: bool) {
         path,
         json,
         auth_user,
-        test_request.extract_state(),
+        test_request.extract_state().await,
     ))
+    .await
     .into();
 
     if should_succeed {

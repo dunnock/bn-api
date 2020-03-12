@@ -152,7 +152,7 @@ pub async fn children(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = hold.id;
 
-    let response = holds::children((database.connection.clone().into(), path, query_parameters, auth_user));
+    let response = holds::children((database.connection.clone().into(), path, query_parameters, auth_user)).await;
     let counter = expected_holds.len() as u32;
     let wrapped_expected_holds = Payload {
         data: expected_holds,

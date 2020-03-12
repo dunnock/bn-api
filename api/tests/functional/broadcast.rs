@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::RequestBuilder;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, Path};
+use actix_web::{http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::broadcasts;
 use bigneon_api::models::PathParameters;
 use bigneon_db::models::enums::{BroadcastAudience, BroadcastChannel, BroadcastType};
@@ -37,7 +37,7 @@ async fn broadcast_counter() {
 
     let broadcast_id = broadcast.id;
     let request = RequestBuilder::new(&format!("/broadcasts/{}/tracking_count", broadcast_id));
-    let mut path: Path<PathParameters> = request.path();
+    let mut path: Path<PathParameters> = request.path().await;
     path.id = broadcast_id;
 
     let response: HttpResponse = broadcasts::tracking_count((conn.into(), path, auth_user)).await.into();

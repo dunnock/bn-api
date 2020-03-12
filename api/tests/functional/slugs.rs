@@ -46,7 +46,7 @@ async fn show_event() {
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = slugs::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -55,7 +55,7 @@ async fn show_event() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body, event_expected_json);
@@ -106,7 +106,7 @@ async fn show_redirect_to_primary_slug() {
         let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
         let response: HttpResponse = slugs::show((
-            test_request.extract_state(),
+            test_request.extract_state().await,
             database.connection.clone().into(),
             path,
             query_parameters,
@@ -115,7 +115,7 @@ async fn show_redirect_to_primary_slug() {
                 user_agent: Some("test".to_string()),
             },
         ))
-        .into();
+        .await.into();
         let body = support::unwrap_body_to_string(&response).unwrap();
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!(
@@ -168,7 +168,7 @@ async fn show_venue() {
     path.id = slug.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -177,7 +177,7 @@ async fn show_venue() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let expected_events = vec![
@@ -201,7 +201,7 @@ async fn show_venue() {
     path.id = slug.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -210,7 +210,7 @@ async fn show_venue() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let expected_events = vec![event_venue_entry(&event3, &venue2, &vec![], None, &*connection)];
@@ -267,7 +267,7 @@ async fn show_organization() {
     path.id = slug.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -276,7 +276,7 @@ async fn show_organization() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let expected_events = vec![
@@ -300,7 +300,7 @@ async fn show_organization() {
     path.id = slug.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -309,7 +309,7 @@ async fn show_organization() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let expected_events = vec![event_venue_entry(&event2, &venue, &vec![], None, &*connection)];
@@ -375,7 +375,7 @@ async fn show_city() {
     path.id = slug.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -384,7 +384,7 @@ async fn show_city() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let expected_events = vec![
@@ -416,7 +416,7 @@ async fn show_city() {
     path.id = slug.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -425,7 +425,7 @@ async fn show_city() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let expected_events = vec![event_venue_entry(&event3, &venue3, &vec![], None, &*connection)];
@@ -505,7 +505,7 @@ async fn show_genre() {
     path.id = slug.to_string();
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
-        test_request.extract_state(),
+        test_request.extract_state().await,
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -514,7 +514,7 @@ async fn show_genre() {
             user_agent: Some("test".to_string()),
         },
     ))
-    .into();
+    .await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let display_event_artist = DisplayEventArtist {
