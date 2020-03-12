@@ -59,7 +59,7 @@ impl TestRequest {
         }
 
         TestRequest {
-            request: request.finish(),
+            request: request.to_http_request(),
             config,
         }
     }
