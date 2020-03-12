@@ -2,8 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::{RequestBuilder, TestRequest};
-use actix_web::Query;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::events;
 use bigneon_api::controllers::events::*;
 use bigneon_api::extractors::*;
@@ -75,8 +74,7 @@ pub async fn index() {
         parameters,
         OptionalUser(None),
     ))
-    .await
-    .into();
+    .await.into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
 
@@ -1119,7 +1117,7 @@ async fn show_with_visibility_always_before_sale() {
 
     let request = RequestBuilder::new(&format!("/events/{}", event.id));
 
-    let mut path: Path<StringPathParameters> = request.path();
+    let mut path: Path<StringPathParameters> = request.path().await;
     path.id = event.id.to_string();
 
     let response: HttpResponse = events::show((
@@ -1160,7 +1158,7 @@ async fn show_with_visibility_always_before_sale_pricing() {
 
     let request = RequestBuilder::new(&format!("/events/{}", event.id));
 
-    let mut path: Path<StringPathParameters> = request.path();
+    let mut path: Path<StringPathParameters> = request.path().await;
     path.id = event.id.to_string();
 
     let response: HttpResponse = events::show((
@@ -1202,7 +1200,7 @@ async fn show_with_visibility_always_after_sale() {
 
     let request = RequestBuilder::new(&format!("/events/{}", event.id));
 
-    let mut path: Path<StringPathParameters> = request.path();
+    let mut path: Path<StringPathParameters> = request.path().await;
     path.id = event.id.to_string();
 
     let response: HttpResponse = events::show((
@@ -1241,7 +1239,7 @@ async fn show_with_hidden_ticket_type() {
 
     let request = RequestBuilder::new(&format!("/events/{}", event.id));
 
-    let mut path: Path<StringPathParameters> = request.path();
+    let mut path: Path<StringPathParameters> = request.path().await;
     path.id = event.id.to_string();
 
     let response: HttpResponse = events::show((
