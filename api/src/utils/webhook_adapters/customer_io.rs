@@ -77,7 +77,7 @@ impl CustomerIoWebhookAdapter {
             "Sending event/customer to customer.io",
             { "payload": &payload }
         );
-        let mut resp = client
+        let resp = client
             .basic_auth(&self.site_id, Some(&self.api_key))
             .send()
             .map_err(|_err| ApplicationError::new("Error making webhook request".to_string()))?;

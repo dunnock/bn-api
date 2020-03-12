@@ -2,7 +2,7 @@ use crate::errors::AuthError;
 use crate::errors::*;
 use crate::jwt::errors::Error as JwtError;
 use crate::payments::PaymentProcessorError;
-use actix_web::{http::StatusCode, HttpResponse, error::ResponseError};
+use actix_web::{HttpResponse, error::ResponseError};
 use bigneon_db::utils::errors::*;
 use branch_rs::BranchError;
 use chrono;

@@ -4,11 +4,8 @@ use actix_web::error;
 use actix_web::{FromRequest, HttpRequest};
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
-use actix_web::dev::{ServiceRequest, ServiceResponse, MessageBody, Payload};
-use actix_service::Service;
+use actix_web::dev::{ServiceResponse, Payload};
 use std::error::Error;
-use std::pin::Pin;
-use std::future::Future;
 
 pub trait RequestConnection {
     fn connection(&self) -> error::Result<Connection>;

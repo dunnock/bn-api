@@ -1,7 +1,6 @@
 use crate::controllers::*;
 //use crate::middleware::{CacheResource, CacheUsersBy};
-use crate::server::AppState;
-use actix_web::{http::Method, App, HttpResponse, web};
+use actix_web::web;
 
 pub fn routes(app: &mut web::ServiceConfig) {
     // Please try to keep in alphabetical order

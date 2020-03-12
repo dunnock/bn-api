@@ -1,29 +1,13 @@
 use crate::extractors::Uuid;
-use crate::server::GetAppState;
 use actix_web::error;
 use actix_web::http::header;
 use actix_web::http::StatusCode;
-use actix_web::FromRequest;
 use actix_web::dev::{ServiceRequest, ServiceResponse, MessageBody};
-use actix_service::Service;
 use log::Level;
-use std::future::Future;
-use std::pin::Pin;
 
 pub struct BigNeonLogger;
 
 impl BigNeonLogger {
-    pub async fn wrapper<S, B>(sreq: ServiceRequest, serv: &mut S) -> error::Result<ServiceResponse<B>>
-    where
-        S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = error::Error>,
-        S::Future: 'static,
-        B: MessageBody,
-    {
-        let data = BigNeonLogger::start(&sreq);
-        let resp = serv.call(sreq).await;
-        BigNeonLogger::finish(&data, resp)
-    }
-
     // log message at the start of request lifecycle
     pub fn start(sreq: &ServiceRequest) -> RequestLogData {
         let data = RequestLogData::from(sreq);
@@ -72,7 +56,6 @@ impl BigNeonLogger {
         resp
     }
 }
-
 
 pub struct RequestLogData {
     user: Option<uuid::Uuid>, // NOTE: this used to be Option<Option<uuid::Uuid>>

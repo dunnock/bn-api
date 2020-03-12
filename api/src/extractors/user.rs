@@ -28,7 +28,7 @@ impl FromRequest for User {
                 } else {
                     match User::new(user, req) {
                         Ok(u) => ok(u),
-                        Err(e) => err(ErrorUnauthorized("User has invalid role data"))
+                        Err(_) => err(ErrorUnauthorized("User has invalid role data"))
                     }
                 }
             }

@@ -1,4 +1,3 @@
-use actix_web::http::header::{HeaderName, HeaderValue};
 use actix_web::middleware::DefaultHeaders;
 
 const SEMVER_HEADER_NAME: &'static str = "X-App-Version";

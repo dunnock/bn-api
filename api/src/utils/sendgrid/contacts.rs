@@ -109,7 +109,7 @@ impl SGContactList {
 
         send_request(api_key, req)
             .and_then(|r| r.error_for_status())
-            .and_then(|mut r| r.json())
+            .and_then(|r| r.json())
             .map(|json: serde_json::Value| json.into())
             .or_else(|err| {
                 match err.status() {
@@ -199,7 +199,7 @@ impl SGContactListResponse {
 fn send_request_json(api_key: &str, req: reqwest::blocking::RequestBuilder) -> Result<serde_json::Value, BigNeonError> {
     send_request(api_key, req)
         .and_then(|r| r.error_for_status())
-        .and_then(|mut r| r.json())
+        .and_then(|r| r.json())
         .map_err(|err| ApplicationError::new(err.to_string()).into())
 }
 

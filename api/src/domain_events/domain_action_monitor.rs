@@ -55,7 +55,7 @@ impl DomainActionMonitor {
             for (executor, domain_action, connection) in futures {
                 let timeout = timeout(Duration::from_secs(55), executor.execute(domain_action, connection));
 
-                let res = runtime
+                let _ = runtime
                     .block_on(timeout.or_else(|err| async move {
                         jlog! {Error,"bigneon::domain_actions", "Action: failed", {"error": err.to_string()}};
                         Err(())
@@ -232,7 +232,7 @@ impl DomainActionMonitor {
     ) -> Result<(), DomainActionError> {
         let router = DomainActionMonitor::create_router(&conf);
 
-        let mut runtime = Runtime::new()?;
+        let runtime = Runtime::new()?;
 
         loop {
             if rx.try_recv().is_ok() {
