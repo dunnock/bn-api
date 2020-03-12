@@ -9,12 +9,13 @@ use bigneon_api::server::AppState;
 use bigneon_api::utils::spotify;
 use bigneon_db::models::Environment;
 use serde::de::DeserializeOwned;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-thread_local!(static DB: RefCell<Option<Database>> = RefCell::new(None));
-thread_local!(static RO_DB: RefCell<Option<Database>> = RefCell::new(None));
+lazy_static::lazy_static! {
+    static ref DB: Arc<Mutex<Option<Database>>> = Arc::new(Mutex::new(None));
+    static ref RO_DB: Arc<Mutex<Option<Database>>> = Arc::new(Mutex::new(None));
+}
 
 pub struct TestRequest {
     pub request: HttpRequest,
@@ -41,7 +42,7 @@ impl TestRequest {
         }
 
         let clients = Arc::new(Mutex::new(HashMap::new()));
-        let dbs = get_thread_local_dbs(&config);
+        let dbs = get_dbs(&config);
         let test_request = test::TestRequest::get().data(
             AppState::new(config.clone(), dbs.0, dbs.1, clients).expect("Failed to generate app state for testing"),
         );
@@ -97,13 +98,14 @@ impl RequestBuilder {
     }
 }
 
-fn get_thread_local_dbs(config: &Config) -> (Database, Database) {
-    let db = |db: &RefCell<Option<Database>>| {
-        if let Some(ref db) = *db.borrow() {
+fn get_dbs(config: &Config) -> (Database, Database) {
+    let get_db = |db: Arc<Mutex<Option<Database>>>| {
+        let mut db_guard = db.lock().unwrap();
+        if let Some(ref db) = *db_guard {
             return db.clone();
         };
-        *db.borrow_mut() = Some(Database::from_config(config));
-        db.borrow().clone().unwrap()
+        *db_guard = Some(Database::from_config(config));
+        db_guard.as_ref().unwrap().clone()
     };
-    (DB.with(db.clone()), RO_DB.with(db))
+    (get_db(DB.clone()), get_db(RO_DB.clone()))
 }
