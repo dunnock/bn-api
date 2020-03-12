@@ -591,7 +591,7 @@ pub async fn clone(
     Ok(HttpResponse::Created().json(event))
 }
 
-pub fn publish(
+pub async fn publish(
     (connection, path, user, cache_database): (Connection, Path<PathParameters>, AuthUser, CacheDatabase),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = connection.get();
@@ -607,7 +607,7 @@ pub fn publish(
     Ok(HttpResponse::Ok().finish())
 }
 
-pub fn unpublish(
+pub async fn unpublish(
     (connection, path, user, cache_database): (Connection, Path<PathParameters>, AuthUser, CacheDatabase),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = connection.get();
