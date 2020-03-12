@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, FromRequest, Query};
+use actix_web::{http::StatusCode, web::Query};
 use bigneon_api::controllers::admin::reports::{self, *};
 use bigneon_api::errors::BigNeonError;
 use bigneon_api::models::WebPayload;
@@ -8,9 +8,9 @@ use chrono::prelude::*;
 use chrono::Duration;
 use diesel;
 use diesel::prelude::*;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
 
 pub fn domain_transaction_detail_report(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();

@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path, Query};
+use actix_web::{http::StatusCode, FromRequest, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::comps::{self, NewCompRequest};
 use bigneon_api::controllers::holds::UpdateHoldRequest;
 use bigneon_api::extractors::*;
@@ -10,7 +10,7 @@ use bigneon_db::models::*;
 use serde_json;
 use std::collections::HashMap;
 
-pub fn index(role: Roles, should_test_succeed: bool) {
+pub async fn index(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -34,11 +34,11 @@ pub fn index(role: Roles, should_test_succeed: bool) {
     ];
 
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = hold.id;
 
-    let response = comps::index((database.connection.clone().into(), path, query_parameters, auth_user));
+    let response = comps::index((database.connection.clone().into(), path, query_parameters, auth_user)).await;
     let counter = expected_comps.len() as u32;
     let wrapped_expected_orgs = Payload {
         data: expected_comps,
@@ -64,7 +64,7 @@ pub fn index(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn show(role: Roles, should_succeed: bool) {
+pub async fn show(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -77,10 +77,10 @@ pub fn show(role: Roles, should_succeed: bool) {
     let expected_json = serde_json::to_string(&comp.into_display(connection).unwrap()).unwrap();
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id"]);
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = comp_id;
 
-    let response: HttpResponse = comps::show((database.connection.clone().into(), path, auth_user)).into();
+    let response: HttpResponse = comps::show((database.connection.clone().into(), path, auth_user)).await.into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -91,7 +91,7 @@ pub fn show(role: Roles, should_succeed: bool) {
     }
 }
 
-pub fn create(role: Roles, should_test_succeed: bool) {
+pub async fn create(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -115,10 +115,10 @@ pub fn create(role: Roles, should_test_succeed: bool) {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = hold.id;
 
-    let response = comps::create((database.connection.clone().into(), json, path, auth_user));
+    let response = comps::create((database.connection.clone().into(), json, path, auth_user)).await;
 
     if should_test_succeed {
         let response = response.unwrap();
@@ -136,7 +136,7 @@ pub fn create(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn destroy(role: Roles, should_succeed: bool) {
+pub async fn destroy(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -146,10 +146,10 @@ pub fn destroy(role: Roles, should_succeed: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id"]);
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = comp.id;
 
-    let response: HttpResponse = comps::destroy((database.connection.clone().into(), path, auth_user)).into();
+    let response: HttpResponse = comps::destroy((database.connection.clone().into(), path, auth_user)).await.into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -160,7 +160,7 @@ pub fn destroy(role: Roles, should_succeed: bool) {
     }
 }
 
-pub fn update(role: Roles, should_test_succeed: bool) {
+pub async fn update(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -171,7 +171,7 @@ pub fn update(role: Roles, should_test_succeed: bool) {
 
     let name = "New Name";
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id"]);
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = comp.id;
 
     let json = Json(UpdateHoldRequest {
@@ -179,7 +179,7 @@ pub fn update(role: Roles, should_test_succeed: bool) {
         ..Default::default()
     });
 
-    let response: HttpResponse = comps::update((database.connection.clone().into(), json, path, auth_user)).into();
+    let response: HttpResponse = comps::update((database.connection.clone().into(), json, path, auth_user)).await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {

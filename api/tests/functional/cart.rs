@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use crate::support::{self, *};
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path, Query};
+use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers;
 use bigneon_api::controllers::cart;
 use bigneon_api::controllers::cart::*;

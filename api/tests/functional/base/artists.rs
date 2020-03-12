@@ -1,14 +1,14 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path};
+use actix_web::{http::StatusCode, FromRequest, HttpResponse, web::Path};
 use bigneon_api::controllers::artists;
 use bigneon_api::extractors::*;
 use bigneon_api::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest};
 use bigneon_db::models::*;
 use serde_json;
 
-pub fn create(role: Roles, should_test_succeed: bool) {
+pub async fn create(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, role, None, &database);
@@ -25,7 +25,7 @@ pub fn create(role: Roles, should_test_succeed: bool) {
         ..Default::default()
     });
 
-    let response: HttpResponse = artists::create((database.connection.into(), json, auth_user)).into();
+    let response: HttpResponse = artists::create((database.connection.into(), json, auth_user)).await.into();
 
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();
@@ -38,7 +38,7 @@ pub fn create(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn create_with_organization(role: Roles, should_test_succeed: bool) {
+pub async fn create_with_organization(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -56,7 +56,7 @@ pub fn create_with_organization(role: Roles, should_test_succeed: bool) {
         ..Default::default()
     });
 
-    let response: HttpResponse = artists::create((database.connection.into(), json, auth_user.clone())).into();
+    let response: HttpResponse = artists::create((database.connection.into(), json, auth_user.clone())).await.into();
 
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();
@@ -69,16 +69,16 @@ pub fn create_with_organization(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn toggle_privacy(role: Roles, should_test_succeed: bool) {
+pub async fn toggle_privacy(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let artist = database.create_artist().finish();
 
     let auth_user = support::create_auth_user(role, None, &database);
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = artist.id;
 
-    let response: HttpResponse = artists::toggle_privacy((database.connection.into(), path, auth_user)).into();
+    let response: HttpResponse = artists::toggle_privacy((database.connection.into(), path, auth_user)).await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {
@@ -90,7 +90,7 @@ pub fn toggle_privacy(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn update(role: Roles, should_test_succeed: bool) {
+pub async fn update(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database.create_organization().finish();
@@ -119,7 +119,7 @@ pub fn update(role: Roles, should_test_succeed: bool) {
     let website_url = "http://www.example2.com";
     let auth_user = support::create_auth_user(role, Some(&organization), &database);
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = artist.id;
 
     let mut attributes: UpdateArtistRequest = Default::default();
@@ -130,7 +130,7 @@ pub fn update(role: Roles, should_test_succeed: bool) {
     attributes.genres = Some(vec!["emo".to_string()]);
     let json = Json(attributes);
 
-    let response: HttpResponse = artists::update((database.connection.clone().into(), path, json, auth_user)).into();
+    let response: HttpResponse = artists::update((database.connection.clone().into(), path, json, auth_user)).await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {
@@ -154,7 +154,7 @@ pub fn update(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn update_with_organization(role: Roles, should_test_succeed: bool, is_private: bool) {
+pub async fn update_with_organization(role: Roles, should_test_succeed: bool, is_private: bool) {
     let database = TestDatabase::new();
 
     let user = database.create_user().finish();
@@ -172,7 +172,7 @@ pub fn update_with_organization(role: Roles, should_test_succeed: bool, is_priva
     let website_url = "http://www.example2.com";
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = artist.id;
 
     let mut attributes: UpdateArtistRequest = Default::default();
@@ -182,7 +182,7 @@ pub fn update_with_organization(role: Roles, should_test_succeed: bool, is_priva
     attributes.youtube_video_urls = Some(Vec::new());
     let json = Json(attributes);
 
-    let response: HttpResponse = artists::update((database.connection.into(), path, json, auth_user.clone())).into();
+    let response: HttpResponse = artists::update((database.connection.into(), path, json, auth_user.clone())).await.into();
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();
         assert_eq!(response.status(), StatusCode::OK);

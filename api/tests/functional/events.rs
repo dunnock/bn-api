@@ -3,7 +3,7 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::{RequestBuilder, TestRequest};
 use actix_web::Query;
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path};
+use actix_web::{http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::events;
 use bigneon_api::controllers::events::*;
 use bigneon_api::extractors::*;

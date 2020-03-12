@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path, Query};
+use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
 use chrono::prelude::*;
 use serde_json;
 use uuid::Uuid;

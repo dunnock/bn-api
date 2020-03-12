@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path};
+use actix_web::{http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::settlement_adjustments::{self, NewSettlementAdjustmentRequest};
 use bigneon_api::extractors::Json;
 use bigneon_api::models::PathParameters;

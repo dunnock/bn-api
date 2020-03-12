@@ -7,7 +7,7 @@ use bigneon_api::models::*;
 use bigneon_db::models::*;
 use chrono::prelude::*;
 
-pub fn update_box_office_pricing(role: Roles, should_test_succeed: bool) {
+pub async fn update_box_office_pricing(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database.create_organization().finish();
@@ -52,6 +52,7 @@ pub fn update_box_office_pricing(role: Roles, should_test_succeed: bool) {
         auth_user,
         RequestInfo { user_agent: None },
     ))
+    .await
     .into();
 
     if should_test_succeed {
@@ -68,7 +69,7 @@ pub fn update_box_office_pricing(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn replace_box_office_pricing(role: Roles, should_test_succeed: bool) {
+pub async fn replace_box_office_pricing(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database.create_organization().finish();
@@ -146,6 +147,7 @@ pub fn replace_box_office_pricing(role: Roles, should_test_succeed: bool) {
         auth_user,
         RequestInfo { user_agent: None },
     ))
+    .await
     .into();
 
     if should_test_succeed {

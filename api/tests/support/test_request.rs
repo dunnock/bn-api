@@ -1,4 +1,4 @@
-use actix_web::{test, FromRequest, HttpRequest, Path, Query, State};
+use actix_web::{test, FromRequest, HttpRequest, web::{Path, Query, Data}};
 use bigneon_api::config::Config;
 use bigneon_api::db::Database;
 use bigneon_api::server::AppState;
@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 pub struct TestRequest {
-    pub request: HttpRequest<AppState>,
+    pub request: HttpRequest,
     pub config: Config,
 }
 
@@ -60,8 +60,8 @@ impl TestRequest {
         }
     }
 
-    pub fn extract_state(&self) -> State<AppState> {
-        State::<AppState>::extract(&self.request)
+    pub fn extract_state(&self) -> Data<AppState> {
+        Data::<AppState>::extract(&self.request)
     }
 }
 

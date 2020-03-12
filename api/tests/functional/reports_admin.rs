@@ -1,5 +1,5 @@
 use bigneon_db::prelude::*;
-use functional::base::reports_admin;
+use crate::functional::base::reports_admin;
 
 #[cfg(test)]
 mod domain_transaction_detail_report_tests {

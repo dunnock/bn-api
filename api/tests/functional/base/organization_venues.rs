@@ -2,7 +2,7 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use crate::support::unwrap_body_to_string;
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path, Query};
+use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::organization_venues;
 use bigneon_api::extractors::*;
 use bigneon_api::models::*;
