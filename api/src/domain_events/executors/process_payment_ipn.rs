@@ -97,7 +97,9 @@ impl ProcessPaymentIPNExecutor {
         if order.is_expired() && (order.status == OrderStatus::PendingPayment || order.status == OrderStatus::Draft) {
             match order.try_refresh_expired_cart(None, connection) {
                 Ok(_) => jlog!(Debug, "IPN: refreshed expired cart", {"ipn_id": ipn.id, "order_id": order.id}),
-                Err(_) => jlog!(Debug, "IPN: Attempted to refresh expired cart but failed", {"ipn_id": ipn.id, "order_id": order.id}),
+                Err(_) => {
+                    jlog!(Debug, "IPN: Attempted to refresh expired cart but failed", {"ipn_id": ipn.id, "order_id": order.id})
+                }
             }
         }
 

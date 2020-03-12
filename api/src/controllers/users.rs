@@ -13,7 +13,7 @@ use actix_web;
 use actix_web::Responder;
 use actix_web::{
     http::StatusCode,
-    web::{Data, Path, Query},
+    web::{Path, Query},
     HttpRequest, HttpResponse,
 };
 use bigneon_db::prelude::*;

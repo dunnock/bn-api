@@ -66,8 +66,12 @@ pub async fn callback(
             // If expired attempt to refresh cart
             if order.is_expired() {
                 match order.try_refresh_expired_cart(user.id(), conn) {
-                    Ok(_) => jlog!(Debug, "Payments: refreshed expired cart", {"payment_id": payment.id, "order_id": order.id}),
-                    Err(_) => jlog!(Debug, "Payments: Attempted to refresh expired cart but failed", {"payment_id": payment.id, "order_id": order.id}),
+                    Ok(_) => {
+                        jlog!(Debug, "Payments: refreshed expired cart", {"payment_id": payment.id, "order_id": order.id})
+                    }
+                    Err(_) => {
+                        jlog!(Debug, "Payments: Attempted to refresh expired cart but failed", {"payment_id": payment.id, "order_id": order.id})
+                    }
                 }
             }
             payment.mark_pending_ipn(user.id(), conn)?;

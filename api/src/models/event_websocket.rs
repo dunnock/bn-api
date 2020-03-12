@@ -37,11 +37,11 @@ impl EventWebSocket {
         }
     }
 
-    pub fn new(event_id: Uuid) -> Self {
+    pub fn new(event_id: Uuid, clients: Arc<Mutex<HashMap<Uuid, Vec<Addr<EventWebSocket>>>>>) -> Self {
         Self {
             heartbeat: Instant::now(),
             event_id,
-            clients: Arc::new(Mutex::new(HashMap::new())),
+            clients,
         }
     }
 

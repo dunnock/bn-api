@@ -9,8 +9,12 @@ use bigneon_api::server::AppState;
 use bigneon_api::utils::spotify;
 use bigneon_db::models::Environment;
 use serde::de::DeserializeOwned;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+
+thread_local!(static DB: RefCell<Option<Database>> = RefCell::new(None));
+thread_local!(static RO_DB: RefCell<Option<Database>> = RefCell::new(None));
 
 pub struct TestRequest {
     pub request: HttpRequest,
@@ -37,14 +41,9 @@ impl TestRequest {
         }
 
         let clients = Arc::new(Mutex::new(HashMap::new()));
+        let dbs = get_thread_local_dbs(&config);
         let test_request = test::TestRequest::get().data(
-            AppState::new(
-                config.clone(),
-                Database::from_config(&config),
-                Database::readonly_from_config(&config),
-                clients,
-            )
-            .expect("Failed to generate app state for testing"),
+            AppState::new(config.clone(), dbs.0, dbs.1, clients).expect("Failed to generate app state for testing"),
         );
 
         // TODO: actix-web test requests do not allow router customization except
@@ -96,4 +95,15 @@ impl RequestBuilder {
     {
         Query::<Q>::extract(&self.request.request).await.unwrap()
     }
+}
+
+fn get_thread_local_dbs(config: &Config) -> (Database, Database) {
+    let db = |db: &RefCell<Option<Database>>| {
+        if let Some(ref db) = *db.borrow() {
+            return db.clone();
+        };
+        *db.borrow_mut() = Some(Database::from_config(config));
+        db.borrow().clone().unwrap()
+    };
+    (DB.with(db.clone()), RO_DB.with(db))
 }

@@ -6,21 +6,9 @@
 // Unused results is more often than not an error
 #![deny(unused_must_use)]
 #![cfg_attr(not(debug_assertions), deny(unused_extern_crates))]
-extern crate actix;
-extern crate actix_web;
 #[macro_use]
 extern crate bigneon_db;
-extern crate bigneon_http;
-extern crate branch_rs;
-extern crate chrono;
-extern crate customer_io;
-extern crate diesel;
-extern crate dotenv;
 extern crate expo_server_sdk as expo;
-extern crate facebook;
-extern crate futures;
-extern crate globee;
-extern crate itertools;
 extern crate jsonwebtoken as jwt;
 #[macro_use]
 extern crate lazy_static;
@@ -30,28 +18,12 @@ extern crate log;
 extern crate logging;
 #[macro_use]
 extern crate macros;
-extern crate phonenumber;
-extern crate r2d2;
-extern crate redis;
-extern crate regex;
-extern crate reqwest;
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate serde_with;
-extern crate stripe;
-extern crate tari_client;
-extern crate tokio;
-extern crate twilio;
-extern crate url;
-extern crate uuid;
-extern crate validator;
 #[macro_use]
 extern crate validator_derive;
-extern crate cache;
-extern crate sitemap;
 
 pub mod auth;
 pub mod communications;

@@ -87,7 +87,7 @@ impl Server {
 
         let mut domain_action_monitor = DomainActionMonitor::new(config.clone(), database.clone(), 1);
         if process_actions_til_empty {
-            domain_action_monitor.run_til_empty().unwrap();
+            domain_action_monitor.run_til_empty().await.unwrap();
             return;
         }
 

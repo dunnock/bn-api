@@ -35,7 +35,7 @@ impl DomainActionMonitor {
         }
     }
 
-    pub fn run_til_empty(&self) -> Result<(), DomainActionError> {
+    pub async fn run_til_empty(&self) -> Result<(), DomainActionError> {
         let router = DomainActionMonitor::create_router(&self.config);
 
         loop {
@@ -47,19 +47,10 @@ impl DomainActionMonitor {
                 cmp::max(1, self.config.connection_pool.max / 2) as usize,
             )?;
 
-            let mut runtime = tokio::runtime::Builder::new().basic_scheduler().build().unwrap();
-
             for (executor, domain_action, connection) in futures {
-                let timeout = timeout(Duration::from_secs(55), executor.execute(domain_action, connection));
-
-                let _ = runtime
-                    .block_on(timeout.or_else(|err| {
-                        async move {
-                            jlog! {Error,"bigneon::domain_actions", "Action: failed", {"error": err.to_string()}};
-                            Err(())
-                        }
-                    }))
-                    .unwrap();
+                if let Err(err) = timeout(Duration::from_secs(55), executor.execute(domain_action, connection)).await {
+                    jlog! {Error,"bigneon::domain_actions", "Action: failed", {"error": err.to_string()}};
+                }
                 num_processed += 1;
             }
 
@@ -252,11 +243,9 @@ impl DomainActionMonitor {
                 for (command, action, connection) in actions {
                     let timeout = timeout(Duration::from_secs(55), command.execute(action, connection));
 
-                    runtime.spawn(timeout.or_else(|err| {
-                        async move {
-                            jlog! {Error,"bigneon::domain_actions", "Action:  failed", {"error": err.to_string()}};
-                            Err(())
-                        }
+                    runtime.spawn(timeout.or_else(|err| async move {
+                        jlog! {Error,"bigneon::domain_actions", "Action:  failed", {"error": err.to_string()}};
+                        Err(())
                     }));
                 }
             }

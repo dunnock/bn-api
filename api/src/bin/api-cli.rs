@@ -129,7 +129,9 @@ fn regenerate_interaction_records(org_id: Option<&str>, database: Database) {
     let connection = connection.get();
 
     let organizations = match org_id {
-        Some(organization_id) => vec![Organization::find(Uuid::from_str(organization_id).unwrap(), connection).unwrap()],
+        Some(organization_id) => {
+            vec![Organization::find(Uuid::from_str(organization_id).unwrap(), connection).unwrap()]
+        }
 
         None => Organization::all(connection).unwrap(),
     };
