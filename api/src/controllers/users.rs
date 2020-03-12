@@ -300,12 +300,7 @@ pub async fn register(
 }
 
 pub async fn register_and_login(
-    (http_request, connection, parameters, request_info): (
-        HttpRequest,
-        Connection,
-        Json<RegisterRequest>,
-        RequestInfo
-    ),
+    (http_request, connection, parameters, request_info): (HttpRequest, Connection, Json<RegisterRequest>, RequestInfo),
 ) -> Result<HttpResponse, BigNeonError> {
     let state = http_request.state();
     let connection_info = http_request.connection_info();

@@ -503,7 +503,9 @@ async fn current_user() {
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
 
-    let response = users::current_user((database.connection.into(), auth_user)).await.unwrap();
+    let response = users::current_user((database.connection.into(), auth_user))
+        .await
+        .unwrap();
     let user = response.user;
     assert_eq!(user.id, user.id);
     assert_eq!(

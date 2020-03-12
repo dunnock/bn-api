@@ -37,7 +37,7 @@ impl TestRequest {
         }
 
         let clients = Arc::new(Mutex::new(HashMap::new()));
-        let test_request = test::TestRequest::with_state(
+        let test_request = test::TestRequest::get().data(
             AppState::new(
                 config.clone(),
                 Database::from_config(&config),

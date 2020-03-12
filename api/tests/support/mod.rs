@@ -3,7 +3,11 @@ pub mod test_request;
 
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{body::Body, http::StatusCode, HttpResponse};
+use actix_web::{
+    body::{Body, ResponseBody},
+    http::StatusCode,
+    HttpResponse,
+};
 use bigneon_api::auth::user::User as AuthUser;
 use bigneon_db::models::{Organization, Roles, User};
 use serde::Deserialize;
@@ -21,7 +25,7 @@ pub struct ValidationResponse {
 
 pub fn unwrap_body_to_string(response: &HttpResponse) -> Result<&str, &'static str> {
     match response.body() {
-        Body::Bytes(binary) => Ok(str::from_utf8(binary.as_ref()).unwrap()),
+        ResponseBody::Body(Body::Bytes(binary)) => Ok(str::from_utf8(binary.as_ref()).unwrap()),
         _ => Err("Unexpected response body"),
     }
 }

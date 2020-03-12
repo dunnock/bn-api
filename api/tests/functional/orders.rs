@@ -433,9 +433,9 @@ mod refund_tests {
     async fn refund_door_person() {
         base::orders::refund(Roles::DoorPerson, false, false).await;
     }
-    #[test]
-    fn refund_promoter() {
-        base::orders::refund(Roles::Promoter, false, false)
+    #[actix_rt::test]
+    async fn refund_promoter() {
+        base::orders::refund(Roles::Promoter, false, false).await;
     }
     #[actix_rt::test]
     async fn refund_promoter_read_only() {
@@ -473,9 +473,9 @@ mod refund_tests {
     async fn refund_override_door_person() {
         base::orders::refund(Roles::DoorPerson, true, false).await;
     }
-    #[test]
-    fn refund_override_promoter() {
-        base::orders::refund(Roles::Promoter, true, false)
+    #[actix_rt::test]
+    async fn refund_override_promoter() {
+        base::orders::refund(Roles::Promoter, true, false).await;
     }
     #[actix_rt::test]
     async fn refund_override_promoter_read_only() {

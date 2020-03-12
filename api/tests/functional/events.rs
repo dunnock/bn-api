@@ -1701,9 +1701,9 @@ mod add_artist_tests {
         base::events::add_artist(Roles::DoorPerson, false).await;
     }
 
-    #[test]
-    fn add_artist_promoter() {
-        base::events::add_artist(Roles::Promoter, true)
+    #[actix_rt::test]
+    async fn add_artist_promoter() {
+        base::events::add_artist(Roles::Promoter, true).await;
     }
 
     #[actix_rt::test]
@@ -2309,7 +2309,8 @@ async fn dashboard_with_default_range() {
         query_parameters,
         auth_user.clone(),
     ))
-    .await.into();
+    .await
+    .into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
