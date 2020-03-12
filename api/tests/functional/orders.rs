@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use chrono::prelude::*;
 use diesel;
 use diesel::prelude::*;
@@ -40,7 +44,9 @@ pub async fn show() {
     path.id = order.id;
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).await.into();
+    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_order: DisplayOrder = serde_json::from_str(&body).unwrap();
@@ -75,7 +81,9 @@ pub async fn show_for_box_office_purchased_user() {
     path.id = order.id;
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).await.into();
+    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_order: DisplayOrder = serde_json::from_str(&body).unwrap();
@@ -292,7 +300,9 @@ pub async fn show_for_draft_returns_forbidden() {
     path.id = order.id;
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).await.into();
+    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+        .await
+        .into();
     support::expects_forbidden(&response, Some("You do not have access to this order"));
 }
 
@@ -340,7 +350,9 @@ pub async fn index() {
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
     let test_request = TestRequest::create_with_uri(&format!("/?"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
-    let response: HttpResponse = orders::index((database.connection.clone(), query_parameters, auth_user)).await.into();
+    let response: HttpResponse = orders::index((database.connection.clone(), query_parameters, auth_user))
+        .await
+        .into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
@@ -565,7 +577,8 @@ pub async fn refund_for_non_refundable_tickets() {
         auth_user,
         test_request.extract_state().await,
     ))
-    .await.into();
+    .await
+    .into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
@@ -653,7 +666,8 @@ pub async fn refund_hold_ticket() {
         auth_user,
         test_request.extract_state().await,
     ))
-    .await.into();
+    .await
+    .into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();

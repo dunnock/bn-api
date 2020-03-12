@@ -7,7 +7,7 @@ use crate::jwt::{decode, Validation};
 use crate::models::*;
 use crate::server::{AppState, GetAppState};
 use crate::utils::google_recaptcha;
-use actix_web::{HttpRequest, HttpResponse, web::Data};
+use actix_web::{web::Data, HttpRequest, HttpResponse};
 use bigneon_db::prelude::*;
 use log::Level::Info;
 use std::collections::HashMap;
@@ -45,12 +45,7 @@ impl RefreshRequest {
 }
 
 pub async fn token(
-    (http_request, connection, login_request, request_info): (
-        HttpRequest,
-        Connection,
-        Json<LoginRequest>,
-        RequestInfo,
-    ),
+    (http_request, connection, login_request, request_info): (HttpRequest, Connection, Json<LoginRequest>, RequestInfo),
 ) -> Result<TokenResponse, BigNeonError> {
     let state = http_request.state();
     let connection_info = http_request.connection_info();

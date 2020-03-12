@@ -3,7 +3,7 @@ pub mod test_request;
 
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, body::Body, HttpResponse};
+use actix_web::{body::Body, http::StatusCode, HttpResponse};
 use bigneon_api::auth::user::User as AuthUser;
 use bigneon_db::models::{Organization, Roles, User};
 use serde::Deserialize;

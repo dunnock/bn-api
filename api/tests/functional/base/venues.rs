@@ -1,7 +1,11 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::venues::{self, NewVenueData};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -34,7 +38,9 @@ pub async fn index(role: Roles, should_succeed: bool) {
 
     let user = support::create_auth_user(role, None, &database);
     let response: HttpResponse =
-        venues::index((database.connection.into(), query_parameters, OptionalUser(Some(user)))).await.into();
+        venues::index((database.connection.into(), query_parameters, OptionalUser(Some(user))))
+            .await
+            .into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);
@@ -60,7 +66,9 @@ pub async fn create(role: Roles, should_succeed: bool) {
         ..Default::default()
     });
 
-    let response: HttpResponse = venues::create((database.connection.clone().into(), json, auth_user.clone())).await.into();
+    let response: HttpResponse = venues::create((database.connection.clone().into(), json, auth_user.clone()))
+        .await
+        .into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);
@@ -96,7 +104,9 @@ pub async fn update(role: Roles, should_succeed: bool) {
     attributes.name = Some(new_name.to_string());
     let json = Json(attributes);
 
-    let response: HttpResponse = venues::update((database.connection.into(), path, json, user)).await.into();
+    let response: HttpResponse = venues::update((database.connection.into(), path, json, user))
+        .await
+        .into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;
@@ -116,7 +126,9 @@ pub async fn toggle_privacy(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = venue.id;
 
-    let response: HttpResponse = venues::toggle_privacy((database.connection.into(), path, auth_user)).await.into();
+    let response: HttpResponse = venues::toggle_privacy((database.connection.into(), path, auth_user))
+        .await
+        .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {
@@ -149,7 +161,9 @@ pub async fn update_with_organization(role: Roles, should_succeed: bool, is_priv
     attributes.name = Some(new_name.to_string());
     let json = Json(attributes);
 
-    let response: HttpResponse = venues::update((database.connection.into(), path, json, auth_user.clone())).await.into();
+    let response: HttpResponse = venues::update((database.connection.into(), path, json, auth_user.clone()))
+        .await
+        .into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;
@@ -205,7 +219,8 @@ pub async fn show_from_organizations(role: Option<Roles>, should_succeed: bool) 
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
         venues::show_from_organizations((database.connection.into(), path, query_parameters, OptionalUser(user)))
-            .await.into();
+            .await
+            .into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);

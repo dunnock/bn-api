@@ -1,7 +1,11 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::events;
 use bigneon_api::controllers::events::*;
 use bigneon_api::db::CacheDatabase;
@@ -211,7 +215,9 @@ pub async fn create(role: Roles, should_test_succeed: bool) {
     let new_event: NewEvent = serde_json::from_str(&serde_json::to_string(&new_event).unwrap()).unwrap();
     let json = Json(new_event);
 
-    let response: HttpResponse = events::create((database.connection.into(), json, auth_user.clone())).await.into();
+    let response: HttpResponse = events::create((database.connection.into(), json, auth_user.clone()))
+        .await
+        .into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::CREATED);
         let body = support::unwrap_body_to_string(&response).unwrap();
@@ -258,7 +264,9 @@ pub async fn show_box_office_pricing(role: Roles, should_test_succeed: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri(&format!("/events/{}?box_office_pricing=true", event.id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = event_id.to_string();
 
     let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
@@ -303,7 +311,9 @@ pub async fn update(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = events::update((database.connection.into(), path, json, auth_user.clone())).await.into();
+    let response: HttpResponse = events::update((database.connection.into(), path, json, auth_user.clone()))
+        .await
+        .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -331,7 +341,9 @@ pub async fn delete(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = events::delete((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = events::delete((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
         assert!(Event::find(event.id, connection).is_err());
@@ -351,7 +363,9 @@ pub async fn cancel(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = events::cancel((database.connection.into(), path, auth_user)).await.into();
+    let response: HttpResponse = events::cancel((database.connection.into(), path, auth_user))
+        .await
+        .into();
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();
         assert_eq!(response.status(), StatusCode::OK);
@@ -392,7 +406,9 @@ pub async fn add_artist(role: Roles, should_test_succeed: bool) {
     path.id = event.id;
 
     let response: HttpResponse =
-        events::add_artist((database.connection.clone().into(), path, json, auth_user.clone())).await.into();
+        events::add_artist((database.connection.clone().into(), path, json, auth_user.clone()))
+            .await
+            .into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::CREATED);
         // Trigger sync right away as normally will happen via background worker
@@ -483,7 +499,9 @@ pub async fn add_interest(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = events::add_interest((database.connection.into(), path, user)).await.into();
+    let response: HttpResponse = events::add_interest((database.connection.into(), path, user))
+        .await
+        .into();
 
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::CREATED);
@@ -506,7 +524,9 @@ pub async fn remove_interest(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = events::remove_interest((database.connection.into(), path, user)).await.into();
+    let response: HttpResponse = events::remove_interest((database.connection.into(), path, user))
+        .await
+        .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {
@@ -626,7 +646,9 @@ pub async fn dashboard(role: Roles, should_test_succeed: bool) {
         "/events/{}/dashboard?start_utc={:?}&end_utc={:?}",
         event.id, start_utc, end_utc
     ));
-    let query_parameters = Query::<DashboardParameters>::extract(&test_request.request).await.unwrap();
+    let query_parameters = Query::<DashboardParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     let mut path_parameters = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path_parameters.id = event.id;
 
@@ -678,11 +700,15 @@ pub async fn guest_list(role: Roles, should_test_succeed: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri(&format!("/events/{}/guest?query=", event.id,));
-    let query_parameters = Query::<GuestListQueryParameters>::extract(&test_request.request).await.unwrap();
+    let query_parameters = Query::<GuestListQueryParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     let mut path_parameters = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path_parameters.id = event.id;
     let response: HttpResponse =
-        events::guest_list((database.connection.into(), query_parameters, path_parameters, auth_user)).await.into();
+        events::guest_list((database.connection.into(), query_parameters, path_parameters, auth_user))
+            .await
+            .into();
 
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -734,8 +760,9 @@ pub async fn codes(role: Roles, should_test_succeed: bool) {
     let test_request = TestRequest::create_with_uri(&format!("/codes?type=Discount"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
 
-    let response: HttpResponse =
-        events::codes((database.connection.clone().into(), query_parameters, path, auth_user)).await.into();
+    let response: HttpResponse = events::codes((database.connection.clone().into(), query_parameters, path, auth_user))
+        .await
+        .into();
 
     let mut expected_tags: HashMap<String, Value> = HashMap::new();
     expected_tags.insert("type".to_string(), json!("Discount"));
@@ -869,8 +896,9 @@ pub async fn holds(role: Roles, should_test_succeed: bool) {
     let test_request = TestRequest::create_with_uri(&format!("/holds"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
 
-    let response: HttpResponse =
-        events::holds((database.connection.clone().into(), query_parameters, path, auth_user)).await.into();
+    let response: HttpResponse = events::holds((database.connection.clone().into(), query_parameters, path, auth_user))
+        .await
+        .into();
     let expected_holds = Payload {
         data: all_holds,
         paging: Paging {

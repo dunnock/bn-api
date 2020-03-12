@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
+use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
 use bigneon_api::controllers::event_report_subscribers::{self, NewEventReportSubscriberRequest};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -106,7 +106,9 @@ pub async fn destroy(role: Roles, should_succeed: bool) {
     path.id = event_report_subscriber.id;
 
     let response: HttpResponse =
-        event_report_subscribers::destroy((database.connection.clone().into(), path, auth_user)).await.into();
+        event_report_subscribers::destroy((database.connection.clone().into(), path, auth_user))
+            .await
+            .into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);

@@ -3,7 +3,10 @@ use crate::db::Connection;
 use crate::errors::BigNeonError;
 use crate::extractors::Json;
 use crate::models::{PathParameters, WebPayload};
-use actix_web::{HttpResponse, web::{Query, Path}};
+use actix_web::{
+    web::{Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::enums::{BroadcastAudience, BroadcastChannel, BroadcastType};
 use bigneon_db::models::scopes::Scopes;
 use bigneon_db::models::{Broadcast, BroadcastEditableAttributes, Organization, PagingParameters};
@@ -105,7 +108,9 @@ pub async fn update(
     Ok(HttpResponse::Ok().json(broadcast))
 }
 
-pub async fn delete((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn delete(
+    (conn, path, user): (Connection, Path<PathParameters>, User),
+) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();
     let broadcast = Broadcast::find(path.id, connection)?;
     let organization = Organization::find_for_event(broadcast.event_id, connection)?;

@@ -7,7 +7,6 @@ pub struct AppVersionHeader;
 
 impl AppVersionHeader {
     pub fn new() -> DefaultHeaders {
-        DefaultHeaders::new()
-            .header(SEMVER_HEADER_NAME, APP_VERSION)
+        DefaultHeaders::new().header(SEMVER_HEADER_NAME, APP_VERSION)
     }
 }

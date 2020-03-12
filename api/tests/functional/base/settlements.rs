@@ -1,7 +1,11 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::settlements::{self, *};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -30,7 +34,9 @@ pub async fn create(role: Roles, should_succeed: bool) {
     let test_request = TestRequest::create();
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
-    let response: HttpResponse = settlements::create((database.connection.into(), json, path, auth_user)).await.into();
+    let response: HttpResponse = settlements::create((database.connection.into(), json, path, auth_user))
+        .await
+        .into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;
@@ -103,7 +109,9 @@ pub async fn show(role: Roles, should_succeed: bool) {
     let test_request = TestRequest::create();
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = settlement.id;
-    let response: HttpResponse = settlements::show((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = settlements::show((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;
@@ -125,7 +133,9 @@ pub async fn destroy(role: Roles, should_succeed: bool) {
     let test_request = TestRequest::create();
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = settlement.id;
-    let response: HttpResponse = settlements::destroy((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = settlements::destroy((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;

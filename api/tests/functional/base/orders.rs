@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
+use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
 use bigneon_api::controllers::orders::{self, *};
 use bigneon_api::errors::BigNeonError;
 use bigneon_api::extractors::Json;
@@ -90,7 +90,9 @@ pub async fn show_other_user_order(role: Roles, should_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
 
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).await.into();
+    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+        .await
+        .into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -202,7 +204,9 @@ pub async fn show_other_user_order_not_matching_users_organization(role: Roles, 
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
 
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).await.into();
+    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+        .await
+        .into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -351,7 +355,9 @@ pub async fn details(role: Roles, should_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = cart.id;
 
-    let response: HttpResponse = orders::details((database.connection.clone(), path, auth_user)).await.into();
+    let response: HttpResponse = orders::details((database.connection.clone(), path, auth_user))
+        .await
+        .into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);

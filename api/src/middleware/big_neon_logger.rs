@@ -1,8 +1,8 @@
 use crate::extractors::Uuid;
+use actix_web::dev::{MessageBody, ServiceRequest, ServiceResponse};
 use actix_web::error;
 use actix_web::http::header;
 use actix_web::http::StatusCode;
-use actix_web::dev::{ServiceRequest, ServiceResponse, MessageBody};
 use log::Level;
 
 pub struct BigNeonLogger;
@@ -29,7 +29,10 @@ impl BigNeonLogger {
     }
 
     // log message at the end of request lifecycle
-    pub fn finish<B: MessageBody>(data: &RequestLogData, resp: error::Result<ServiceResponse<B>>) -> error::Result<ServiceResponse<B>> {
+    pub fn finish<B: MessageBody>(
+        data: &RequestLogData,
+        resp: error::Result<ServiceResponse<B>>,
+    ) -> error::Result<ServiceResponse<B>> {
         let error = match resp {
             Err(ref error) => Some(error),
             Ok(ref resp) => resp.response().error(),
@@ -76,6 +79,12 @@ impl RequestLogData {
         } else {
             None
         };
-        Self { user, ip_address, method, user_agent, uri }
+        Self {
+            user,
+            ip_address,
+            method,
+            user_agent,
+            uri,
+        }
     }
 }

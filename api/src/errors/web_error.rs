@@ -47,8 +47,7 @@ fn not_found() -> HttpResponse {
 }
 
 fn status_code_and_message(code: StatusCode, message: &str) -> HttpResponse {
-    HttpResponse::build(code)
-        .json(json!({"error": message.to_string()}))
+    HttpResponse::build(code).json(json!({"error": message.to_string()}))
 }
 
 impl ConvertToWebError for dyn Error {
@@ -159,8 +158,7 @@ impl ConvertToWebError for PaymentProcessorError {
                 }],
             );
 
-            HttpResponse::UnprocessableEntity()
-                .json(json!({"error": "Validation error", "fields": fields}))
+            HttpResponse::UnprocessableEntity().json(json!({"error": "Validation error", "fields": fields}))
         } else {
             error!("Payment Processor error: {}", self);
             internal_error("Internal error")
@@ -262,8 +260,7 @@ impl ConvertToWebError for DatabaseError {
             7200 => match &self.error_code {
                 ValidationError { errors } => HttpResponse::UnprocessableEntity()
                     .json(json!({"error": "Validation error".to_string(), "fields": errors})),
-                _ => HttpResponse::UnprocessableEntity()
-                    .json(json!({"error": "Validation error".to_string()})),
+                _ => HttpResponse::UnprocessableEntity().json(json!({"error": "Validation error".to_string()})),
             },
             7300 => internal_error("Internal error"),
             _ => internal_error("Unknown error"),

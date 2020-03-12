@@ -1,7 +1,7 @@
 use crate::models::*;
 use actix_web::error::*;
-use actix_web::{FromRequest, HttpRequest, dev::Payload};
-use futures::future::{Ready, ok};
+use actix_web::{dev::Payload, FromRequest, HttpRequest};
+use futures::future::{ok, Ready};
 
 impl FromRequest for RequestInfo {
     type Config = ();

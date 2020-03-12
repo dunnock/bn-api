@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse};
+use actix_web::{http::StatusCode, FromRequest, HttpResponse};
 use bigneon_api::auth::TokenResponse;
 use bigneon_api::controllers::users;
 use bigneon_api::extractors::*;
@@ -397,7 +397,9 @@ async fn register_address_exists() {
         None,
     ));
 
-    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).await.into();
+    let response: HttpResponse = users::register((request.request, database.connection.into(), json))
+        .await
+        .into();
 
     if response.status() == StatusCode::OK {
         panic!("Duplicate email was allowed when it should not be")
@@ -417,7 +419,9 @@ async fn register_succeeds_without_name() {
         captcha_response: None,
     });
 
-    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).await.into();
+    let response: HttpResponse = users::register((request.request, database.connection.into(), json))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::CREATED);
 }
 
@@ -434,7 +438,9 @@ async fn register_succeeds() {
         None,
     ));
 
-    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).await.into();
+    let response: HttpResponse = users::register((request.request, database.connection.into(), json))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::CREATED);
 }
 
@@ -457,7 +463,8 @@ async fn register_succeeds_with_login() {
         json,
         RequestInfo { user_agent: None },
     ))
-    .await.into();
+    .await
+    .into();
     assert_eq!(response.status(), StatusCode::CREATED);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let token_response: TokenResponse = serde_json::from_str(&body).unwrap();
@@ -478,7 +485,9 @@ async fn register_with_validation_errors() {
         None,
     ));
 
-    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).await.into();
+    let response: HttpResponse = users::register((request.request, database.connection.into(), json))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -518,7 +527,9 @@ async fn current_user_organization_owner() {
     let organization = database.create_organization().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::OrgOwner, Some(&organization), &database);
 
-    let current_user = users::current_user((database.connection.clone().into(), auth_user)).await.unwrap();
+    let current_user = users::current_user((database.connection.clone().into(), auth_user))
+        .await
+        .unwrap();
     let user = current_user.user;
     assert_eq!(user.id, user.id);
     let mut expected_results = HashMap::new();
@@ -599,7 +610,9 @@ async fn current_user_organization_member() {
     let organization = database.create_organization().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::OrgMember, Some(&organization), &database);
 
-    let current_user = users::current_user((database.connection.clone().into(), auth_user)).await.unwrap();
+    let current_user = users::current_user((database.connection.clone().into(), auth_user))
+        .await
+        .unwrap();
     let user = current_user.user;
     assert_eq!(user.id, user.id);
     assert_eq!(
@@ -681,7 +694,9 @@ pub async fn update_current_user() {
     attributes.email = Some(email.to_string());
     let json = Json(attributes);
 
-    let updated_user = users::update_current_user((database.connection.into(), json, user)).await.unwrap();
+    let updated_user = users::update_current_user((database.connection.into(), json, user))
+        .await
+        .unwrap();
     assert_eq!(updated_user.user.email, Some(email.into()));
 }
 
@@ -694,7 +709,8 @@ pub async fn update_current_user_with_validation_errors() {
     let json = Json(attributes);
 
     let result: Result<HttpResponse, BigNeonError> =
-        Err(users::update_current_user((database.connection.into(), json, user)).await
+        Err(users::update_current_user((database.connection.into(), json, user))
+            .await
             .err()
             .unwrap());
 
@@ -717,7 +733,8 @@ async fn update_current_user_address_exists() {
     let json = Json(attributes);
 
     let result: Result<HttpResponse, BigNeonError> =
-        Err(users::update_current_user((database.connection.into(), json, user)).await
+        Err(users::update_current_user((database.connection.into(), json, user))
+            .await
             .err()
             .unwrap());
     let response: HttpResponse = result.into();

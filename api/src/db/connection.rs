@@ -1,13 +1,13 @@
 use crate::db::*;
 use crate::errors::BigNeonError;
 use crate::server::GetAppState;
-use actix_web::{FromRequest, HttpRequest, Result, dev::Payload};
+use actix_web::{dev::Payload, FromRequest, HttpRequest, Result};
 use diesel;
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
 use diesel::PgConnection;
+use futures::future::{err, ok, Ready};
 use std::sync::Arc;
-use futures::future::{Ready, ok, err};
 
 pub struct Connection {
     pub inner: Arc<ConnectionType>,
@@ -75,9 +75,10 @@ impl FromRequest for Connection {
             let connection_object = connection.get();
             if let Err(e) = connection_object
                 .transaction_manager()
-                .begin_transaction(connection_object) {
-                    return err(e.into());
-                }
+                .begin_transaction(connection_object)
+            {
+                return err(e.into());
+            }
         }
 
         request.extensions_mut().insert(connection.clone());

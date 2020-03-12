@@ -78,11 +78,7 @@ impl SGContactList {
         Self { name }
     }
 
-    pub async fn get_async(
-        &self,
-        api_key: &str,
-        id: String,
-    ) -> Result<SGContactListResponse, BigNeonError> {
+    pub async fn get_async(&self, api_key: &str, id: String) -> Result<SGContactListResponse, BigNeonError> {
         reqwest::Client::new()
             .get(Self::api_url(Some(id)).as_str())
             .header("Authorization", format!("Bearer {}", api_key))
@@ -126,7 +122,7 @@ impl SGContactList {
                         } else {
                             Err(BigNeonError::new(Box::new(err)))
                         }
-                    },
+                    }
                     _ => Err(BigNeonError::new(Box::new(err))),
                 }
             })

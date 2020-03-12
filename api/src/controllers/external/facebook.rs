@@ -6,7 +6,7 @@ use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::FacebookWebLoginToken;
 use crate::server::AppState;
-use actix_web::{HttpResponse, web::Data};
+use actix_web::{web::Data, HttpResponse};
 use bigneon_db::prelude::*;
 use bigneon_db::validators::{append_validation_error, create_validation_error};
 use facebook::error::FacebookError;
@@ -30,12 +30,7 @@ struct FacebookGraphResponse {
 
 // TODO: Not covered by tests
 pub async fn web_login(
-    (state, connection, auth_token, auth_user): (
-        Data<AppState>,
-        Connection,
-        Json<FacebookWebLoginToken>,
-        OptionalUser,
-    ),
+    (state, connection, auth_token, auth_user): (Data<AppState>, Connection, Json<FacebookWebLoginToken>, OptionalUser),
 ) -> Result<HttpResponse, BigNeonError> {
     let url = format!("{}/me?fields=id,email,first_name,last_name", FACEBOOK_GRAPH_URL);
     let connection = connection.get();

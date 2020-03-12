@@ -6,7 +6,10 @@ use crate::helpers::application;
 use crate::models::{AdminDisplayTicketType, EventTicketPathParameters, PathParameters};
 use crate::server::AppState;
 use crate::utils::serializers::default_as_true;
-use actix_web::{HttpResponse, web::{Path, Query, Data}};
+use actix_web::{
+    web::{Data, Path, Query},
+    HttpResponse,
+};
 use bigneon_db::dev::times;
 use bigneon_db::models::*;
 use chrono::prelude::*;

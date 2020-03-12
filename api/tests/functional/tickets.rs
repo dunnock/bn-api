@@ -1,4 +1,8 @@
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use chrono::prelude::*;
 use serde_json;
 use uuid::Uuid;
@@ -109,10 +113,14 @@ pub async fn index() {
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
 
     // Test with specified event
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = Some(event.id);
     let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
-    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).await.unwrap();
+    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone()))
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_data: Payload<DisplayTicket> = serde_json::from_str(&body).unwrap();
@@ -134,10 +142,14 @@ pub async fn index() {
     };
     assert_eq!(vec![expected_ticket.clone()], found_data.data);
     // Test without specified event
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = None;
     let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
-    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).await.unwrap();
+    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone()))
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_data: Payload<(DisplayEvent, Vec<DisplayTicket>)> = serde_json::from_str(&body).unwrap();
@@ -170,11 +182,15 @@ pub async fn index() {
     );
 
     // Tickets include live event
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = None;
     let mut parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     parameters.start_utc = Some(NaiveDate::from_ymd(2016, 7, 8).and_hms(9, 11, 11));
-    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).await.unwrap();
+    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone()))
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_data: Payload<(DisplayEvent, Vec<DisplayTicket>)> = serde_json::from_str(&body).unwrap();
@@ -191,11 +207,15 @@ pub async fn index() {
     );
 
     // Test with search parameter
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = None;
     let mut parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     parameters.start_utc = Some(NaiveDate::from_ymd(2017, 7, 8).and_hms(9, 0, 11));
-    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user)).await.unwrap();
+    let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user))
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_data: Payload<(DisplayEvent, Vec<DisplayTicket>)> = serde_json::from_str(&body).unwrap();
@@ -250,7 +270,9 @@ pub async fn show() {
     let mut path = Path::<PathParameters>::extract(&request.request).await.unwrap();
     let ticket = TicketInstance::find_for_user(user.id, conn).unwrap().remove(0);
     path.id = ticket.id;
-    let response = tickets::show((database.connection.clone().into(), path, auth_user)).await.unwrap();
+    let response = tickets::show((database.connection.clone().into(), path, auth_user))
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let ticket_response: ShowTicketResponse = serde_json::from_str(&body).unwrap();
@@ -484,7 +506,8 @@ async fn ticket_transfer_authorization() {
         database.connection.clone().into(),
         Json(ticket_transfer_request.clone()),
         auth_user.clone(),
-    )).await;
+    ))
+    .await;
 
     assert!(response.is_err());
 
@@ -504,7 +527,8 @@ async fn ticket_transfer_authorization() {
         Json(ticket_transfer_request.clone()),
         auth_user.clone(),
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -518,7 +542,8 @@ async fn ticket_transfer_authorization() {
         database.connection.clone().into(),
         Json(ticket_transfer_request),
         auth_user.clone(),
-    ));
+    ))
+    .await;
 
     assert!(response.is_err());
 }
@@ -547,7 +572,8 @@ async fn send_to_existing_user() {
         auth_sender.clone(),
         request.extract_state().await,
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let sender_tickets = TicketInstance::find_for_user(sender.id, conn).unwrap();
@@ -582,7 +608,8 @@ async fn send_to_new_user() {
         auth_sender.clone(),
         request.extract_state().await,
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let sender_tickets = TicketInstance::find_for_user(sender.id, conn).unwrap();
@@ -660,7 +687,8 @@ async fn receive_ticket_transfer() {
         auth_user2.clone(),
         request.extract_state().await,
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 }
@@ -724,7 +752,8 @@ async fn receive_ticket_transfer_fails_cancelled_transfer() {
         auth_user2.clone(),
         request.extract_state().await,
     ))
-    .await.into();
+    .await
+    .into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     let body = support::unwrap_body_to_string(&response).unwrap();

@@ -2,7 +2,11 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::artists;
 use bigneon_api::extractors::*;
 use bigneon_api::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest};
@@ -25,7 +29,9 @@ async fn index() {
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
-        artists::index((database.connection.clone().into(), query_parameters, OptionalUser(None))).await.into();
+        artists::index((database.connection.clone().into(), query_parameters, OptionalUser(None)))
+            .await
+            .into();
 
     let wrapped_expected_artists = Payload {
         data: expected_artists,
@@ -69,7 +75,9 @@ async fn index_with_org_linked_and_private_venues() {
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     //first try with no user
     let response: HttpResponse =
-        artists::index((database.connection.clone().into(), query_parameters, OptionalUser(None))).await.into();
+        artists::index((database.connection.clone().into(), query_parameters, OptionalUser(None)))
+            .await
+            .into();
 
     let mut expected_artists = vec![
         artist.for_display(connection).unwrap(),
@@ -172,7 +180,9 @@ pub async fn search_no_spotify() {
     let expected_artists = vec![artist.id];
     let test_request = TestRequest::create_with_uri(&format!("/?q=Artist&spotify=1"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
-    let response = artists::search((database.connection.into(), query_parameters, OptionalUser(None))).await.unwrap();
+    let response = artists::search((database.connection.into(), query_parameters, OptionalUser(None)))
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
     let collected_ids = response
@@ -192,7 +202,9 @@ pub async fn search_with_spotify() {
 
     let test_request = TestRequest::create_with_uri(&format!("/?q=Powerwolf&spotify=1"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
-    let response = artists::search((database.connection.into(), query_parameters, OptionalUser(None))).await.unwrap();
+    let response = artists::search((database.connection.into(), query_parameters, OptionalUser(None)))
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -583,7 +595,9 @@ pub async fn update_with_validation_errors() {
     attributes.youtube_video_urls = Some(vec!["invalid".to_string()]);
     let json = Json(attributes);
 
-    let response: HttpResponse = artists::update((database.connection.into(), path, json, user)).await.into();
+    let response: HttpResponse = artists::update((database.connection.into(), path, json, user))
+        .await
+        .into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());

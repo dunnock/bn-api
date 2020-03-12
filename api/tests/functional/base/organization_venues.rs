@@ -2,7 +2,11 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use crate::support::unwrap_body_to_string;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::organization_venues;
 use bigneon_api::extractors::*;
 use bigneon_api::models::*;
@@ -25,7 +29,9 @@ pub async fn show(role: Roles, should_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization_venue.id;
 
-    let response: HttpResponse = organization_venues::show((database.connection.clone(), path, auth_user)).await.into();
+    let response: HttpResponse = organization_venues::show((database.connection.clone(), path, auth_user))
+        .await
+        .into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -51,8 +57,9 @@ pub async fn create(role: Roles, should_test_succeed: bool) {
         venue_id: venue.id,
     });
 
-    let response: HttpResponse =
-        organization_venues::create((database.connection.into(), json, auth_user.clone())).await.into();
+    let response: HttpResponse = organization_venues::create((database.connection.into(), json, auth_user.clone()))
+        .await
+        .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {
@@ -86,18 +93,18 @@ pub async fn destroy(role: Roles, with_number_of_extra_venues: i64, should_succe
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization_venue.id;
 
-    let response: HttpResponse =
-        organization_venues::destroy((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = organization_venues::destroy((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
 
     if should_succeed && with_number_of_extra_venues > 0 {
         assert_eq!(response.status(), StatusCode::OK);
         let organization_venue = OrganizationVenue::find(organization_venue.id, connection);
         assert!(organization_venue.is_err());
     } else if should_succeed {
-        let expected_json = HttpResponse::UnprocessableEntity()
-            .json(json!({
-                "error": "Unable to remove organization venue link, at least one organization must be associated with venue"
-            }));
+        let expected_json = HttpResponse::UnprocessableEntity().json(json!({
+            "error": "Unable to remove organization venue link, at least one organization must be associated with venue"
+        }));
         let expected_text = unwrap_body_to_string(&expected_json).unwrap();
         let body = unwrap_body_to_string(&response).unwrap();
         assert_eq!(body, expected_text);
@@ -146,7 +153,8 @@ pub async fn organizations_index(role: Roles, should_test_succeed: bool) {
         path,
         query_parameters,
         auth_user,
-    )).await;
+    ))
+    .await;
 
     let wrapped_expected_organization_venues = Payload {
         data: vec![
@@ -223,7 +231,8 @@ pub async fn venues_index(role: Roles, should_test_succeed: bool) {
     path.id = venue2.id;
 
     let response =
-        organization_venues::venues_index((database.connection.clone().into(), path, query_parameters, auth_user)).await;
+        organization_venues::venues_index((database.connection.clone().into(), path, query_parameters, auth_user))
+            .await;
 
     let wrapped_expected_organization_venues = Payload {
         data: vec![

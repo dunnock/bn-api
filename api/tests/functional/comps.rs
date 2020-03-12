@@ -3,7 +3,7 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::error::ResponseError;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
+use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
 use bigneon_api::controllers::comps::{self, NewCompRequest};
 use bigneon_api::controllers::holds::UpdateHoldRequest;
 use bigneon_api::extractors::*;
@@ -273,7 +273,9 @@ async fn update_with_validation_errors() {
         ..Default::default()
     });
 
-    let response: HttpResponse = comps::update((database.connection.clone(), json, path, auth_user)).await.into();
+    let response: HttpResponse = comps::update((database.connection.clone(), json, path, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 

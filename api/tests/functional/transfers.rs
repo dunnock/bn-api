@@ -2,7 +2,11 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::transfers::{self, *};
 use bigneon_api::errors::BigNeonError;
 use bigneon_api::models::*;
@@ -244,13 +248,16 @@ pub async fn activity() {
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, Some(&organization), &database);
     let test_request = TestRequest::create_with_uri("/transfers/activity?past_or_upcoming=Upcoming");
     let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
-    let filter_parameters = Query::<PastOrUpcomingParameters>::extract(&test_request.request).await.unwrap();
+    let filter_parameters = Query::<PastOrUpcomingParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     let response: Result<WebPayload<UserTransferActivitySummary>, BigNeonError> = transfers::activity((
         database.connection.clone().into(),
         paging_parameters,
         filter_parameters,
         auth_user.clone(),
-    )).await;
+    ))
+    .await;
 
     let response = response.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -314,7 +321,9 @@ pub async fn show_by_transfer_key() {
     let test_request = TestRequest::create();
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = transfer.transfer_key;
-    let response: HttpResponse = transfers::show_by_transfer_key((database.connection.clone().into(), path)).await.into();
+    let response: HttpResponse = transfers::show_by_transfer_key((database.connection.clone().into(), path))
+        .await
+        .into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
@@ -384,7 +393,9 @@ async fn index() {
     let test_request = TestRequest::create_with_uri("/transfers?source_or_destination=source");
     let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let filter_parameters = Query::<TransferFilters>::extract(&test_request.request).await.unwrap();
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = None;
     let response: Result<WebPayload<DisplayTransfer>, BigNeonError> = transfers::index((
         database.connection.clone().into(),
@@ -392,7 +403,8 @@ async fn index() {
         filter_parameters,
         path,
         auth_user.clone(),
-    )).await;
+    ))
+    .await;
 
     let response = response.unwrap();
     let mut expected_tags: HashMap<String, Value> = HashMap::new();
@@ -434,7 +446,9 @@ async fn index() {
     let test_request = TestRequest::create_with_uri("/transfers?source_or_destination=destination");
     let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let filter_parameters = Query::<TransferFilters>::extract(&test_request.request).await.unwrap();
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = None;
     let response: Result<WebPayload<DisplayTransfer>, BigNeonError> = transfers::index((
         database.connection.clone().into(),
@@ -442,7 +456,8 @@ async fn index() {
         filter_parameters,
         path,
         auth_user,
-    )).await;
+    ))
+    .await;
 
     let response = response.unwrap();
     let mut expected_tags: HashMap<String, Value> = HashMap::new();

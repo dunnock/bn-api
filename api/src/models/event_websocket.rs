@@ -2,12 +2,12 @@
 
 use crate::models::*;
 use actix::prelude::*;
-use actix_web_actors::ws;
 use actix_http::ws::Item;
+use actix_web_actors::ws;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use uuid::Uuid;
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
@@ -87,8 +87,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EventWebSocket {
             Ok(ws::Message::Binary(bin)) => context.binary(bin),
             Ok(ws::Message::Close(_)) => {
                 self.close(context);
-            },
-            Ok(ws::Message::Nop) => {},
+            }
+            Ok(ws::Message::Nop) => {}
             // probably continuation text should be recognized too
             Ok(ws::Message::Continuation(Item::FirstText(bin))) => context.binary(bin),
             Ok(ws::Message::Continuation(Item::FirstBinary(bin))) => context.binary(bin),

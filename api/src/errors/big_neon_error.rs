@@ -2,7 +2,8 @@ use crate::errors::AuthError;
 use crate::errors::*;
 use crate::jwt::errors::Error as JwtError;
 use crate::payments::PaymentProcessorError;
-use actix_web::{HttpResponse, error::ResponseError};
+use actix_web::http::header::ToStrError;
+use actix_web::{error::ResponseError, HttpResponse};
 use bigneon_db::utils::errors::*;
 use branch_rs::BranchError;
 use chrono;
@@ -12,7 +13,6 @@ use facebook::prelude::FacebookError;
 use globee::GlobeeError;
 use redis::RedisError;
 use reqwest;
-use actix_web::http::header::ToStrError;
 use serde_json::Error as SerdeError;
 use std::error::Error;
 use std::fmt;
@@ -90,16 +90,14 @@ impl BigNeonError {
 impl ConvertToWebError for sitemap::Error {
     fn to_response(&self) -> HttpResponse {
         error!("Sitemap generator error: {}", self);
-        HttpResponse::InternalServerError()
-            .json(json!({"error": self.to_string()}))
+        HttpResponse::InternalServerError().json(json!({"error": self.to_string()}))
     }
 }
 
 impl ConvertToWebError for std::io::Error {
     fn to_response(&self) -> HttpResponse {
         error!("IO Error: {}", self);
-        HttpResponse::InternalServerError()
-            .json(json!({"error": self.to_string()}))
+        HttpResponse::InternalServerError().json(json!({"error": self.to_string()}))
     }
 }
 
@@ -112,7 +110,6 @@ impl From<TwilioError> for BigNeonError {
 impl ConvertToWebError for TwilioError {
     fn to_response(&self) -> HttpResponse {
         error!("Twilio error: {}", self);
-        HttpResponse::InternalServerError()
-            .json(json!({"error": self.to_string()}))
+        HttpResponse::InternalServerError().json(json!({"error": self.to_string()}))
     }
 }

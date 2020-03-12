@@ -2,7 +2,7 @@ use crate::db::Connection;
 use crate::errors::BigNeonError;
 use crate::server::AppState;
 use crate::utils::gen_sitemap;
-use actix_web::{HttpResponse, web::Data};
+use actix_web::{web::Data, HttpResponse};
 
 pub async fn index((connection, state): (Connection, Data<AppState>)) -> Result<HttpResponse, BigNeonError> {
     let conn = connection.get();

@@ -39,25 +39,34 @@ pub async fn send_async(
         CommunicationType::EmailTemplate => {
             send_email_template(domain_action, &config, conn, communication, &destination_addresses).await
         }
-        CommunicationType::Sms => twilio::send_sms_async(
-            &config.twilio_account_id,
-            &config.twilio_api_key,
-            communication.source.as_ref().unwrap().get_first().unwrap(),
-            destination_addresses,
-            &communication.body.unwrap_or(communication.title),
-        ).await,
-        CommunicationType::Push => expo::send_push_notification_async(
-            &destination_addresses,
-            &communication.body.unwrap_or(communication.title),
-            communication.extra_data.map(|ed| json!(ed.clone())),
-        ).await,
-        CommunicationType::Webhook => webhook::send_webhook_async(
-            &destination_addresses,
-            &communication.body.unwrap_or(communication.title),
-            domain_action.main_table_id,
-            conn,
-            &config,
-        ).await,
+        CommunicationType::Sms => {
+            twilio::send_sms_async(
+                &config.twilio_account_id,
+                &config.twilio_api_key,
+                communication.source.as_ref().unwrap().get_first().unwrap(),
+                destination_addresses,
+                &communication.body.unwrap_or(communication.title),
+            )
+            .await
+        }
+        CommunicationType::Push => {
+            expo::send_push_notification_async(
+                &destination_addresses,
+                &communication.body.unwrap_or(communication.title),
+                communication.extra_data.map(|ed| json!(ed.clone())),
+            )
+            .await
+        }
+        CommunicationType::Webhook => {
+            webhook::send_webhook_async(
+                &destination_addresses,
+                &communication.body.unwrap_or(communication.title),
+                domain_action.main_table_id,
+                conn,
+                &config,
+            )
+            .await
+        }
     }
 }
 
@@ -69,10 +78,10 @@ async fn send_email_template(
     destination_addresses: &Vec<String>,
 ) -> Result<(), BigNeonError> {
     if communication.template_id.is_none() {
-        return Err(
-            ApplicationError::new("Template ID must be specified when communication type is EmailTemplate".to_string())
-                .into(),
-        );
+        return Err(ApplicationError::new(
+            "Template ID must be specified when communication type is EmailTemplate".to_string(),
+        )
+        .into());
     }
     let template_id = communication.template_id.as_ref().unwrap();
 
@@ -144,7 +153,8 @@ async fn send_email_template(
                 communication.template_data.as_ref().unwrap(),
                 communication.categories.clone(),
                 Some(sendgrid_extra_data),
-            ).await
+            )
+            .await
         } // Customer IO
     }
 }

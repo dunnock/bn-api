@@ -31,7 +31,9 @@ async fn create() {
     let json = Json(CreatePasswordResetParameters {
         email: email.to_string(),
     });
-    let response: HttpResponse = password_resets::create((state, database.connection.clone(), json)).await.into();
+    let response: HttpResponse = password_resets::create((state, database.connection.clone(), json))
+        .await
+        .into();
 
     assert_eq!(response.status(), StatusCode::CREATED);
     let body = support::unwrap_body_to_string(&response).unwrap();

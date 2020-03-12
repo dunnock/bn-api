@@ -6,7 +6,11 @@ use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest, WebPayload};
 use crate::utils::spotify;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::*;
 
 pub async fn search(

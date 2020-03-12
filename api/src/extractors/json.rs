@@ -3,12 +3,12 @@
 
 use actix_web::dev::JsonBody;
 use actix_web::error::{Error, InternalError, JsonPayloadError};
-use actix_web::{FromRequest, HttpRequest, HttpResponse, dev::Payload};
+use actix_web::{dev::Payload, FromRequest, HttpRequest, HttpResponse};
+use futures::future::TryFutureExt;
 use serde::de::DeserializeOwned;
+use std::future::Future;
 use std::ops::Deref;
 use std::pin::Pin;
-use std::future::Future;
-use futures::future::TryFutureExt;
 
 const LIMIT_DEFAULT: usize = 262_144; // 256Kb
 
@@ -42,11 +42,7 @@ where
         if let Some(cfg) = req.app_data::<JsonConfig>() {
             json_body = json_body.limit(cfg.limit);
         }
-        Box::pin(
-            json_body
-                .map_err(json_error)
-                .map_ok(Json),
-        )
+        Box::pin(json_body.map_err(json_error).map_ok(Json))
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
+use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
 use bigneon_api::controllers::tickets::{self, ShowTicketResponse};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -30,7 +30,9 @@ pub async fn show_other_user_ticket(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&request.request).await.unwrap();
     path.id = ticket.id;
 
-    let response: HttpResponse = tickets::show((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = tickets::show((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
         let body = support::unwrap_body_to_string(&response).unwrap();
@@ -94,7 +96,9 @@ pub async fn update(role: Roles, owns_ticket: bool, should_test_succeed: bool) {
         last_name_override: Some(Some("Last".to_string())),
     });
 
-    let response: HttpResponse = tickets::update((database.connection.clone().into(), path, json, auth_user)).await.into();
+    let response: HttpResponse = tickets::update((database.connection.clone().into(), path, json, auth_user))
+        .await
+        .into();
 
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -175,7 +179,9 @@ pub async fn show_redeemable_ticket(role: Roles, should_test_succeed: bool) {
     path.id = ticket.id;
 
     let response: HttpResponse =
-        tickets::show_redeemable_ticket((database.connection.clone().into(), path, auth_user.clone())).await.into();
+        tickets::show_redeemable_ticket((database.connection.clone().into(), path, auth_user.clone()))
+            .await
+            .into();
 
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();

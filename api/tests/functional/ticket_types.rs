@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
+use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
 use bigneon_api::controllers::ticket_types;
 use bigneon_api::controllers::ticket_types::*;
 use bigneon_api::extractors::*;
@@ -257,7 +257,9 @@ pub async fn create_with_validation_errors() {
         ..Default::default()
     };
     let response: HttpResponse =
-        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state)).await.into();
+        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state))
+            .await
+            .into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
@@ -311,7 +313,9 @@ pub async fn create_with_validation_errors_on_ticket_pricing() {
         ..Default::default()
     };
     let response: HttpResponse =
-        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state)).await.into();
+        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state))
+            .await
+            .into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
@@ -371,7 +375,9 @@ pub async fn create_with_overlapping_periods() {
         ..Default::default()
     };
     let response: HttpResponse =
-        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state)).await.into();
+        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state))
+            .await
+            .into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
@@ -437,7 +443,9 @@ pub async fn create_with_out_of_bounds_ticket_capacity() {
         ..Default::default()
     };
     let response: HttpResponse =
-        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state)).await.into();
+        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state))
+            .await
+            .into();
 
     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     assert!(response.error().is_some());
@@ -465,7 +473,9 @@ pub async fn update_with_invalid_id() {
 
     //Construct update request
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["event_id", "ticket_type_id"]);
-    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.event_id = event.id;
     path.ticket_type_id = created_ticket_type.id;
 
@@ -503,7 +513,8 @@ pub async fn update_with_invalid_id() {
         auth_user,
         request.extract_state().await,
     ))
-    .await.into();
+    .await
+    .into();
 
     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     assert!(response.error().is_some());
@@ -531,7 +542,9 @@ pub async fn update_with_validation_errors() {
 
     //Construct update request
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["event_id", "ticket_type_id"]);
-    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.event_id = event.id;
     path.ticket_type_id = created_ticket_type.id;
 
@@ -571,7 +584,8 @@ pub async fn update_with_validation_errors() {
         auth_user,
         request.extract_state().await,
     ))
-    .await.into();
+    .await
+    .into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
@@ -607,7 +621,9 @@ pub async fn update_with_validation_errors_on_ticket_pricing() {
 
     //Construct update request
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["event_id", "ticket_type_id"]);
-    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.event_id = event.id;
     path.ticket_type_id = created_ticket_type.id;
 
@@ -647,7 +663,8 @@ pub async fn update_with_validation_errors_on_ticket_pricing() {
         auth_user,
         request.extract_state().await,
     ))
-    .await.into();
+    .await
+    .into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
@@ -683,7 +700,9 @@ pub async fn update_with_overlapping_periods() {
 
     //Construct update request
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["event_id", "ticket_type_id"]);
-    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.event_id = event.id;
     path.ticket_type_id = created_ticket_type.id;
 
@@ -732,7 +751,8 @@ pub async fn update_with_overlapping_periods() {
         auth_user,
         request.extract_state().await,
     ))
-    .await.into();
+    .await
+    .into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
@@ -811,13 +831,16 @@ pub async fn cancel_with_sold_tickets_and_hold() {
     //Construct update request
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["event_id", "ticket_type_id"]);
     let state = test_request.extract_state().await;
-    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.event_id = event.id;
     path.ticket_type_id = created_ticket_type.id;
 
     //Send update request
-    let response: HttpResponse =
-        ticket_types::cancel((database.connection.clone().into(), path, auth_user, state)).await.into();
+    let response: HttpResponse = ticket_types::cancel((database.connection.clone().into(), path, auth_user, state))
+        .await
+        .into();
 
     let updated_ticket_type = &event.ticket_types(true, None, conn).unwrap()[0];
 
@@ -854,13 +877,16 @@ pub async fn cancel_with_no_sold_tickets_or_hold() {
     //Construct update request
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["event_id", "ticket_type_id"]);
     let state = test_request.extract_state().await;
-    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.event_id = event.id;
     path.ticket_type_id = created_ticket_type.id;
 
     //Send update request
-    let response: HttpResponse =
-        ticket_types::cancel((database.connection.clone().into(), path, auth_user, state)).await.into();
+    let response: HttpResponse = ticket_types::cancel((database.connection.clone().into(), path, auth_user, state))
+        .await
+        .into();
 
     let updated_ticket_types = &event.ticket_types(true, None, conn).unwrap();
 

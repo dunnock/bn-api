@@ -1,8 +1,8 @@
 use crate::errors::BigNeonError;
 use crate::server::GetAppState;
-use actix_web::{FromRequest, HttpRequest, Result, dev::Payload};
+use actix_web::{dev::Payload, FromRequest, HttpRequest, Result};
 use cache::RedisCacheConnection;
-use futures::future::{Ready, ok};
+use futures::future::{ok, Ready};
 
 #[derive(Debug, Clone)]
 pub struct CacheDatabase {

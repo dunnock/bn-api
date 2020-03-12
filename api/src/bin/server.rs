@@ -89,6 +89,7 @@ async fn main() {
             .unwrap_or("false")
             .parse()
             .expect("Unknown value for `run-til-empty`. Use `true` or `false`"),
-    ).await;
+    )
+    .await;
     info!("Server shutting down");
 }

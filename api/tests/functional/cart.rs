@@ -2,7 +2,11 @@ use crate::functional::base;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use crate::support::{self, *};
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers;
 use bigneon_api::controllers::cart;
 use bigneon_api::controllers::cart::*;
@@ -107,7 +111,9 @@ async fn duplicate() {
     let test_request = TestRequest::create();
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
-    let response = cart::duplicate((database.connection.clone().into(), path, auth_user)).await.unwrap();
+    let response = cart::duplicate((database.connection.clone().into(), path, auth_user))
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Cart now matches old order for items
@@ -180,13 +186,14 @@ async fn duplicate_fails_no_longer_available() {
     let test_request = TestRequest::create();
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
-    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
-    let expected_json = HttpResponse::UnprocessableEntity()
-        .json(json!({
-            "error": "Order is invalid for duplication"
-        }));
+    let expected_json = HttpResponse::UnprocessableEntity().json(json!({
+        "error": "Order is invalid for duplication"
+    }));
     let expected_text = unwrap_body_to_string(&expected_json).unwrap();
     let body = unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, expected_text);
@@ -232,7 +239,9 @@ async fn duplicate_fails_for_unowned_order() {
     let test_request = TestRequest::create();
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
-    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 
     let expected_json = HttpResponse::Forbidden().json(json!({
@@ -315,7 +324,9 @@ async fn destroy() {
     let items = cart.items(&connection).unwrap();
     assert!(items.len() > 0);
 
-    let response = cart::destroy((database.connection.clone().into(), auth_user)).await.unwrap();
+    let response = cart::destroy((database.connection.clone().into(), auth_user))
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Cart is cleared
@@ -332,7 +343,9 @@ async fn destroy_without_existing_cart() {
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
 
-    let response = cart::destroy((database.connection.clone().into(), auth_user)).await.unwrap();
+    let response = cart::destroy((database.connection.clone().into(), auth_user))
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Cart is cleared
@@ -368,7 +381,8 @@ async fn update() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let cart = Order::find_cart_for_user(user.id, &connection).unwrap().unwrap();
@@ -415,7 +429,8 @@ async fn update_with_draft_event() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
@@ -457,7 +472,8 @@ async fn update_multiple() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let cart = Order::find_cart_for_user(user.id, connection).unwrap().unwrap();
     let cart_items = cart
@@ -519,7 +535,8 @@ async fn add_with_increment() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let cart = Order::find_cart_for_user(user.id, connection).unwrap().unwrap();
@@ -567,7 +584,8 @@ async fn update_with_increment_failure_invalid_quantity() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.into();
+    .await
+    .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
     let validation_response = support::validation_response_from_response(&response).unwrap();
@@ -606,7 +624,8 @@ async fn update_with_existing_cart() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let items = cart.items(connection).unwrap();
     let order_item = items.iter().find(|i| i.ticket_type_id == Some(ticket_type_id)).unwrap();
@@ -667,7 +686,8 @@ async fn reduce() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Contains additional item quantity so cart response still includes cart object
@@ -732,7 +752,8 @@ async fn remove() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Contains additional item quantity so cart response still includes cart object
@@ -799,7 +820,8 @@ async fn remove_with_increment() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Contains additional item quantity so cart response still includes cart object
@@ -869,7 +891,8 @@ async fn remove_with_increment_failure_invalid_quantity() {
         auth_user,
         RequestInfo { user_agent: None },
     ))
-    .await.into();
+    .await
+    .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     let validation_response = support::validation_response_from_response(&response).unwrap();
     let quantity = validation_response.fields.get("quantity").unwrap();
@@ -914,7 +937,8 @@ async fn checkout_external() {
         request.extract_state().await,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Reload order
@@ -968,7 +992,8 @@ async fn checkout_external_with_free_cart() {
         request.extract_state().await,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Reload order
@@ -1018,13 +1043,13 @@ async fn checkout_paid_fails_with_free_cart() {
         request.extract_state().await,
         RequestInfo { user_agent: None },
     ))
-    .await.into();
+    .await
+    .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
-    let expected_json = HttpResponse::UnprocessableEntity()
-        .json(json!({
-            "error": "Could not complete this cart; only paid orders require payment processing"
-        }));
+    let expected_json = HttpResponse::UnprocessableEntity().json(json!({
+        "error": "Could not complete this cart; only paid orders require payment processing"
+    }));
     let expected_text = unwrap_body_to_string(&expected_json).unwrap();
     let body = unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, expected_text);
@@ -1064,7 +1089,8 @@ async fn checkout_free() {
         request.extract_state().await,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Reload order
@@ -1104,13 +1130,13 @@ async fn checkout_free_for_paid_items() {
         request.extract_state().await,
         RequestInfo { user_agent: None },
     ))
-    .await.into();
+    .await
+    .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
-    let expected_json = HttpResponse::UnprocessableEntity()
-        .json(json!({
-            "error": "Could not use free payment method this cart because it has a total greater than zero"
-        }));
+    let expected_json = HttpResponse::UnprocessableEntity().json(json!({
+        "error": "Could not use free payment method this cart because it has a total greater than zero"
+    }));
     let expected_text = unwrap_body_to_string(&expected_json).unwrap();
     let body = unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, expected_text);
@@ -1157,7 +1183,9 @@ async fn clear_invalid_items() {
     // Not currently valid
     assert!(!cart.items_valid_for_purchase(connection).unwrap());
 
-    let response: HttpResponse = cart::clear_invalid_items((database.connection.clone().into(), user)).await.into();
+    let response: HttpResponse = cart::clear_invalid_items((database.connection.clone().into(), user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Cart no longer contains invalid items
@@ -1220,13 +1248,13 @@ async fn checkout_fails_for_invalid_items() {
         request.extract_state().await,
         RequestInfo { user_agent: None },
     ))
-    .await.into();
+    .await
+    .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
-    let expected_json = HttpResponse::UnprocessableEntity()
-        .json(json!({
-            "error": "Could not complete this checkout because it contains invalid order items"
-        }));
+    let expected_json = HttpResponse::UnprocessableEntity().json(json!({
+        "error": "Could not complete this checkout because it contains invalid order items"
+    }));
     let expected_text = unwrap_body_to_string(&expected_json).unwrap();
     let body = unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, expected_text);
@@ -1263,7 +1291,8 @@ async fn checkout_provider_globee() {
         request.extract_state().await,
         RequestInfo { user_agent: None },
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = unwrap_body_to_string(&response).unwrap();
@@ -1279,8 +1308,12 @@ async fn checkout_provider_globee() {
         order.id
     );
     let request = TestRequest::create_with_uri_custom_params(&url, vec!["nonce", "id"]);
-    let query = Query::<controllers::payments::QueryParams>::extract(&request.request).await.unwrap();
-    let mut path = Path::<controllers::payments::PathParams>::extract(&request.request).await.unwrap();
+    let query = Query::<controllers::payments::QueryParams>::extract(&request.request)
+        .await
+        .unwrap();
+    let mut path = Path::<controllers::payments::PathParams>::extract(&request.request)
+        .await
+        .unwrap();
     path.nonce = db_payment.url_nonce.clone().unwrap();
     path.id = order.id;
 
@@ -1291,7 +1324,8 @@ async fn checkout_provider_globee() {
         request.extract_state().await,
         OptionalUser(Some(user)),
     ))
-    .await.unwrap();
+    .await
+    .unwrap();
 
     assert_eq!(response.status(), StatusCode::FOUND);
 
@@ -1328,7 +1362,9 @@ async fn checkout_provider_globee() {
         created_at: None,
     };
 
-    let response = controllers::ipns::globee((Json(ipn), database.connection.clone().into())).await.unwrap();
+    let response = controllers::ipns::globee((Json(ipn), database.connection.clone().into()))
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 

@@ -1,7 +1,11 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::organization_invites::{self, *};
 use bigneon_api::extractors::*;
 use bigneon_api::models::*;
@@ -30,7 +34,9 @@ pub async fn create(role: Roles, should_test_succeed: bool) {
     path.id = organization.id;
 
     let response: HttpResponse =
-        organization_invites::create((state, database.connection.into(), json, path, auth_user.clone())).await.into();
+        organization_invites::create((state, database.connection.into(), json, path, auth_user.clone()))
+            .await
+            .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {
@@ -61,7 +67,9 @@ pub async fn create_for_new_user(role: Roles, should_test_succeed: bool) {
     path.id = organization.id;
 
     let response: HttpResponse =
-        organization_invites::create((state, database.connection.into(), json, path, auth_user)).await.into();
+        organization_invites::create((state, database.connection.into(), json, path, auth_user))
+            .await
+            .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {
@@ -88,12 +96,15 @@ pub async fn destroy(role: Roles, should_succeed: bool) {
         .finish();
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id", "invite_id"]);
-    let mut path = Path::<OrganizationInvitePathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OrganizationInvitePathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = organization.id;
     path.invite_id = invite.id;
 
-    let response: HttpResponse =
-        organization_invites::destroy((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = organization_invites::destroy((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -147,7 +158,8 @@ pub async fn index(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
-    let response = organization_invites::index((database.connection.clone().into(), path, query_parameters, auth_user)).await;
+    let response =
+        organization_invites::index((database.connection.clone().into(), path, query_parameters, auth_user)).await;
 
     let wrapped_expected_invites = Payload {
         data: vec![DisplayInvite {
@@ -202,11 +214,14 @@ pub async fn accept_invite_status_of_invite(role: Roles, should_test_succeed: bo
         )
         .as_str(),
     );
-    let parameters = Query::<InviteResponseQuery>::extract(&test_request.request).await.unwrap();
+    let parameters = Query::<InviteResponseQuery>::extract(&test_request.request)
+        .await
+        .unwrap();
 
     let response: HttpResponse =
         organization_invites::accept_request((database.connection.into(), parameters, OptionalUser(Some(auth_user))))
-            .await.into();
+            .await
+            .into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
     } else {

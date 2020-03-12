@@ -5,7 +5,11 @@ use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::{PathParameters, WebPayload};
 use crate::server::AppState;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
+use actix_web::{
+    http::StatusCode,
+    web::{Data, Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::*;
 use chrono::prelude::*;
 use log::Level::Warn;
@@ -266,7 +270,9 @@ pub async fn split(
     Ok(HttpResponse::Created().json(new_hold))
 }
 
-pub async fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy(
+    (conn, path, user): (Connection, Path<PathParameters>, User),
+) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::HoldWrite, &hold.organization(conn)?, &hold.event(conn)?, conn)?;

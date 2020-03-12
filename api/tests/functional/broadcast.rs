@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::RequestBuilder;
-use actix_web::{http::StatusCode, HttpResponse, web::Path};
+use actix_web::{http::StatusCode, web::Path, HttpResponse};
 use bigneon_api::controllers::broadcasts;
 use bigneon_api::models::PathParameters;
 use bigneon_db::models::enums::{BroadcastAudience, BroadcastChannel, BroadcastType};

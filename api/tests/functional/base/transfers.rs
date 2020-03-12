@@ -1,7 +1,11 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::transfers::{self, *};
 use bigneon_api::errors::BigNeonError;
 use bigneon_api::models::*;
@@ -98,7 +102,9 @@ pub async fn index(role: Roles, owns_order: bool, should_succeed: bool) {
     let test_request = TestRequest::create_with_uri("/transfers?source_or_destination=source");
     let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let filter_parameters = Query::<TransferFilters>::extract(&test_request.request).await.unwrap();
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = Some(order.id);
     let response: Result<WebPayload<DisplayTransfer>, BigNeonError> = transfers::index((
         database.connection.clone().into(),
@@ -106,7 +112,8 @@ pub async fn index(role: Roles, owns_order: bool, should_succeed: bool) {
         filter_parameters,
         path,
         auth_user.clone(),
-    )).await;
+    ))
+    .await;
 
     if should_succeed {
         let response = response.unwrap();

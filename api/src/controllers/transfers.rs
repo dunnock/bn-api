@@ -6,7 +6,11 @@ use crate::errors::*;
 use crate::helpers::application;
 use crate::models::*;
 use crate::server::AppState;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
+use actix_web::{
+    http::StatusCode,
+    web::{Data, Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::{User as DbUser, *};
 use chrono::prelude::*;
 use diesel::PgConnection;

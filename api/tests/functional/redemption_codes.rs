@@ -1,7 +1,11 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::redemption_codes::{self, *};
 use bigneon_api::extractors::*;
 use bigneon_api::models::UserDisplayTicketType;
@@ -22,7 +26,9 @@ async fn show_hold() {
     let parameters = Query::<EventParameter>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse =
-        redemption_codes::show(database.connection.clone().into(), parameters, path, OptionalUser(None)).await.into();
+        redemption_codes::show(database.connection.clone().into(), parameters, path, OptionalUser(None))
+            .await
+            .into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let redemption_code_response: RedemptionCodeResponse = serde_json::from_str(&body).unwrap();
@@ -73,7 +79,9 @@ async fn show_comp() {
     let parameters = Query::<EventParameter>::extract(&test_request.request).await.unwrap();
     path.code = hold.redemption_code.clone().unwrap();
     let response: HttpResponse =
-        redemption_codes::show(database.connection.clone().into(), parameters, path, OptionalUser(None)).await.into();
+        redemption_codes::show(database.connection.clone().into(), parameters, path, OptionalUser(None))
+            .await
+            .into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let redemption_code_response: RedemptionCodeResponse = serde_json::from_str(&body).unwrap();
@@ -147,7 +155,8 @@ async fn show_hold_for_user() {
         path,
         OptionalUser(Some(auth_user.clone())),
     )
-    .await.into();
+    .await
+    .into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let redemption_code_response: RedemptionCodeResponse = serde_json::from_str(&body).unwrap();
@@ -211,7 +220,9 @@ async fn show_code() {
     let test_request = TestRequest::create_with_uri("/");
     let parameters = Query::<EventParameter>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
-        redemption_codes::show(database.connection.clone().into(), parameters, path, OptionalUser(None)).await.into();
+        redemption_codes::show(database.connection.clone().into(), parameters, path, OptionalUser(None))
+            .await
+            .into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let redemption_code_response: RedemptionCodeResponse = serde_json::from_str(&body).unwrap();
@@ -263,7 +274,9 @@ async fn show_invalid() {
     let test_request = TestRequest::create_with_uri("/");
     let parameters = Query::<EventParameter>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
-        redemption_codes::show(database.connection.clone().into(), parameters, path, OptionalUser(None)).await.into();
+        redemption_codes::show(database.connection.clone().into(), parameters, path, OptionalUser(None))
+            .await
+            .into();
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }

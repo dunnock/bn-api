@@ -2,7 +2,11 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::venues;
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -35,7 +39,9 @@ async fn index_with_org_linked_and_private_venues() {
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     //first try with no user
     let response: HttpResponse =
-        venues::index((database.connection.clone().into(), query_parameters, OptionalUser(None))).await.into();
+        venues::index((database.connection.clone().into(), query_parameters, OptionalUser(None)))
+            .await
+            .into();
 
     let mut expected_venues = vec![venue, venue2, venue3];
     let wrapped_expected_venues = Payload {
@@ -60,7 +66,8 @@ async fn index_with_org_linked_and_private_venues() {
         query_parameters,
         OptionalUser(Some(auth_user.clone())),
     ))
-    .await.into();
+    .await
+    .into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, expected_json);
@@ -80,7 +87,8 @@ async fn index_with_org_linked_and_private_venues() {
         query_parameters,
         OptionalUser(Some(auth_user)),
     ))
-    .await.into();
+    .await
+    .into();
     let wrapped_expected_venues = Payload {
         data: expected_venues,
         paging: Paging {
@@ -455,7 +463,8 @@ pub async fn show_from_organizations_private_venue_same_org() {
         query_parameters,
         OptionalUser(Some(auth_user)),
     ))
-    .await.into();
+    .await
+    .into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();

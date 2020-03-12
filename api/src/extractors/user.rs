@@ -1,10 +1,10 @@
+use super::Uuid;
 use crate::auth::user::User;
 use crate::middleware::RequestConnection;
 use actix_web::error::*;
-use actix_web::{FromRequest, HttpRequest, dev::Payload};
+use actix_web::{dev::Payload, FromRequest, HttpRequest};
 use bigneon_db::models::User as DbUser;
-use futures::future::{Ready, ok, err};
-use super::Uuid;
+use futures::future::{err, ok, Ready};
 
 impl FromRequest for User {
     type Config = ();
@@ -28,7 +28,7 @@ impl FromRequest for User {
                 } else {
                     match User::new(user, req) {
                         Ok(u) => ok(u),
-                        Err(_) => err(ErrorUnauthorized("User has invalid role data"))
+                        Err(_) => err(ErrorUnauthorized("User has invalid role data")),
                     }
                 }
             }

@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
+use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
 use bigneon_api::controllers::codes::{self, *};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -204,8 +204,9 @@ async fn create_with_validation_errors() {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse =
-        codes::create((database.connection.clone().into(), json, path, auth_user.clone())).await.into();
+    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user.clone()))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -234,8 +235,9 @@ async fn create_with_validation_errors() {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse =
-        codes::create((database.connection.clone().into(), json, path, auth_user.clone())).await.into();
+    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user.clone()))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -260,7 +262,9 @@ async fn create_with_validation_errors() {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user)).await.into();
+    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -299,7 +303,9 @@ async fn create_fails_adding_ticket_type_id_from_other_event() {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user)).await.into();
+    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -335,7 +341,9 @@ async fn update_with_validation_errors() {
         ..Default::default()
     });
 
-    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user)).await.into();
+    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -369,7 +377,9 @@ async fn update_fails_adding_ticket_type_id_from_other_event() {
         ..Default::default()
     });
 
-    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user)).await.into();
+    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -421,7 +431,9 @@ pub async fn update_adding_keeping_and_removing_ticket_types() {
         ..Default::default()
     });
 
-    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user)).await.into();
+    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user))
+        .await
+        .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);

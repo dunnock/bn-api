@@ -6,7 +6,11 @@ use crate::helpers::application;
 use crate::models::WebPayload;
 use crate::models::{OrganizationUserPathParameters, PathParameters};
 use crate::server::AppState;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
+use actix_web::{
+    http::StatusCode,
+    web::{Data, Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::*;
 use chrono::NaiveDateTime;
 use uuid::Uuid;

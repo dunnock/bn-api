@@ -1,4 +1,8 @@
-use actix_web::{test, FromRequest, HttpRequest, web::{Path, Query, Data}};
+use actix_web::{
+    test,
+    web::{Data, Path, Query},
+    FromRequest, HttpRequest,
+};
 use bigneon_api::config::Config;
 use bigneon_api::db::Database;
 use bigneon_api::server::AppState;

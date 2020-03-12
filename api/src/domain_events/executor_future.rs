@@ -2,17 +2,17 @@ use crate::db::Connection;
 use crate::errors::BigNeonError;
 use bigneon_db::prelude::*;
 use chrono::prelude::*;
-use std::future::Future;
-use std::task::{Context, Poll};
 use log::Level::*;
 use logging::*;
+use std::future::Future;
 use std::pin::Pin;
+use std::task::{Context, Poll};
 
 pub struct ExecutorFuture {
     started_at: NaiveDateTime,
     action: DomainAction,
     conn: Connection,
-    inner: Pin<Box<dyn Future<Output=Result<(),BigNeonError>>>>,
+    inner: Pin<Box<dyn Future<Output = Result<(), BigNeonError>>>>,
 }
 
 unsafe impl Send for ExecutorFuture {}
@@ -21,7 +21,7 @@ impl ExecutorFuture {
     pub fn new(
         action: DomainAction,
         conn: Connection,
-        inner: Pin<Box<dyn Future<Output=Result<(),BigNeonError>>>>,
+        inner: Pin<Box<dyn Future<Output = Result<(), BigNeonError>>>>,
     ) -> ExecutorFuture {
         ExecutorFuture {
             action,
@@ -48,7 +48,7 @@ impl Future for ExecutorFuture {
                 self.action.set_done(&self.conn.get())?;
                 self.conn.commit_transaction()?;
                 Poll::Ready(Ok(r))
-            },
+            }
             Poll::Ready(Err(e)) => {
                 let desc = e.to_string();
                 jlog!(Error,
@@ -68,7 +68,7 @@ impl Future for ExecutorFuture {
 
                 self.action.set_failed(&desc, self.conn.get())?;
                 Poll::Ready(Err(e))
-            },
+            }
             Poll::Pending => Poll::Pending,
         }
     }

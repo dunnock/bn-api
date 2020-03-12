@@ -4,8 +4,8 @@ use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use actix_web::{Error, Responder};
 use bigneon_db::models::Payload;
+use futures::future::{err, ok, Ready};
 use serde::Serialize;
-use futures::future::{ok, err, Ready};
 
 #[derive(Debug)]
 pub struct WebPayload<T>(StatusCode, Payload<T>);
@@ -28,9 +28,7 @@ where
 
     pub fn into_http_response(self) -> Result<HttpResponse, BigNeonError> {
         let body = serde_json::to_string(&self.1)?;
-        Ok(HttpResponse::build(self.0)
-            .content_type("application/json")
-            .body(body))
+        Ok(HttpResponse::build(self.0).content_type("application/json").body(body))
     }
 }
 
@@ -74,9 +72,7 @@ where
 
     fn respond_to(self, _req: &HttpRequest) -> Self::Future {
         match serde_json::to_string(&self.1) {
-            Ok(body) => ok(HttpResponse::build(self.0)
-                .content_type("application/json")
-                .body(body)),
+            Ok(body) => ok(HttpResponse::build(self.0).content_type("application/json").body(body)),
             Err(e) => err(e.into()),
         }
     }

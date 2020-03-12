@@ -5,7 +5,7 @@ use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::server::AppState;
-use actix_web::{HttpResponse, web::Data};
+use actix_web::{web::Data, HttpResponse};
 use bigneon_db::models::concerns::users::password_resetable::*;
 use bigneon_db::models::User;
 use bigneon_db::utils::errors::Optional;

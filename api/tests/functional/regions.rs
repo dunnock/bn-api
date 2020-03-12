@@ -2,7 +2,11 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::regions;
 use bigneon_api::models::PathParameters;
 use bigneon_db::models::*;
@@ -18,7 +22,9 @@ async fn index() {
     let expected_regions = vec![region, region2];
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
-    let response = regions::index((database.connection.into(), query_parameters)).await.unwrap();
+    let response = regions::index((database.connection.into(), query_parameters))
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.payload().data[0].id, Uuid::nil());

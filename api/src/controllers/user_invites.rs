@@ -4,7 +4,10 @@ use crate::db::Connection;
 use crate::errors::*;
 use crate::helpers::application;
 use crate::server::AppState;
-use actix_web::{HttpResponse, web::{Json, Data}};
+use actix_web::{
+    web::{Data, Json},
+    HttpResponse,
+};
 use bigneon_db::models::concerns::users::password_resetable::PasswordResetable;
 use bigneon_db::models::User;
 use bigneon_db::utils::errors::Optional;

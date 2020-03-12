@@ -8,18 +8,18 @@ use crate::utils::redis::*;
 use crate::utils::spotify;
 use crate::utils::ServiceLocator;
 use actix::Addr;
-use actix_web::{http, HttpRequest, HttpResponse, dev::ServiceRequest};
-use actix_web::middleware::Logger;
-use actix_web::{HttpServer, App, web, web::Data};
-use actix_files as fs;
 use actix_cors::Cors;
+use actix_files as fs;
 use actix_service::Service;
+use actix_web::middleware::Logger;
+use actix_web::{dev::ServiceRequest, http, HttpRequest, HttpResponse};
+use actix_web::{web, web::Data, App, HttpServer};
 use bigneon_db::utils::errors::DatabaseError;
 use log::Level::{Debug, Warn};
 use std::collections::HashMap;
+use std::error::Error;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-use std::error::Error;
 
 // Must be valid JSON
 const LOGGER_FORMAT: &'static str = r#"{"level": "INFO", "target":"bigneon::request", "remote_ip":"%a", "user_agent": "%{User-Agent}i", "request": "%r", "status_code": %s, "response_time": %D, "api_version":"%{x-app-version}o", "client_version": "%{X-API-Client-Version}i" }"#;
@@ -55,15 +55,13 @@ pub(crate) trait GetAppState {
 }
 impl GetAppState for HttpRequest {
     fn state(&self) -> Data<AppState> {
-        let data: &Data<AppState> = self.app_data()
-            .expect("critical: AppState not configured for App");
+        let data: &Data<AppState> = self.app_data().expect("critical: AppState not configured for App");
         data.clone()
     }
 }
 impl GetAppState for ServiceRequest {
     fn state(&self) -> Data<AppState> {
-        let data: Data<AppState> = self.app_data()
-            .expect("critical: AppState not configured for App");
+        let data: Data<AppState> = self.app_data().expect("critical: AppState not configured for App");
         data
     }
 }
@@ -186,7 +184,7 @@ impl Server {
                 server = server.workers(workers);
             }
             match server.run().await {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(e) => jlog!(Warn, "bigneon_api::server", "Server exit with error", {"error": e.description()}),
             };
 

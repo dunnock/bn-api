@@ -6,7 +6,10 @@ use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::{OptionalPathParameters, PathParameters};
 use crate::server::AppState;
-use actix_web::{HttpResponse, web::{Path, Query, Data}};
+use actix_web::{
+    web::{Data, Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::User as DbUser;
 use bigneon_db::prelude::*;
 use chrono::prelude::*;

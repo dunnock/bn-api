@@ -4,7 +4,11 @@ use crate::db::Connection;
 use crate::errors::BigNeonError;
 use crate::extractors::*;
 use crate::models::{PathParameters, WebPayload, WebResult};
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::*;
 use chrono::prelude::*;
 
@@ -100,7 +104,9 @@ pub async fn update(
     Ok(HttpResponse::Ok().json(comp))
 }
 
-pub async fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy(
+    (conn, path, user): (Connection, Path<PathParameters>, User),
+) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::CompWrite, &hold.organization(conn)?, conn)?;

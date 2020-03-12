@@ -8,7 +8,11 @@ use crate::helpers::application;
 use crate::models::*;
 use crate::server::AppState;
 use crate::utils::serializers::default_as_false;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
+use actix_web::{
+    http::StatusCode,
+    web::{Data, Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::User as DbUser;
 use bigneon_db::models::*;
 use diesel::pg::PgConnection;
@@ -42,7 +46,9 @@ pub async fn activity(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub async fn show((conn, path, auth_user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show(
+    (conn, path, auth_user): (Connection, Path<PathParameters>, User),
+) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();
     let order = Order::find(path.id, connection)?;
     let mut organization_ids = Vec::new();
@@ -105,7 +111,9 @@ pub struct DetailsResponse {
     pub order_contains_other_tickets: bool,
 }
 
-pub async fn details((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn details(
+    (conn, path, user): (Connection, Path<PathParameters>, User),
+) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();
     let order = Order::find(path.id, connection)?;
 
@@ -419,7 +427,9 @@ fn is_authorized_to_refund(
     Ok(authorized_to_refund_items)
 }
 
-pub async fn tickets((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn tickets(
+    (conn, path, user): (Connection, Path<PathParameters>, User),
+) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let order = Order::find(path.id, conn)?;
     // TODO: Only show the redeem key for orgs that the user has access to redeem

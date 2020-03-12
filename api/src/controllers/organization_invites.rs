@@ -6,7 +6,11 @@ use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::{OrganizationInvitePathParameters, PathParameters, WebPayload};
 use crate::server::AppState;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query, Data}};
+use actix_web::{
+    http::StatusCode,
+    web::{Data, Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::*;
 use bigneon_db::utils::errors::DatabaseError;
 use bigneon_db::utils::errors::Optional;

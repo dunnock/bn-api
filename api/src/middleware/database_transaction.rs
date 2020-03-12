@@ -1,10 +1,10 @@
 use crate::db::Connection;
 use crate::errors::BigNeonError;
+use actix_web::dev::{Payload, ServiceResponse};
 use actix_web::error;
 use actix_web::{FromRequest, HttpRequest};
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
-use actix_web::dev::{ServiceResponse, Payload};
 use std::error::Error;
 
 pub trait RequestConnection {
@@ -49,11 +49,13 @@ impl DatabaseTransaction {
                     Err(error)
                 }
             }
-        } else { Ok(()) };
+        } else {
+            Ok(())
+        };
 
         match res {
             Ok(_) => Ok(response),
-            Err(err) => Ok(response.error_response(err))
+            Err(err) => Ok(response.error_response(err)),
         }
     }
 }

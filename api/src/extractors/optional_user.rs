@@ -1,8 +1,8 @@
 use crate::auth::user::User;
 use actix_web::error::*;
-use actix_web::{FromRequest, HttpRequest, dev::Payload};
+use actix_web::{dev::Payload, FromRequest, HttpRequest};
+use futures::future::{err, ok, Ready};
 use uuid::Uuid;
-use futures::future::{Ready, ok, err};
 
 #[derive(Clone)]
 pub struct OptionalUser(pub Option<User>);

@@ -114,9 +114,7 @@ pub async fn send_email_template_async(
     unique_args: Option<HashMap<String, String>>,
 ) -> Result<(), BigNeonError> {
     if dest_email_addresses.len() != template_data.len() {
-        return Err(
-            ApplicationError::new("Destination addresses mismatched with template data".to_string()).into(),
-        )
+        return Err(ApplicationError::new("Destination addresses mismatched with template data".to_string()).into());
     } else {
         let mut sg_message = SGMailMessage::new();
         sg_message.from = SGEmail::from(source_email_address);

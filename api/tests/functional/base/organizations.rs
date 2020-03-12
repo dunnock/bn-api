@@ -2,7 +2,11 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::ResponseError;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::organizations;
 use bigneon_api::controllers::organizations::*;
 use bigneon_api::extractors::*;
@@ -41,7 +45,9 @@ pub async fn index(role: Roles) {
 
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
-    let response: HttpResponse = organizations::index((database.connection.into(), query_parameters, user)).await.into();
+    let response: HttpResponse = organizations::index((database.connection.into(), query_parameters, user))
+        .await
+        .into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     let counter = expected_organizations.len();
     let wrapped_expected_orgs = Payload {
@@ -116,7 +122,9 @@ pub async fn index_for_all_orgs(role: Roles, should_test_succeed: bool) {
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
-        organizations::index_for_all_orgs((database.connection.into(), query_parameters, auth_user)).await.into();
+        organizations::index_for_all_orgs((database.connection.into(), query_parameters, auth_user))
+            .await
+            .into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
 
@@ -325,12 +333,15 @@ pub async fn remove_user(role: Roles, should_test_succeed: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id", "user_id"]);
-    let mut path = Path::<OrganizationUserPathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OrganizationUserPathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = organization.id;
     path.user_id = user3.id;
 
-    let response: HttpResponse =
-        organizations::remove_user((database.connection.into(), path, auth_user.clone())).await.into();
+    let response: HttpResponse = organizations::remove_user((database.connection.into(), path, auth_user.clone()))
+        .await
+        .into();
     let count = 1;
     let body = support::unwrap_body_to_string(&response).unwrap();
     if should_test_succeed {
@@ -358,7 +369,9 @@ pub async fn add_user(role: Roles, should_test_succeed: bool) {
     path.id = organization.id;
 
     let response: HttpResponse =
-        organizations::add_or_replace_user((database.connection.into(), path, json, auth_user.clone())).await.into();
+        organizations::add_or_replace_user((database.connection.into(), path, json, auth_user.clone()))
+            .await
+            .into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::CREATED);
     } else {
@@ -386,8 +399,9 @@ pub async fn add_artist(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
-    let response: HttpResponse =
-        organizations::add_artist((database.connection.into(), path, json, auth_user.clone())).await.into();
+    let response: HttpResponse = organizations::add_artist((database.connection.into(), path, json, auth_user.clone()))
+        .await
+        .into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::CREATED);
         let body = support::unwrap_body_to_string(&response).unwrap();
@@ -454,7 +468,8 @@ pub async fn list_organization_members(role: Roles, should_succeed: bool) {
         path,
         query_parameters,
         auth_user.clone(),
-    )).await;
+    ))
+    .await;
 
     if !should_succeed {
         let http_response = response.err().unwrap().error_response();
@@ -501,7 +516,9 @@ pub async fn show_fee_schedule(role: Roles, should_succeed: bool) {
     path.id = organization.id;
 
     let response: HttpResponse =
-        organizations::show_fee_schedule((database.connection.into(), path, auth_user.clone())).await.into();
+        organizations::show_fee_schedule((database.connection.into(), path, auth_user.clone()))
+            .await
+            .into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);
@@ -536,8 +553,9 @@ pub async fn add_fee_schedule(role: Roles, should_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
-    let response: HttpResponse =
-        organizations::add_fee_schedule((database.connection.into(), path, json, auth_user)).await.into();
+    let response: HttpResponse = organizations::add_fee_schedule((database.connection.into(), path, json, auth_user))
+        .await
+        .into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);

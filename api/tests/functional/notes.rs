@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
+use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
 use bigneon_api::controllers::notes::{self, *};
 use bigneon_api::extractors::*;
 use bigneon_api::models::*;
@@ -185,11 +185,15 @@ async fn create_with_validation_errors() {
     let json = Json(NewNoteRequest { note: "".to_string() });
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["main_table", "id"]);
-    let mut path = Path::<MainTablePathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<MainTablePathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = order.id;
     path.main_table = Tables::Orders.to_string();
 
-    let response: HttpResponse = notes::create((database.connection.into(), path, json, auth_user)).await.into();
+    let response: HttpResponse = notes::create((database.connection.into(), path, json, auth_user))
+        .await
+        .into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
     let validation_response = support::validation_response_from_response(&response).unwrap();

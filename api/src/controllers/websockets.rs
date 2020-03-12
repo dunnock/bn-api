@@ -2,13 +2,16 @@ use crate::auth::user::User;
 use crate::db::Connection;
 use crate::errors::*;
 use crate::models::*;
-use actix_web::{HttpRequest, HttpResponse, web::{Path, Payload}};
+use actix_web::{
+    web::{Path, Payload},
+    HttpRequest, HttpResponse,
+};
 use actix_web_actors::ws;
 use bigneon_db::prelude::*;
 
 pub async fn initate(
     (conn, path, request, user): (Connection, Path<PathParameters>, HttpRequest, User),
-    stream: Payload
+    stream: Payload,
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     let event = Event::find(path.id, conn)?;

@@ -11,13 +11,17 @@ use crate::server::AppState;
 use crate::utils::google_recaptcha;
 use actix_web;
 use actix_web::Responder;
-use actix_web::{http::StatusCode, HttpRequest, HttpResponse, web::{Path, Query, Data}};
+use actix_web::{
+    http::StatusCode,
+    web::{Data, Path, Query},
+    HttpRequest, HttpResponse,
+};
 use bigneon_db::prelude::*;
 use diesel::PgConnection;
+use futures::future::{err, ok, Ready};
 use std::collections::HashMap;
 use std::str;
 use uuid::Uuid;
-use futures::future::{Ready, ok, err};
 
 #[derive(Deserialize)]
 pub struct SearchUserByEmail {
@@ -42,10 +46,8 @@ impl Responder for CurrentUser {
 
     fn respond_to(self, _req: &HttpRequest) -> Self::Future {
         match serde_json::to_string(&self) {
-            Ok(body) => ok(HttpResponse::Ok()
-                .content_type("application/json")
-                .body(body)),
-            Err(e) => err(e.into())
+            Ok(body) => ok(HttpResponse::Ok().content_type("application/json").body(body)),
+            Err(e) => err(e.into()),
         }
     }
 }
@@ -302,7 +304,7 @@ pub async fn register_and_login(
         Connection,
         Json<RegisterRequest>,
         RequestInfo,
-        Data<AppState>
+        Data<AppState>,
     ),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection_info = http_request.connection_info();
@@ -380,7 +382,9 @@ fn verify_recaptcha(
     }
 }
 
-pub async fn delete((conn, path, user): (Connection, Path<PathParameters>, AuthUser)) -> Result<HttpResponse, BigNeonError> {
+pub async fn delete(
+    (conn, path, user): (Connection, Path<PathParameters>, AuthUser),
+) -> Result<HttpResponse, BigNeonError> {
     let conn = conn.get();
     if user.id() != path.id {
         user.requires_scope(Scopes::UserDelete)?

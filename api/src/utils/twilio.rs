@@ -27,7 +27,7 @@ pub async fn send_sms_async(
             "body": message.body,
             "status": message.status
         });
-    };
+    }
 
     Ok(())
 }

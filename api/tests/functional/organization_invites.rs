@@ -2,7 +2,11 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::organization_invites::{self, InviteResponseQuery};
 use bigneon_api::extractors::OptionalUser;
 use bigneon_api::models::OrganizationInvitePathParameters;
@@ -239,11 +243,14 @@ pub async fn accept_invite_for_other_email_succeeds() {
         )
         .as_str(),
     );
-    let parameters = Query::<InviteResponseQuery>::extract(&test_request.request).await.unwrap();
+    let parameters = Query::<InviteResponseQuery>::extract(&test_request.request)
+        .await
+        .unwrap();
 
     let response: HttpResponse =
         organization_invites::accept_request((database.connection.into(), parameters, OptionalUser(Some(auth_user))))
-            .await.into();
+            .await
+            .into();
     assert_eq!(response.status(), StatusCode::OK);
 }
 
@@ -274,11 +281,14 @@ pub async fn accept_invite_for_user_id_succeeds() {
         )
         .as_str(),
     );
-    let parameters = Query::<InviteResponseQuery>::extract(&test_request.request).await.unwrap();
+    let parameters = Query::<InviteResponseQuery>::extract(&test_request.request)
+        .await
+        .unwrap();
 
     let response: HttpResponse =
         organization_invites::accept_request((database.connection.into(), parameters, OptionalUser(Some(auth_user))))
-            .await.into();
+            .await
+            .into();
     assert_eq!(response.status(), StatusCode::OK);
 }
 
@@ -308,11 +318,14 @@ pub async fn accept_invite_for_other_user_id_fails() {
         )
         .as_str(),
     );
-    let parameters = Query::<InviteResponseQuery>::extract(&test_request.request).await.unwrap();
+    let parameters = Query::<InviteResponseQuery>::extract(&test_request.request)
+        .await
+        .unwrap();
 
     let response: HttpResponse =
         organization_invites::accept_request((database.connection.into(), parameters, OptionalUser(Some(auth_user))))
-            .await.into();
+            .await
+            .into();
     support::expects_unauthorized(&response);
 }
 
@@ -331,12 +344,15 @@ async fn destroy_owner_role_invite_as_organization_member_fails() {
         .finish();
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id", "invite_id"]);
-    let mut path = Path::<OrganizationInvitePathParameters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OrganizationInvitePathParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     path.id = organization.id;
     path.invite_id = invite.id;
 
-    let response: HttpResponse =
-        organization_invites::destroy((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = organization_invites::destroy((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
 
     support::expects_unauthorized(&response);
 }
