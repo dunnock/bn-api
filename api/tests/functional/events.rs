@@ -1175,10 +1175,10 @@ async fn show_with_visibility_always_before_sale() {
     path.id = event.id.to_string();
 
     let response: HttpResponse = events::show((
-        request.state(),
+        request.state().await,
         conn.clone().into(),
         path,
-        request.query(),
+        request.query().await,
         auth_user.into_optional(),
         RequestInfo {
             user_agent: Some("test".to_string()),
@@ -1217,10 +1217,10 @@ async fn show_with_visibility_always_before_sale_pricing() {
     path.id = event.id.to_string();
 
     let response: HttpResponse = events::show((
-        request.state(),
+        request.state().await,
         conn.clone().into(),
         path,
-        request.query(),
+        request.query().await,
         auth_user.into_optional(),
         RequestInfo {
             user_agent: Some("test".to_string()),
@@ -1260,10 +1260,10 @@ async fn show_with_visibility_always_after_sale() {
     path.id = event.id.to_string();
 
     let response: HttpResponse = events::show((
-        request.state(),
+        request.state().await,
         conn.clone().into(),
         path,
-        request.query(),
+        request.query().await,
         auth_user.into_optional(),
         RequestInfo {
             user_agent: Some("test".to_string()),
@@ -1300,10 +1300,10 @@ async fn show_with_hidden_ticket_type() {
     path.id = event.id.to_string();
 
     let response: HttpResponse = events::show((
-        request.state(),
+        request.state().await,
         conn.clone().into(),
         path,
-        request.query(),
+        request.query().await,
         auth_user.into_optional(),
         RequestInfo {
             user_agent: Some("test".to_string()),
@@ -2309,7 +2309,7 @@ async fn dashboard_with_default_range() {
         query_parameters,
         auth_user.clone(),
     ))
-    .into();
+    .await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
@@ -2405,7 +2405,7 @@ pub async fn show_from_organizations_upcoming() {
     );
 }
 
-pub async fn event_venue_entry(
+pub fn event_venue_entry(
     event: &Event,
     venue: &Venue,
     artists: &Vec<DisplayEventArtist>,

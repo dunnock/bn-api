@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, FromRequest, HttpResponse};
+use actix_web::{http::StatusCode, HttpResponse};
 use bigneon_api::auth::TokenResponse;
 use bigneon_api::controllers::users;
 use bigneon_api::extractors::*;
@@ -503,7 +503,7 @@ async fn current_user() {
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
 
-    let response = users::current_user((database.connection.into(), auth_user)).unwrap();
+    let response = users::current_user((database.connection.into(), auth_user)).await.unwrap();
     let user = response.user;
     assert_eq!(user.id, user.id);
     assert_eq!(

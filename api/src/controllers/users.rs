@@ -7,7 +7,7 @@ use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::*;
-use crate::server::AppState;
+use crate::server::GetAppState;
 use crate::utils::google_recaptcha;
 use actix_web;
 use actix_web::Responder;
@@ -267,8 +267,9 @@ pub async fn remove_push_notification_token(
 }
 
 pub async fn register(
-    (http_request, connection, parameters, state): (HttpRequest, Connection, Json<RegisterRequest>, Data<AppState>),
+    (http_request, connection, parameters): (HttpRequest, Connection, Json<RegisterRequest>),
 ) -> Result<HttpResponse, BigNeonError> {
+    let state = http_request.state();
     let connection_info = http_request.connection_info();
     let remote_ip = connection_info.remote();
     let mut log_data = HashMap::new();
@@ -299,14 +300,14 @@ pub async fn register(
 }
 
 pub async fn register_and_login(
-    (http_request, connection, parameters, request_info, state): (
+    (http_request, connection, parameters, request_info): (
         HttpRequest,
         Connection,
         Json<RegisterRequest>,
-        RequestInfo,
-        Data<AppState>,
+        RequestInfo
     ),
 ) -> Result<HttpResponse, BigNeonError> {
+    let state = http_request.state();
     let connection_info = http_request.connection_info();
     let remote_ip = connection_info.remote();
     let mut log_data = HashMap::new();
