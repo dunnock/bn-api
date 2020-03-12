@@ -13,6 +13,7 @@ pub trait CacheConnection {
     fn delete(&mut self, key: &str) -> Result<(), CacheError>;
     fn add(&mut self, key: &str, data: &str, ttl: Option<Milliseconds>) -> Result<(), CacheError>;
     fn publish(&mut self, channel: &str, message: &str) -> Result<(), CacheError>;
+    fn delete_by_key_fragment(&mut self, key_fragment: &str) -> Result<(), CacheError>;
 }
 
 // Implementation
@@ -62,6 +63,14 @@ impl CacheConnection for RedisCacheConnection {
 
     fn delete(&mut self, key: &str) -> Result<(), CacheError> {
         self.conn()?.del(key.to_string())?;
+        Ok(())
+    }
+
+    fn delete_by_key_fragment(&mut self, key_fragment: &str) -> Result<(), CacheError> {
+        let matches: Vec<String> = self.conn()?.keys(format!("*{}*", key_fragment))?;
+        for key in matches {
+            self.conn()?.del(key.to_string())?;
+        }
         Ok(())
     }
 

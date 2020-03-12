@@ -16,7 +16,7 @@ fi
 cd $DB_DIR
 
 # start Postgres using Docker, data is stored in db/pg_data
-docker run -d -v pg_data:/var/lib/postgresql/data -p 5432:5432/tcp postgres:latest
+docker run -d -v pg_data:/var/lib/postgresql/data -e POSTGRES_HOST_AUTH_METHOD=trust -p 5432:5432/tcp postgres:latest
 
 # wait till postgres has started
 sleep 1 

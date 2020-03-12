@@ -44,6 +44,16 @@ pub(crate) fn get_cached_value<T: Serialize>(
     None
 }
 
+pub(crate) fn delete_by_key_fragment(
+    mut cache_connection: impl CacheConnection,
+    key_fragment: String,
+) -> Result<(), BigNeonError> {
+    if let Err(err) = cache_connection.delete_by_key_fragment(&key_fragment) {
+        error!("helpers::caching#delete_by_key_fragment: {:?}", err);
+    }
+    Ok(())
+}
+
 pub(crate) fn publish<T: Serialize>(
     mut cache_connection: impl CacheConnection,
     redis_pubsub_channel: RedisPubSubChannel,

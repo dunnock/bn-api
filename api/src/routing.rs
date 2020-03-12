@@ -1,6 +1,7 @@
 use crate::controllers::*;
-//use crate::middleware::{CacheResource, CacheUsersBy};
+//use crate::middleware::*;
 use actix_web::web;
+use bigneon_db::models::Scopes;
 
 pub fn routes(app: &mut web::ServiceConfig) {
     // Please try to keep in alphabetical order
@@ -193,15 +194,35 @@ pub fn routes(app: &mut web::ServiceConfig) {
     )
     .service(web::resource("/organizations/{id}/events").route(web::get().to(events::show_from_organizations)))
     .service(web::resource("/organizations/{id}/export_event_data").route(web::get().to(events::export_event_data)))
-    .service(web::resource("/organizations/{id}/fans/{user_id}/activity").route(web::get().to(users::activity)))
-    .service(web::resource("/organizations/{id}/fans/{user_id}/history").route(web::get().to(users::history)))
-    .service(web::resource("/organizations/{id}/fans/{user_id}").route(web::get().to(users::profile)))
+    .service(web::resource("/organizations/{id}/fans/{user_id}/activity")
+    //r.middleware(CacheResource::new(CacheUsersBy::OrganizationScopePresence(
+    //    OrganizationLoad::Path,
+    //    Scopes::OrgFans,
+    //)));
+        .route(web::get().to(users::activity)))
+    .service(web::resource("/organizations/{id}/fans/{user_id}/history")
+    //r.middleware(CacheResource::new(CacheUsersBy::OrganizationScopePresence(
+    //    OrganizationLoad::Path,
+    //    Scopes::OrgFans,
+    //)));
+        .route(web::get().to(users::history)))
+    .service(web::resource("/organizations/{id}/fans/{user_id}")
+    //r.middleware(CacheResource::new(CacheUsersBy::OrganizationScopePresence(
+    //    OrganizationLoad::Path,
+    //    Scopes::OrgFans,
+    //)));
+        .route(web::get().to(users::profile)))
     .service(
         web::resource("/organizations/{id}/fee_schedule")
             .route(web::get().to(organizations::show_fee_schedule))
             .route(web::post().to(organizations::add_fee_schedule)),
     )
-    .service(web::resource("/organizations/{id}/fans").route(web::get().to(organizations::search_fans)))
+    .service(web::resource("/organizations/{id}/fans")
+    //r.middleware(CacheResource::new(CacheUsersBy::OrganizationScopePresence(
+    //    OrganizationLoad::Path,
+    //    Scopes::OrgFans,
+    //)));
+        .route(web::get().to(organizations::search_fans)))
     .service(
         web::resource("/organizations/{id}/invites/{invite_id}").route(web::delete().to(organization_invites::destroy)),
     )

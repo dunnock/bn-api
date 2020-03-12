@@ -25,11 +25,25 @@ To download and build this project,
         
 # Configuring the local development environment
 
-To simplify the management of your local environment,
-we've created the [Big Neon repository](https://github.com/big-neon/bigneon) that uses [Docker](https://docker.org) to
-set up and configure your local development environment.
+## 1. Update submodules
 
-See the [README](https://github.com/big-neon/bigneon/blob/master/README.md) for that repo for more details.
+```
+git submodule init
+git submodule update
+```
+
+## 2. Initialize database and redis
+
+```
+source init_database.sh
+docker run --name bigneon_redis -d redis
+```
+
+## 3. Start Bigneon API
+
+```
+cd api; cargo run --bin server
+```
 
 # Setting up Facebook login
 Facebook login is optional. If you would like to enable it, you will need to get
