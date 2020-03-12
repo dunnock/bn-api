@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::settlements::{self, *};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -10,7 +10,7 @@ use bigneon_db::utils::dates;
 use serde_json;
 use uuid::Uuid;
 
-pub fn create(role: Roles, should_succeed: bool) {
+pub async fn create(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database
@@ -28,9 +28,9 @@ pub fn create(role: Roles, should_succeed: bool) {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
-    let response: HttpResponse = settlements::create((database.connection.into(), json, path, auth_user)).into();
+    let response: HttpResponse = settlements::create((database.connection.into(), json, path, auth_user)).await.into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;
@@ -45,7 +45,7 @@ pub fn create(role: Roles, should_succeed: bool) {
     assert_eq!(settlement.only_finished_events, false);
 }
 
-pub fn index(role: Roles, should_succeed: bool) {
+pub async fn index(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let organization = database.create_organization().finish();
     let organization2 = database.create_organization().finish();
@@ -66,9 +66,9 @@ pub fn index(role: Roles, should_succeed: bool) {
 
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
 
     let response = settlements::index((database.connection.clone().into(), query_parameters, path, auth_user));
 
@@ -87,7 +87,7 @@ pub fn index(role: Roles, should_succeed: bool) {
     }
 }
 
-pub fn show(role: Roles, should_succeed: bool) {
+pub async fn show(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -101,9 +101,9 @@ pub fn show(role: Roles, should_succeed: bool) {
 
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = settlement.id;
-    let response: HttpResponse = settlements::show((database.connection.clone().into(), path, auth_user)).into();
+    let response: HttpResponse = settlements::show((database.connection.clone().into(), path, auth_user)).await.into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;
@@ -114,7 +114,7 @@ pub fn show(role: Roles, should_succeed: bool) {
     assert_eq!(returned_settlement, settlement.for_display(connection).unwrap());
 }
 
-pub fn destroy(role: Roles, should_succeed: bool) {
+pub async fn destroy(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -123,9 +123,9 @@ pub fn destroy(role: Roles, should_succeed: bool) {
 
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = settlement.id;
-    let response: HttpResponse = settlements::destroy((database.connection.clone().into(), path, auth_user)).into();
+    let response: HttpResponse = settlements::destroy((database.connection.clone().into(), path, auth_user)).await.into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;

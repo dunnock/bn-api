@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::Path};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::tickets::{self, ShowTicketResponse};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -9,7 +9,7 @@ use bigneon_db::models::*;
 use bigneon_db::utils::dates;
 use serde_json;
 
-pub fn show_other_user_ticket(role: Roles, should_test_succeed: bool) {
+pub async fn show_other_user_ticket(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -27,10 +27,10 @@ pub fn show_other_user_ticket(role: Roles, should_test_succeed: bool) {
     let ticket = database.create_purchased_tickets(&user2, ticket_type.id, 1).remove(0);
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
-    let mut path = Path::<PathParameters>::extract(&request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&request.request).await.unwrap();
     path.id = ticket.id;
 
-    let response: HttpResponse = tickets::show((database.connection.clone().into(), path, auth_user)).into();
+    let response: HttpResponse = tickets::show((database.connection.clone().into(), path, auth_user)).await.into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
         let body = support::unwrap_body_to_string(&response).unwrap();
@@ -65,7 +65,7 @@ pub fn show_other_user_ticket(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn update(role: Roles, owns_ticket: bool, should_test_succeed: bool) {
+pub async fn update(role: Roles, owns_ticket: bool, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -87,14 +87,14 @@ pub fn update(role: Roles, owns_ticket: bool, should_test_succeed: bool) {
         support::create_auth_user(role, Some(&organization), &database)
     };
 
-    let mut path = Path::<PathParameters>::extract(&request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&request.request).await.unwrap();
     path.id = ticket.id;
     let json = Json(UpdateTicketInstanceAttributes {
         first_name_override: Some(Some("First".to_string())),
         last_name_override: Some(Some("Last".to_string())),
     });
 
-    let response: HttpResponse = tickets::update((database.connection.clone().into(), path, json, auth_user)).into();
+    let response: HttpResponse = tickets::update((database.connection.clone().into(), path, json, auth_user)).await.into();
 
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -130,7 +130,7 @@ pub fn update(role: Roles, owns_ticket: bool, should_test_succeed: bool) {
     }
 }
 
-pub fn show_redeemable_ticket(role: Roles, should_test_succeed: bool) {
+pub async fn show_redeemable_ticket(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let conn = database.connection.get();
     let user = database.create_user().finish();
@@ -171,11 +171,11 @@ pub fn show_redeemable_ticket(role: Roles, should_test_succeed: bool) {
     let ticket = TicketInstance::find_for_user(user2.id, conn).unwrap().remove(0);
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
-    let mut path = Path::<PathParameters>::extract(&request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&request.request).await.unwrap();
     path.id = ticket.id;
 
     let response: HttpResponse =
-        tickets::show_redeemable_ticket((database.connection.clone().into(), path, auth_user.clone())).into();
+        tickets::show_redeemable_ticket((database.connection.clone().into(), path, auth_user.clone())).await.into();
 
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();

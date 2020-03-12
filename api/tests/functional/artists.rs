@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::artists;
 use bigneon_api::extractors::*;
 use bigneon_api::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest};
@@ -11,8 +11,8 @@ use serde_json;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-#[test]
-fn index() {
+#[actix_rt::test]
+async fn index() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let artist = database.create_artist().with_name("Artist1".to_string()).finish();
@@ -23,9 +23,9 @@ fn index() {
         artist2.for_display(connection).unwrap(),
     ];
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
-        artists::index((database.connection.clone().into(), query_parameters, OptionalUser(None))).into();
+        artists::index((database.connection.clone().into(), query_parameters, OptionalUser(None))).await.into();
 
     let wrapped_expected_artists = Payload {
         data: expected_artists,
@@ -44,8 +44,8 @@ fn index() {
     assert_eq!(body, expected_json);
 }
 
-#[test]
-fn index_with_org_linked_and_private_venues() {
+#[actix_rt::test]
+async fn index_with_org_linked_and_private_venues() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let artist = database.create_artist().with_name("Artist1".to_string()).finish();
@@ -66,10 +66,10 @@ fn index_with_org_linked_and_private_venues() {
         .finish();
 
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     //first try with no user
     let response: HttpResponse =
-        artists::index((database.connection.clone().into(), query_parameters, OptionalUser(None))).into();
+        artists::index((database.connection.clone().into(), query_parameters, OptionalUser(None))).await.into();
 
     let mut expected_artists = vec![
         artist.for_display(connection).unwrap(),
@@ -95,7 +95,7 @@ fn index_with_org_linked_and_private_venues() {
     //now try with user that does not belong to org
     let user = support::create_auth_user(Roles::User, None, &database);
     let user_id = user.id();
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = artists::index((
         database.connection.clone().into(),
         query_parameters,
@@ -114,7 +114,7 @@ fn index_with_org_linked_and_private_venues() {
         database.connection.clone().get(),
     );
     expected_artists.push(artist4.for_display(connection).unwrap());
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = artists::index((
         database.connection.clone().into(),
         query_parameters,
@@ -138,7 +138,7 @@ fn index_with_org_linked_and_private_venues() {
 
     //now with an admin user
     let admin = support::create_auth_user(Roles::Admin, None, &database);
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = artists::index((
         database.connection.clone().into(),
         query_parameters,
@@ -162,13 +162,13 @@ fn index_with_org_linked_and_private_venues() {
 }
 
 #[test]
-pub fn search_no_spotify() {
+pub async fn search_no_spotify() {
     let database = TestDatabase::new();
     let artist = database.create_artist().with_name("Artist1".to_string()).finish();
 
     let expected_artists = vec![artist.id];
     let test_request = TestRequest::create_with_uri(&format!("/?q=Artist&spotify=1"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response = artists::search((database.connection.into(), query_parameters, OptionalUser(None))).unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
@@ -183,12 +183,12 @@ pub fn search_no_spotify() {
 }
 
 #[test]
-pub fn search_with_spotify() {
+pub async fn search_with_spotify() {
     let database = TestDatabase::new();
     let _artist = database.create_artist().with_name("Artist1".to_string()).finish();
 
     let test_request = TestRequest::create_with_uri(&format!("/?q=Powerwolf&spotify=1"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response = artists::search((database.connection.into(), query_parameters, OptionalUser(None))).unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
@@ -207,24 +207,24 @@ pub fn search_with_spotify() {
 }
 
 #[test]
-pub fn show() {
+pub async fn show() {
     let database = TestDatabase::new();
     let artist = database.create_artist().finish();
     let artist_expected_json =
         serde_json::to_string(&artist.clone().for_display(database.connection.get()).unwrap()).unwrap();
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = artist.id;
 
-    let response: HttpResponse = artists::show((database.connection.into(), path)).into();
+    let response: HttpResponse = artists::show((database.connection.into(), path)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, artist_expected_json);
 }
 
 #[test]
-pub fn show_from_organizations_private_artist_same_org() {
+pub async fn show_from_organizations_private_artist_same_org() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -264,13 +264,13 @@ pub fn show_from_organizations_private_artist_same_org() {
     let expected_json = serde_json::to_string(&wrapped_expected_artists).unwrap();
     let test_request = TestRequest::create();
 
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
     let user = support::create_auth_user_from_user(&user2, Roles::OrgOwner, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = artists::show_from_organizations((
         database.connection.clone().into(),
         path,
@@ -362,7 +362,7 @@ mod create_tests {
 }
 
 #[test]
-pub fn create_with_validation_errors() {
+pub async fn create_with_validation_errors() {
     let database = TestDatabase::new();
 
     let name = "Artist Example";
@@ -376,7 +376,7 @@ pub fn create_with_validation_errors() {
         ..Default::default()
     });
     let user = support::create_auth_user(Roles::Admin, None, &database);
-    let response: HttpResponse = artists::create((database.connection.into(), json, user)).into();
+    let response: HttpResponse = artists::create((database.connection.into(), json, user)).await.into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
@@ -560,7 +560,7 @@ mod update_public_artist_with_organization_tests {
 }
 
 #[test]
-pub fn update_with_validation_errors() {
+pub async fn update_with_validation_errors() {
     let database = TestDatabase::new();
     let artist = database.create_artist().finish();
     let name = "New Name";
@@ -569,7 +569,7 @@ pub fn update_with_validation_errors() {
 
     let user = support::create_auth_user(Roles::Admin, None, &database);
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = artist.id;
 
     let mut attributes: UpdateArtistRequest = Default::default();
@@ -579,7 +579,7 @@ pub fn update_with_validation_errors() {
     attributes.youtube_video_urls = Some(vec!["invalid".to_string()]);
     let json = Json(attributes);
 
-    let response: HttpResponse = artists::update((database.connection.into(), path, json, user)).into();
+    let response: HttpResponse = artists::update((database.connection.into(), path, json, user)).await.into();
 
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());

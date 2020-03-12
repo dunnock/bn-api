@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use chrono::prelude::*;
 use serde_json;
 use uuid::Uuid;
@@ -14,7 +14,7 @@ use bigneon_api::models::{OptionalPathParameters, PathParameters};
 use bigneon_db::prelude::*;
 
 #[test]
-pub fn index() {
+pub async fn index() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -109,9 +109,9 @@ pub fn index() {
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
 
     // Test with specified event
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = Some(event.id);
-    let parameters = Query::<SearchParameters>::extract(&test_request.request).unwrap();
+    let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
@@ -134,9 +134,9 @@ pub fn index() {
     };
     assert_eq!(vec![expected_ticket.clone()], found_data.data);
     // Test without specified event
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = None;
-    let parameters = Query::<SearchParameters>::extract(&test_request.request).unwrap();
+    let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
@@ -170,9 +170,9 @@ pub fn index() {
     );
 
     // Tickets include live event
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = None;
-    let mut parameters = Query::<SearchParameters>::extract(&test_request.request).unwrap();
+    let mut parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     parameters.start_utc = Some(NaiveDate::from_ymd(2016, 7, 8).and_hms(9, 11, 11));
     let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user.clone())).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -191,9 +191,9 @@ pub fn index() {
     );
 
     // Test with search parameter
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = None;
-    let mut parameters = Query::<SearchParameters>::extract(&test_request.request).unwrap();
+    let mut parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     parameters.start_utc = Some(NaiveDate::from_ymd(2017, 7, 8).and_hms(9, 0, 11));
     let response = tickets::index((database.connection.clone().into(), path, parameters, auth_user)).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -207,7 +207,7 @@ pub fn index() {
 }
 
 #[test]
-pub fn show() {
+pub async fn show() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -247,7 +247,7 @@ pub fn show() {
     )
     .unwrap();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let mut path = Path::<PathParameters>::extract(&request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&request.request).await.unwrap();
     let ticket = TicketInstance::find_for_user(user.id, conn).unwrap().remove(0);
     path.id = ticket.id;
     let response = tickets::show((database.connection.clone().into(), path, auth_user)).unwrap();
@@ -440,8 +440,8 @@ mod show_redeem_key {
     }
 }
 
-#[test]
-fn ticket_transfer_authorization() {
+#[actix_rt::test]
+async fn ticket_transfer_authorization() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -523,8 +523,8 @@ fn ticket_transfer_authorization() {
     assert!(response.is_err());
 }
 
-#[test]
-fn send_to_existing_user() {
+#[actix_rt::test]
+async fn send_to_existing_user() {
     let database = TestDatabase::new();
     let conn = database.connection.get();
     let sender = database.create_user().finish();
@@ -559,8 +559,8 @@ fn send_to_existing_user() {
     );
 }
 
-#[test]
-fn send_to_new_user() {
+#[actix_rt::test]
+async fn send_to_new_user() {
     let database = TestDatabase::new();
     let conn = database.connection.get();
     let sender = database.create_user().finish();
@@ -592,8 +592,8 @@ fn send_to_new_user() {
     );
 }
 
-#[test]
-fn receive_ticket_transfer() {
+#[actix_rt::test]
+async fn receive_ticket_transfer() {
     let database = TestDatabase::new();
     let request = TestRequest::create();
     let user = database.create_user().finish();
@@ -665,8 +665,8 @@ fn receive_ticket_transfer() {
     assert_eq!(response.status(), StatusCode::OK);
 }
 
-#[test]
-fn receive_ticket_transfer_fails_cancelled_transfer() {
+#[actix_rt::test]
+async fn receive_ticket_transfer_fails_cancelled_transfer() {
     let database = TestDatabase::new();
     let request = TestRequest::create();
     let user = database.create_user().finish();

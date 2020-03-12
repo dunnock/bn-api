@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::users::{self, *};
 use bigneon_api::errors::*;
 use bigneon_api::extractors::*;
@@ -11,7 +11,7 @@ use serde_json;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-pub fn profile(role: Roles, should_test_true: bool) {
+pub async fn profile(role: Roles, should_test_true: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -47,10 +47,10 @@ pub fn profile(role: Roles, should_test_true: bool) {
     .unwrap();
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id", "user_id"]);
-    let mut path = Path::<OrganizationFanPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<OrganizationFanPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     path.user_id = user2.id;
-    let response: HttpResponse = users::profile((database.connection.clone().into(), path, auth_user.clone())).into();
+    let response: HttpResponse = users::profile((database.connection.clone().into(), path, auth_user.clone())).await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_true {
@@ -83,7 +83,7 @@ pub fn profile(role: Roles, should_test_true: bool) {
     }
 }
 
-pub fn activity(role: Roles, should_test_true: bool) {
+pub async fn activity(role: Roles, should_test_true: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -124,11 +124,11 @@ pub fn activity(role: Roles, should_test_true: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id", "user_id"]);
-    let mut path = Path::<OrganizationFanPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<OrganizationFanPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     path.user_id = user2.id;
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
-    let activity_parameters = Query::<ActivityParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
+    let activity_parameters = Query::<ActivityParameters>::extract(&test_request.request).await.unwrap();
     let response: Result<WebPayload<ActivitySummary>, BigNeonError> = users::activity((
         database.connection.clone().into(),
         path,
@@ -169,7 +169,7 @@ pub fn activity(role: Roles, should_test_true: bool) {
     }
 }
 
-pub fn history(role: Roles, should_test_true: bool) {
+pub async fn history(role: Roles, should_test_true: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -208,10 +208,10 @@ pub fn history(role: Roles, should_test_true: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id", "user_id"]);
-    let mut path = Path::<OrganizationFanPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<OrganizationFanPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     path.user_id = user2.id;
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: Result<WebPayload<HistoryItem>, BigNeonError> = users::history((
         database.connection.clone().into(),
         path,
@@ -244,7 +244,7 @@ pub fn history(role: Roles, should_test_true: bool) {
     }
 }
 
-pub fn list_organizations(role: Roles, should_test_true: bool) {
+pub async fn list_organizations(role: Roles, should_test_true: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let user2 = database.create_user().finish();
@@ -255,11 +255,11 @@ pub fn list_organizations(role: Roles, should_test_true: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = user2.id;
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
-        users::list_organizations((database.connection.into(), path, query_parameters, auth_user.clone())).into();
+        users::list_organizations((database.connection.into(), path, query_parameters, auth_user.clone())).await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_true {
@@ -295,7 +295,7 @@ pub fn list_organizations(role: Roles, should_test_true: bool) {
     assert_eq!(true, true);
 }
 
-pub fn show_push_notification_tokens_for_user_id(role: Roles, should_test_true: bool) {
+pub async fn show_push_notification_tokens_for_user_id(role: Roles, should_test_true: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -314,7 +314,7 @@ pub fn show_push_notification_tokens_for_user_id(role: Roles, should_test_true: 
     created_token.commit(user.id, &connection).unwrap();
     //Retrieve push notification token
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = user2.id;
 
     let response: HttpResponse =
@@ -335,7 +335,7 @@ pub fn show_push_notification_tokens_for_user_id(role: Roles, should_test_true: 
     }
 }
 
-pub fn show_push_notification_tokens(role: Roles, should_test_true: bool) {
+pub async fn show_push_notification_tokens(role: Roles, should_test_true: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -353,7 +353,7 @@ pub fn show_push_notification_tokens(role: Roles, should_test_true: bool) {
     created_token.commit(user.id, &connection).unwrap();
     //Retrieve push notification tokens
     let response: HttpResponse =
-        users::show_push_notification_tokens((database.connection.clone().into(), auth_user.clone())).into();
+        users::show_push_notification_tokens((database.connection.clone().into(), auth_user.clone())).await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_true {
@@ -369,7 +369,7 @@ pub fn show_push_notification_tokens(role: Roles, should_test_true: bool) {
     }
 }
 
-pub fn add_push_notification_token(role: Roles, should_test_true: bool) {
+pub async fn add_push_notification_token(role: Roles, should_test_true: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -386,7 +386,7 @@ pub fn add_push_notification_token(role: Roles, should_test_true: bool) {
     let json = Json(created_token.clone());
 
     let response: HttpResponse =
-        users::add_push_notification_token((database.connection.clone().into(), json, auth_user.clone())).into();
+        users::add_push_notification_token((database.connection.clone().into(), json, auth_user.clone())).await.into();
 
     if should_test_true {
         assert_eq!(response.status(), StatusCode::OK);
@@ -403,7 +403,7 @@ pub fn add_push_notification_token(role: Roles, should_test_true: bool) {
     }
 }
 
-pub fn remove_push_notification_token(role: Roles, should_test_true: bool) {
+pub async fn remove_push_notification_token(role: Roles, should_test_true: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -425,11 +425,11 @@ pub fn remove_push_notification_token(role: Roles, should_test_true: bool) {
     assert_eq!(stored_tokens.len(), 1);
     //Remove push notification token
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = stored_tokens[0].id;
 
     let response: HttpResponse =
-        users::remove_push_notification_token((database.connection.clone().into(), path, auth_user.clone())).into();
+        users::remove_push_notification_token((database.connection.clone().into(), path, auth_user.clone())).await.into();
 
     if should_test_true {
         assert_eq!(response.status(), StatusCode::OK);
@@ -441,7 +441,7 @@ pub fn remove_push_notification_token(role: Roles, should_test_true: bool) {
     }
 }
 
-pub fn show(role: Roles, should_test_true: bool) {
+pub async fn show(role: Roles, should_test_true: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let user2 = database.create_user().finish();
@@ -455,9 +455,9 @@ pub fn show(role: Roles, should_test_true: bool) {
     let display_user = user2.for_display().unwrap();
     let test_request = TestRequest::create();
 
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = display_user.id;
-    let response: HttpResponse = users::show((database.connection.into(), path, auth_user.clone())).into();
+    let response: HttpResponse = users::show((database.connection.into(), path, auth_user.clone())).await.into();
     if should_test_true {
         let body = support::unwrap_body_to_string(&response).unwrap();
         assert_eq!(response.status(), StatusCode::OK);

@@ -3,7 +3,7 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::error::ResponseError;
-use actix_web::{http::StatusCode, HttpResponse, web::Path};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::comps::{self, NewCompRequest};
 use bigneon_api::controllers::holds::UpdateHoldRequest;
 use bigneon_api::extractors::*;
@@ -215,8 +215,8 @@ mod destroy_tests {
     }
 }
 
-#[test]
-fn create_with_validation_errors() {
+#[actix_rt::test]
+async fn create_with_validation_errors() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -240,7 +240,7 @@ fn create_with_validation_errors() {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = hold.id;
 
     let response = comps::create((database.connection.clone(), json, path, auth_user));
@@ -253,8 +253,8 @@ fn create_with_validation_errors() {
     assert_eq!(&email[0].message.clone().unwrap().into_owned(), "Email is invalid");
 }
 
-#[test]
-fn update_with_validation_errors() {
+#[actix_rt::test]
+async fn update_with_validation_errors() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -265,7 +265,7 @@ fn update_with_validation_errors() {
 
     let email = "invalid".to_string();
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id"]);
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = comp.id;
 
     let json = Json(UpdateHoldRequest {
@@ -273,7 +273,7 @@ fn update_with_validation_errors() {
         ..Default::default()
     });
 
-    let response: HttpResponse = comps::update((database.connection.clone(), json, path, auth_user)).into();
+    let response: HttpResponse = comps::update((database.connection.clone(), json, path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 

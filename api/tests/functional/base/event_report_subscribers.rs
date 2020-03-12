@@ -1,14 +1,14 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::Path};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::event_report_subscribers::{self, NewEventReportSubscriberRequest};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
 use bigneon_db::models::*;
 use std::collections::HashMap;
 
-pub fn index(role: Roles, should_test_succeed: bool) {
+pub async fn index(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -28,7 +28,7 @@ pub fn index(role: Roles, should_test_succeed: bool) {
     let expected_event_report_subscribers = vec![event_report_subscriber1, event_report_subscriber2];
 
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
     let response = event_report_subscribers::index((database.connection.clone().into(), path, auth_user));
@@ -57,7 +57,7 @@ pub fn index(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn create(role: Roles, should_test_succeed: bool) {
+pub async fn create(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -72,7 +72,7 @@ pub fn create(role: Roles, should_test_succeed: bool) {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
     let response = event_report_subscribers::create((database.connection.clone().into(), json, path, auth_user));
@@ -92,7 +92,7 @@ pub fn create(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn destroy(role: Roles, should_succeed: bool) {
+pub async fn destroy(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -102,11 +102,11 @@ pub fn destroy(role: Roles, should_succeed: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id"]);
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event_report_subscriber.id;
 
     let response: HttpResponse =
-        event_report_subscribers::destroy((database.connection.clone().into(), path, auth_user)).into();
+        event_report_subscribers::destroy((database.connection.clone().into(), path, auth_user)).await.into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);

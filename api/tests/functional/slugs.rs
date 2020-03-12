@@ -2,7 +2,7 @@ use crate::functional::{base::events, events::event_venue_entry};
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::events::*;
 use bigneon_api::controllers::slugs;
 use bigneon_api::controllers::slugs::*;
@@ -12,8 +12,8 @@ use bigneon_db::models::*;
 use serde_json;
 use std::env;
 
-#[test]
-fn show_event() {
+#[actix_rt::test]
+async fn show_event() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -29,7 +29,7 @@ fn show_event() {
     let _event_interest = EventInterest::create(event.id, user.id).commit(conn);
     let slug = "newevent1-san-francisco";
     let test_request = TestRequest::create_with_uri(&format!("/{}", slug));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = events::expected_show_json(
         Roles::User,
         event.clone(),
@@ -43,7 +43,7 @@ fn show_event() {
         None,
     );
     path.id = slug.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = slugs::show((
         test_request.extract_state(),
@@ -61,8 +61,8 @@ fn show_event() {
     assert_eq!(body, event_expected_json);
 }
 
-#[test]
-fn show_redirect_to_primary_slug() {
+#[actix_rt::test]
+async fn show_redirect_to_primary_slug() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -101,9 +101,9 @@ fn show_redirect_to_primary_slug() {
 
     for (slug, expected_redirect_slug, expected_path) in slug_redirects {
         let test_request = TestRequest::create_with_uri(&format!("/{}", &slug.slug));
-        let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+        let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
         path.id = slug.slug.to_string();
-        let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+        let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
         let response: HttpResponse = slugs::show((
             test_request.extract_state(),
@@ -134,8 +134,8 @@ fn show_redirect_to_primary_slug() {
     }
 }
 
-#[test]
-fn show_venue() {
+#[actix_rt::test]
+async fn show_venue() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -164,9 +164,9 @@ fn show_venue() {
 
     let slug = "venue1";
     let test_request = TestRequest::create_with_uri(&format!("/{}", slug));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = slug.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -197,9 +197,9 @@ fn show_venue() {
 
     let slug = "venue2";
     let test_request = TestRequest::create_with_uri(&format!("/{}", slug));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = slug.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -226,8 +226,8 @@ fn show_venue() {
     assert_eq!(body, &expected_json);
 }
 
-#[test]
-fn show_organization() {
+#[actix_rt::test]
+async fn show_organization() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -263,9 +263,9 @@ fn show_organization() {
 
     let slug = "organization1";
     let test_request = TestRequest::create_with_uri(&format!("/{}", slug));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = slug.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -296,9 +296,9 @@ fn show_organization() {
 
     let slug = "organization2";
     let test_request = TestRequest::create_with_uri(&format!("/{}", slug));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = slug.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -325,8 +325,8 @@ fn show_organization() {
     assert_eq!(body, &expected_json);
 }
 
-#[test]
-fn show_city() {
+#[actix_rt::test]
+async fn show_city() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -371,9 +371,9 @@ fn show_city() {
 
     let slug = "san-francisco";
     let test_request = TestRequest::create_with_uri(&format!("/{}", slug));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = slug.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -412,9 +412,9 @@ fn show_city() {
 
     let slug = "oakland";
     let test_request = TestRequest::create_with_uri(&format!("/{}", slug));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = slug.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -449,8 +449,8 @@ fn show_city() {
     assert_eq!(body, &expected_json);
 }
 
-#[test]
-fn show_genre() {
+#[actix_rt::test]
+async fn show_genre() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -501,9 +501,9 @@ fn show_genre() {
 
     let slug = Slug::create_slug(custom_genre.clone().as_str());
     let test_request = TestRequest::create_with_uri(&format!("/{}", slug));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = slug.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = slugs::show((
         test_request.extract_state(),
         database.connection.clone().into(),

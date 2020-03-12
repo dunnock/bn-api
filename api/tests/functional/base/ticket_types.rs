@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::ticket_types;
 use bigneon_api::controllers::ticket_types::*;
 use bigneon_api::extractors::*;
@@ -10,7 +10,7 @@ use bigneon_db::models::*;
 use chrono::prelude::*;
 use serde_json;
 
-pub fn create(role: Roles, should_test_succeed: bool) {
+pub async fn create(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -19,8 +19,8 @@ pub fn create(role: Roles, should_test_succeed: bool) {
 
     //Construct Ticket creation and pricing request
     let test_request = TestRequest::create();
-    let state = test_request.extract_state();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let state = test_request.extract_state().await;
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
     let mut ticket_pricing: Vec<CreateTicketPricingRequest> = Vec::new();
     let start_date = NaiveDate::from_ymd(2018, 5, 1).and_hms(6, 20, 21);
@@ -58,7 +58,7 @@ pub fn create(role: Roles, should_test_succeed: bool) {
         ..Default::default()
     };
     let response: HttpResponse =
-        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state)).into();
+        ticket_types::create((database.connection.into(), path, Json(request_data), auth_user, state)).await.into();
 
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::CREATED);
@@ -67,7 +67,7 @@ pub fn create(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn create_multiple(role: Roles, should_test_succeed: bool) {
+pub async fn create_multiple(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -77,8 +77,8 @@ pub fn create_multiple(role: Roles, should_test_succeed: bool) {
 
     //Construct Ticket creation and pricing request
     let test_request = TestRequest::create();
-    let state = test_request.extract_state();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let state = test_request.extract_state().await;
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
     let mut ticket_types: Vec<CreateTicketTypeRequest> = Vec::new();
     let mut ticket_pricing: Vec<CreateTicketPricingRequest> = Vec::new();
@@ -187,7 +187,7 @@ pub fn create_multiple(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn update(role: Roles, should_test_succeed: bool) {
+pub async fn update(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let request = TestRequest::create();
     let user = database.create_user().finish();
@@ -208,7 +208,7 @@ pub fn update(role: Roles, should_test_succeed: bool) {
 
     //Construct update request
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["event_id", "ticket_type_id"]);
-    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).await.unwrap();
     path.event_id = event.id;
     path.ticket_type_id = created_ticket_type.id;
 
@@ -309,7 +309,7 @@ pub fn update(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn cancel(role: Roles, should_test_succeed: bool) {
+pub async fn cancel(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -329,14 +329,14 @@ pub fn cancel(role: Roles, should_test_succeed: bool) {
 
     //Construct update request
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["event_id", "ticket_type_id"]);
-    let state = test_request.extract_state();
-    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).unwrap();
+    let state = test_request.extract_state().await;
+    let mut path = Path::<EventTicketPathParameters>::extract(&test_request.request).await.unwrap();
     path.event_id = event.id;
     path.ticket_type_id = created_ticket_type.id;
 
     //Send update request
     let response: HttpResponse =
-        ticket_types::cancel((database.connection.clone().into(), path, auth_user, state)).into();
+        ticket_types::cancel((database.connection.clone().into(), path, auth_user, state)).await.into();
 
     let updated_ticket_types = event.ticket_types(true, None, conn).unwrap();
 
@@ -348,7 +348,7 @@ pub fn cancel(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn index(role: Roles, should_test_succeed: bool) {
+pub async fn index(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let request = TestRequest::create();
@@ -362,12 +362,12 @@ pub fn index(role: Roles, should_test_succeed: bool) {
         .finish();
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
-    let mut path = Path::<PathParameters>::extract(&request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&request.request).await.unwrap();
     path.id = event.id;
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
-        ticket_types::index((database.connection.clone().into(), path, query_parameters, auth_user)).into();
+        ticket_types::index((database.connection.clone().into(), path, query_parameters, auth_user)).await.into();
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();
         assert_eq!(response.status(), StatusCode::OK);

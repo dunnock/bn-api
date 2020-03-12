@@ -60,8 +60,8 @@ impl TestRequest {
         }
     }
 
-    pub fn extract_state(&self) -> Data<AppState> {
-        Data::<AppState>::extract(&self.request)
+    pub async fn extract_state(&self) -> Data<AppState> {
+        Data::<AppState>::extract(&self.request).await
     }
 }
 
@@ -75,21 +75,21 @@ impl RequestBuilder {
         RequestBuilder { request }
     }
 
-    pub fn state(&self) -> State<AppState> {
-        self.request.extract_state()
+    pub async fn state(&self) -> Data<AppState> {
+        self.request.extract_state().await
     }
 
-    pub fn path<P>(&self) -> Path<P>
+    pub async fn path<P>(&self) -> Path<P>
     where
         P: DeserializeOwned,
     {
-        Path::<P>::extract(&self.request.request).unwrap()
+        Path::<P>::extract(&self.request.request).await.unwrap()
     }
 
-    pub fn query<Q>(&self) -> Query<Q>
+    pub async fn query<Q>(&self) -> Query<Q>
     where
         Q: DeserializeOwned,
     {
-        Query::<Q>::extract(&self.request.request).unwrap()
+        Query::<Q>::extract(&self.request.request).await.unwrap()
     }
 }

@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use crate::support::{self, *};
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers;
 use bigneon_api::controllers::cart;
 use bigneon_api::controllers::cart::*;
@@ -66,8 +66,8 @@ mod replace_box_office_pricing_tests {
     }
 }
 
-#[test]
-fn duplicate() {
+#[actix_rt::test]
+async fn duplicate() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -105,7 +105,7 @@ fn duplicate() {
     assert_eq!(items.len(), 0);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
     let response = cart::duplicate((database.connection.clone().into(), path, auth_user)).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -128,8 +128,8 @@ fn duplicate() {
     assert_eq!(order_item.ticket_type_id, cart_item.ticket_type_id);
 }
 
-#[test]
-fn duplicate_fails_no_longer_available() {
+#[actix_rt::test]
+async fn duplicate_fails_no_longer_available() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -178,9 +178,9 @@ fn duplicate_fails_no_longer_available() {
     assert_eq!(items.len(), 0);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
-    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user)).into();
+    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
     let expected_json = HttpResponse::new(StatusCode::UNPROCESSABLE_ENTITY)
@@ -193,8 +193,8 @@ fn duplicate_fails_no_longer_available() {
     assert_eq!(body, expected_text);
 }
 
-#[test]
-fn duplicate_fails_for_unowned_order() {
+#[actix_rt::test]
+async fn duplicate_fails_for_unowned_order() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -231,9 +231,9 @@ fn duplicate_fails_for_unowned_order() {
     assert_eq!(items.len(), 0);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
-    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user)).into();
+    let response: HttpResponse = cart::duplicate((database.connection.clone().into(), path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 
     let expected_json = HttpResponse::new(StatusCode::FORBIDDEN).into_builder().json(json!({
@@ -244,34 +244,34 @@ fn duplicate_fails_for_unowned_order() {
     assert_eq!(body, expected_text);
 }
 
-#[test]
-fn show() {
+#[actix_rt::test]
+async fn show() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
     let cart = Order::find_or_create_cart(&user, connection).unwrap();
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = cart::show((database.connection.clone(), auth_user)).into();
+    let response: HttpResponse = cart::show((database.connection.clone(), auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let cart_response: DisplayOrder = serde_json::from_str(&body).unwrap();
     assert_eq!(cart.id, cart_response.id);
 }
 
-#[test]
-fn show_no_cart() {
+#[actix_rt::test]
+async fn show_no_cart() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = cart::show((database.connection, auth_user)).into();
+    let response: HttpResponse = cart::show((database.connection, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, "{}");
 }
 
-#[test]
-fn show_expired_cart() {
+#[actix_rt::test]
+async fn show_expired_cart() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -283,14 +283,14 @@ fn show_expired_cart() {
         .unwrap();
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = cart::show((database.connection.clone().into(), auth_user)).into();
+    let response: HttpResponse = cart::show((database.connection.clone().into(), auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, "{}");
 }
 
-#[test]
-fn destroy() {
+#[actix_rt::test]
+async fn destroy() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -326,8 +326,8 @@ fn destroy() {
     assert_eq!(0, items.len());
 }
 
-#[test]
-fn destroy_without_existing_cart() {
+#[actix_rt::test]
+async fn destroy_without_existing_cart() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -343,8 +343,8 @@ fn destroy_without_existing_cart() {
     assert_eq!(0, items.len());
 }
 
-#[test]
-fn update() {
+#[actix_rt::test]
+async fn update() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -385,8 +385,8 @@ fn update() {
     assert_eq!(order_item.unit_price_in_cents, ticket_pricing.price_in_cents);
 }
 
-#[test]
-fn update_with_draft_event() {
+#[actix_rt::test]
+async fn update_with_draft_event() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database
@@ -420,8 +420,8 @@ fn update_with_draft_event() {
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
-#[test]
-fn update_multiple() {
+#[actix_rt::test]
+async fn update_multiple() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database
@@ -488,8 +488,8 @@ fn update_multiple() {
     assert_eq!(order_item2.unit_price_in_cents, ticket_pricing2.price_in_cents);
 }
 
-#[test]
-fn add_with_increment() {
+#[actix_rt::test]
+async fn add_with_increment() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -536,8 +536,8 @@ fn add_with_increment() {
     assert_eq!(order_item.unit_price_in_cents, ticket_pricing.price_in_cents);
 }
 
-#[test]
-fn update_with_increment_failure_invalid_quantity() {
+#[actix_rt::test]
+async fn update_with_increment_failure_invalid_quantity() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -580,8 +580,8 @@ fn update_with_increment_failure_invalid_quantity() {
     );
 }
 
-#[test]
-fn update_with_existing_cart() {
+#[actix_rt::test]
+async fn update_with_existing_cart() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -621,8 +621,8 @@ fn update_with_existing_cart() {
     assert_eq!(order_item.unit_price_in_cents, ticket_pricing.price_in_cents);
 }
 
-#[test]
-fn reduce() {
+#[actix_rt::test]
+async fn reduce() {
     let database = TestDatabase::new();
     let connection = &database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -685,8 +685,8 @@ fn reduce() {
     assert_eq!(order_item.unit_price_in_cents, ticket_pricing.price_in_cents);
 }
 
-#[test]
-fn remove() {
+#[actix_rt::test]
+async fn remove() {
     let database = TestDatabase::new();
     let connection = &database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -746,8 +746,8 @@ fn remove() {
     assert_eq!(items.len(), 0);
 }
 
-#[test]
-fn remove_with_increment() {
+#[actix_rt::test]
+async fn remove_with_increment() {
     let database = TestDatabase::new();
     let connection = &database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -816,8 +816,8 @@ fn remove_with_increment() {
     assert_eq!(order_item.unit_price_in_cents, ticket_pricing.price_in_cents);
 }
 
-#[test]
-fn remove_with_increment_failure_invalid_quantity() {
+#[actix_rt::test]
+async fn remove_with_increment_failure_invalid_quantity() {
     let database = TestDatabase::new();
     let connection = &database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -881,8 +881,8 @@ fn remove_with_increment_failure_invalid_quantity() {
     );
 }
 
-#[test]
-fn checkout_external() {
+#[actix_rt::test]
+async fn checkout_external() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -931,8 +931,8 @@ fn checkout_external() {
     assert_eq!("Example note".to_string(), note.note);
 }
 
-#[test]
-fn checkout_external_with_free_cart() {
+#[actix_rt::test]
+async fn checkout_external_with_free_cart() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -984,8 +984,8 @@ fn checkout_external_with_free_cart() {
     assert_eq!(payment.provider, PaymentProviders::External);
 }
 
-#[test]
-fn checkout_paid_fails_with_free_cart() {
+#[actix_rt::test]
+async fn checkout_paid_fails_with_free_cart() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -1036,8 +1036,8 @@ fn checkout_paid_fails_with_free_cart() {
     assert_eq!(order.status, OrderStatus::Draft);
 }
 
-#[test]
-fn checkout_free() {
+#[actix_rt::test]
+async fn checkout_free() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -1081,8 +1081,8 @@ fn checkout_free() {
     assert_eq!(payment.provider, PaymentProviders::Free);
 }
 
-#[test]
-fn checkout_free_for_paid_items() {
+#[actix_rt::test]
+async fn checkout_free_for_paid_items() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -1123,8 +1123,8 @@ fn checkout_free_for_paid_items() {
     assert_eq!(order.status, OrderStatus::Draft);
 }
 
-#[test]
-fn clear_invalid_items() {
+#[actix_rt::test]
+async fn clear_invalid_items() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -1160,15 +1160,15 @@ fn clear_invalid_items() {
     // Not currently valid
     assert!(!cart.items_valid_for_purchase(connection).unwrap());
 
-    let response: HttpResponse = cart::clear_invalid_items((database.connection.clone().into(), user)).into();
+    let response: HttpResponse = cart::clear_invalid_items((database.connection.clone().into(), user)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
 
     // Cart no longer contains invalid items
     assert!(cart.items_valid_for_purchase(connection).unwrap());
 }
 
-#[test]
-fn checkout_fails_for_invalid_items() {
+#[actix_rt::test]
+async fn checkout_fails_for_invalid_items() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -1239,8 +1239,8 @@ fn checkout_fails_for_invalid_items() {
     let cart = Order::find(cart.id, connection).unwrap();
     assert_eq!(cart.status, OrderStatus::Draft);
 }
-#[test]
-fn checkout_provider_globee() {
+#[actix_rt::test]
+async fn checkout_provider_globee() {
     let database = TestDatabase::new();
     let conn = database.connection.get();
     let event = database.create_event().with_tickets().with_ticket_pricing().finish();
@@ -1283,8 +1283,8 @@ fn checkout_provider_globee() {
         order.id
     );
     let request = TestRequest::create_with_uri_custom_params(&url, vec!["nonce", "id"]);
-    let query = Query::<controllers::payments::QueryParams>::extract(&request.request).unwrap();
-    let mut path = Path::<controllers::payments::PathParams>::extract(&request.request).unwrap();
+    let query = Query::<controllers::payments::QueryParams>::extract(&request.request).await.unwrap();
+    let mut path = Path::<controllers::payments::PathParams>::extract(&request.request).await.unwrap();
     path.nonce = db_payment.url_nonce.clone().unwrap();
     path.id = order.id;
 

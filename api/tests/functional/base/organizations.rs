@@ -2,7 +2,7 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::ResponseError;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::organizations;
 use bigneon_api::controllers::organizations::*;
 use bigneon_api::extractors::*;
@@ -13,7 +13,7 @@ use serde_json;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-pub fn index(role: Roles) {
+pub async fn index(role: Roles) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
 
@@ -40,8 +40,8 @@ pub fn index(role: Roles) {
     };
 
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
-    let response: HttpResponse = organizations::index((database.connection.into(), query_parameters, user)).into();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
+    let response: HttpResponse = organizations::index((database.connection.into(), query_parameters, user)).await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     let counter = expected_organizations.len();
     let wrapped_expected_orgs = Payload {
@@ -61,7 +61,7 @@ pub fn index(role: Roles) {
     assert_eq!(body, expected_json);
 }
 
-pub fn show(role: Roles, should_succeed: bool) {
+pub async fn show(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -72,7 +72,7 @@ pub fn show(role: Roles, should_succeed: bool) {
     let organization_expected_json = serde_json::to_string(&organization).unwrap();
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     let response: HttpResponse = organizations::show((
         test_request.extract_state(),
@@ -92,7 +92,7 @@ pub fn show(role: Roles, should_succeed: bool) {
     assert_eq!(body, organization_expected_json);
 }
 
-pub fn index_for_all_orgs(role: Roles, should_test_succeed: bool) {
+pub async fn index_for_all_orgs(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
 
     let user = database.create_user().finish();
@@ -113,9 +113,9 @@ pub fn index_for_all_orgs(role: Roles, should_test_succeed: bool) {
 
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse =
-        organizations::index_for_all_orgs((database.connection.into(), query_parameters, auth_user)).into();
+        organizations::index_for_all_orgs((database.connection.into(), query_parameters, auth_user)).await.into();
 
     let body = support::unwrap_body_to_string(&response).unwrap();
 
@@ -141,7 +141,7 @@ pub fn index_for_all_orgs(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn create(role: Roles, should_test_succeed: bool) {
+pub async fn create(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let name = "Organization Example";
     let auth_user = support::create_auth_user(role, None, &database);
@@ -197,7 +197,7 @@ pub fn create(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn update(role: Roles, should_succeed: bool) {
+pub async fn update(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -205,7 +205,7 @@ pub fn update(role: Roles, should_succeed: bool) {
 
     let new_name = "New Name";
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     let json = Json(OrganizationEditableAttributes {
         name: Some(new_name.to_string()),
@@ -251,7 +251,7 @@ pub fn update(role: Roles, should_succeed: bool) {
     assert_eq!(updated_organization.cc_fee_percent, 5.5);
 }
 
-pub fn update_restricted_field(restricted_field: &str, role: Roles, should_succeed: bool) {
+pub async fn update_restricted_field(restricted_field: &str, role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -259,7 +259,7 @@ pub fn update_restricted_field(restricted_field: &str, role: Roles, should_succe
 
     let new_name = "New Name";
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
     let mut attributes = OrganizationEditableAttributes {
@@ -307,7 +307,7 @@ pub fn update_restricted_field(restricted_field: &str, role: Roles, should_succe
     }
 }
 
-pub fn remove_user(role: Roles, should_test_succeed: bool) {
+pub async fn remove_user(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let user2 = database.create_user().finish();
@@ -321,12 +321,12 @@ pub fn remove_user(role: Roles, should_test_succeed: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id", "user_id"]);
-    let mut path = Path::<OrganizationUserPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<OrganizationUserPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     path.user_id = user3.id;
 
     let response: HttpResponse =
-        organizations::remove_user((database.connection.into(), path, auth_user.clone())).into();
+        organizations::remove_user((database.connection.into(), path, auth_user.clone())).await.into();
     let count = 1;
     let body = support::unwrap_body_to_string(&response).unwrap();
     if should_test_succeed {
@@ -338,7 +338,7 @@ pub fn remove_user(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn add_user(role: Roles, should_test_succeed: bool) {
+pub async fn add_user(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let user2 = database.create_user().finish();
@@ -350,11 +350,11 @@ pub fn add_user(role: Roles, should_test_succeed: bool) {
         roles: vec![Roles::OrgMember],
         event_ids: None,
     });
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
     let response: HttpResponse =
-        organizations::add_or_replace_user((database.connection.into(), path, json, auth_user.clone())).into();
+        organizations::add_or_replace_user((database.connection.into(), path, json, auth_user.clone())).await.into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::CREATED);
     } else {
@@ -362,7 +362,7 @@ pub fn add_user(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn add_artist(role: Roles, should_test_succeed: bool) {
+pub async fn add_artist(role: Roles, should_test_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -379,11 +379,11 @@ pub fn add_artist(role: Roles, should_test_succeed: bool) {
         ..Default::default()
     });
 
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
     let response: HttpResponse =
-        organizations::add_artist((database.connection.into(), path, json, auth_user.clone())).into();
+        organizations::add_artist((database.connection.into(), path, json, auth_user.clone())).await.into();
     if should_test_succeed {
         assert_eq!(response.status(), StatusCode::CREATED);
         let body = support::unwrap_body_to_string(&response).unwrap();
@@ -394,7 +394,7 @@ pub fn add_artist(role: Roles, should_test_succeed: bool) {
     }
 }
 
-pub fn list_organization_members(role: Roles, should_succeed: bool) {
+pub async fn list_organization_members(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let user1 = database.create_user().with_last_name("User1".into()).finish();
     let user2 = database.create_user().with_last_name("User2".into()).finish();
@@ -441,10 +441,10 @@ pub fn list_organization_members(role: Roles, should_succeed: bool) {
     };
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response = organizations::list_organization_members((
         database.connection.into(),
         path,
@@ -465,7 +465,7 @@ pub fn list_organization_members(role: Roles, should_succeed: bool) {
     assert_eq!(response.payload(), &expected_data);
 }
 
-pub fn show_fee_schedule(role: Roles, should_succeed: bool) {
+pub async fn show_fee_schedule(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().with_fees().finish();
@@ -493,11 +493,11 @@ pub fn show_fee_schedule(role: Roles, should_succeed: bool) {
 
     let expected_json = serde_json::to_string(&expected_data).unwrap();
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
     let response: HttpResponse =
-        organizations::show_fee_schedule((database.connection.into(), path, auth_user.clone())).into();
+        organizations::show_fee_schedule((database.connection.into(), path, auth_user.clone())).await.into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);
@@ -508,7 +508,7 @@ pub fn show_fee_schedule(role: Roles, should_succeed: bool) {
     assert_eq!(body, expected_json.to_string());
 }
 
-pub fn add_fee_schedule(role: Roles, should_succeed: bool) {
+pub async fn add_fee_schedule(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let organization = database.create_organization().finish();
     let auth_user = support::create_auth_user(role, Some(&organization), &database);
@@ -529,11 +529,11 @@ pub fn add_fee_schedule(role: Roles, should_succeed: bool) {
         ],
     });
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
     let response: HttpResponse =
-        organizations::add_fee_schedule((database.connection.into(), path, json, auth_user)).into();
+        organizations::add_fee_schedule((database.connection.into(), path, json, auth_user)).await.into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);

@@ -2,8 +2,8 @@ use crate::support::database::TestDatabase;
 use bigneon_api::utils::gen_sitemap;
 use bigneon_db::prelude::*;
 
-#[test]
-fn index() {
+#[actix_rt::test]
+async fn index() {
     let database = TestDatabase::new();
     let conn = database.connection.get();
     let organization = database.create_organization().finish();

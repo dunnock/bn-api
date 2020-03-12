@@ -3,7 +3,7 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::{RequestBuilder, TestRequest};
 use actix_web::Query;
-use actix_web::{http::StatusCode, HttpResponse, web::Path};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::events;
 use bigneon_api::controllers::events::*;
 use bigneon_api::extractors::*;
@@ -20,7 +20,7 @@ use std::env;
 use uuid::Uuid;
 
 #[test]
-pub fn index() {
+pub async fn index() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database.create_organization().finish();
@@ -68,7 +68,7 @@ pub fn index() {
     ];
 
     let test_request = TestRequest::create_with_uri("/events?query=New");
-    let parameters = Query::<SearchParameters>::extract(&test_request.request).unwrap();
+    let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -104,7 +104,7 @@ pub fn index() {
 }
 
 #[test]
-pub fn index_for_user() {
+pub async fn index_for_user() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database.create_organization().finish();
@@ -154,7 +154,7 @@ pub fn index_for_user() {
     ];
 
     let test_request = TestRequest::create_with_uri("/events?query=New");
-    let parameters = Query::<SearchParameters>::extract(&test_request.request).unwrap();
+    let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -184,7 +184,7 @@ pub fn index_for_user() {
 }
 
 #[test]
-pub fn index_with_draft_for_organization_user() {
+pub async fn index_with_draft_for_organization_user() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -215,7 +215,7 @@ pub fn index_with_draft_for_organization_user() {
     ];
 
     let test_request = TestRequest::create_with_uri("/events?query=New");
-    let parameters = Query::<SearchParameters>::extract(&test_request.request).unwrap();
+    let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -246,7 +246,7 @@ pub fn index_with_draft_for_organization_user() {
 }
 
 #[test]
-pub fn index_with_draft_for_user_ignores_drafts() {
+pub async fn index_with_draft_for_user_ignores_drafts() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -274,7 +274,7 @@ pub fn index_with_draft_for_user_ignores_drafts() {
     let expected_results = vec![event_venue_entry(&event, &venue, &vec![], None, &*connection)];
 
     let test_request = TestRequest::create_with_uri("/events?query=New");
-    let parameters = Query::<SearchParameters>::extract(&test_request.request).unwrap();
+    let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -303,7 +303,7 @@ pub fn index_with_draft_for_user_ignores_drafts() {
 }
 
 #[test]
-pub fn index_search_with_filter() {
+pub async fn index_search_with_filter() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database.create_organization().finish();
@@ -357,7 +357,7 @@ pub fn index_search_with_filter() {
     }];
 
     let test_request = TestRequest::create_with_uri("/events?query=NewEvent1");
-    let parameters = Query::<SearchParameters>::extract(&test_request.request).unwrap();
+    let parameters = Query::<SearchParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::index((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -385,8 +385,8 @@ pub fn index_search_with_filter() {
     assert_eq!(body, expected_json);
 }
 
-#[test]
-fn show() {
+#[actix_rt::test]
+async fn show() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -411,7 +411,7 @@ fn show() {
 
     let _event_interest = EventInterest::create(event.id, user.id).commit(conn);
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", event.id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = base::events::expected_show_json(
         Roles::User,
         event,
@@ -425,7 +425,7 @@ fn show() {
         None,
     );
     path.id = event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
         test_request.extract_state(),
@@ -443,8 +443,8 @@ fn show() {
     assert_eq!(body, event_expected_json);
 }
 
-#[test]
-fn show_ended_event() {
+#[actix_rt::test]
+async fn show_ended_event() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -471,7 +471,7 @@ fn show_ended_event() {
 
     let _event_interest = EventInterest::create(event.id, user.id).commit(conn);
     let test_request = TestRequest::create_with_uri(&format!("/tickets/{}", event.id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = base::events::expected_show_json(
         Roles::User,
         event,
@@ -485,7 +485,7 @@ fn show_ended_event() {
         Some(EventStatus::Closed),
     );
     path.id = event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
         test_request.extract_state(),
@@ -503,8 +503,8 @@ fn show_ended_event() {
     assert_eq!(body, event_expected_json);
 }
 
-#[test]
-fn show_future_published_no_preview() {
+#[actix_rt::test]
+async fn show_future_published_no_preview() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -521,9 +521,9 @@ fn show_future_published_no_preview() {
     let event_id = event.id;
 
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", event_id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -538,8 +538,8 @@ fn show_future_published_no_preview() {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[test]
-fn show_from_slug() {
+#[actix_rt::test]
+async fn show_from_slug() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -555,7 +555,7 @@ fn show_from_slug() {
     let _event_interest = EventInterest::create(event1.id, user.id).commit(conn);
     let slug1 = "newevent1-san-francisco";
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", slug1));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = base::events::expected_show_json(
         Roles::User,
         event1.clone(),
@@ -569,7 +569,7 @@ fn show_from_slug() {
         None,
     );
     path.id = slug1.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
         test_request.extract_state(),
@@ -590,9 +590,9 @@ fn show_from_slug() {
     event1.delete(user.id, conn).unwrap();
     let slug1 = "newevent1-at-name-san-francisco";
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", slug1));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = slug1.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
         test_request.extract_state(),
@@ -617,7 +617,7 @@ fn show_from_slug() {
     let _event_interest = EventInterest::create(event2.id, user.id).commit(conn);
     let slug2 = event2.clone().slug(conn).unwrap();
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", slug2));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = base::events::expected_show_json(
         Roles::User,
         event2.clone(),
@@ -631,7 +631,7 @@ fn show_from_slug() {
         None,
     );
     path.id = slug2.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
         test_request.extract_state(),
@@ -649,8 +649,8 @@ fn show_from_slug() {
     assert_eq!(body, event_expected_json);
 }
 
-#[test]
-fn show_future_published_with_preview() {
+#[actix_rt::test]
+async fn show_future_published_with_preview() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database.create_organization().finish();
@@ -681,9 +681,9 @@ fn show_future_published_with_preview() {
 
     EventInterest::create(event_id, user.id).commit(connection).unwrap();
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", event_id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -700,8 +700,8 @@ fn show_future_published_with_preview() {
     assert_eq!(body, event_expected_json);
 }
 
-#[test]
-fn show_deleted_event() {
+#[actix_rt::test]
+async fn show_deleted_event() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -719,9 +719,9 @@ fn show_deleted_event() {
     event.delete(user.id, connection).unwrap();
 
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", event_id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -736,8 +736,8 @@ fn show_deleted_event() {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[test]
-fn show_private() {
+#[actix_rt::test]
+async fn show_private() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -776,7 +776,7 @@ fn show_private() {
 
     let _event_interest = EventInterest::create(event.id, user.id).commit(conn);
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", event.id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = base::events::expected_show_json(
         Roles::User,
         event,
@@ -790,7 +790,7 @@ fn show_private() {
         None,
     );
     path.id = event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
         test_request.extract_state(),
@@ -810,7 +810,7 @@ fn show_private() {
     let _event_interest = EventInterest::create(private_event_id, org_user.id).commit(conn);
     let _event_interest = EventInterest::create(private_event_id, user.id).commit(conn);
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", private_event_id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = base::events::expected_show_json(
         Roles::OrgMember,
         private_event.clone(),
@@ -824,7 +824,7 @@ fn show_private() {
         None,
     );
     path.id = private_event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
         test_request.extract_state(),
@@ -842,9 +842,9 @@ fn show_private() {
     assert_eq!(body, event_expected_json);
 
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", private_event_id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = private_event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -863,9 +863,9 @@ fn show_private() {
         private_event_id,
         "access".to_string()
     ));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = private_event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = events::show((
         test_request.extract_state(),
         database.connection.clone().into(),
@@ -895,8 +895,8 @@ fn show_private() {
     assert_eq!(body, event_expected_json);
 }
 
-#[test]
-fn show_with_cancelled_ticket_type() {
+#[actix_rt::test]
+async fn show_with_cancelled_ticket_type() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -925,7 +925,7 @@ fn show_with_cancelled_ticket_type() {
 
     EventInterest::create(event.id, user.id).commit(conn).unwrap();
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", event.id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = base::events::expected_show_json(
         Roles::User,
         event,
@@ -939,7 +939,7 @@ fn show_with_cancelled_ticket_type() {
         None,
     );
     path.id = event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
 
     let response: HttpResponse = events::show((
         test_request.extract_state(),
@@ -957,8 +957,8 @@ fn show_with_cancelled_ticket_type() {
     assert_eq!(body, event_expected_json);
 }
 
-#[test]
-fn show_with_access_restricted_ticket_type_and_no_code() {
+#[actix_rt::test]
+async fn show_with_access_restricted_ticket_type_and_no_code() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -994,7 +994,7 @@ fn show_with_access_restricted_ticket_type_and_no_code() {
 
     let _event_interest = EventInterest::create(event.id, user.id).commit(conn);
     let test_request = TestRequest::create_with_uri(&format!("/events/{}", event.id));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = base::events::expected_show_json(
         Roles::User,
         event,
@@ -1008,7 +1008,7 @@ fn show_with_access_restricted_ticket_type_and_no_code() {
         None,
     );
     path.id = event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     assert_eq!(query_parameters.redemption_code, None);
 
     let response: HttpResponse = events::show((
@@ -1027,8 +1027,8 @@ fn show_with_access_restricted_ticket_type_and_no_code() {
     assert_eq!(body, event_expected_json);
 }
 
-#[test]
-fn show_with_access_restricted_ticket_type_and_access_code() {
+#[actix_rt::test]
+async fn show_with_access_restricted_ticket_type_and_access_code() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -1067,7 +1067,7 @@ fn show_with_access_restricted_ticket_type_and_access_code() {
         "/events/{}?redemption_code={}",
         event.id, code.redemption_code
     ));
-    let mut path = Path::<StringPathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<StringPathParameters>::extract(&test_request.request).await.unwrap();
     let event_expected_json = base::events::expected_show_json(
         Roles::User,
         event,
@@ -1081,7 +1081,7 @@ fn show_with_access_restricted_ticket_type_and_access_code() {
         None,
     );
     path.id = event_id.to_string();
-    let query_parameters = Query::<EventParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<EventParameters>::extract(&test_request.request).await.unwrap();
     assert_eq!(query_parameters.redemption_code, Some(code.redemption_code));
 
     let response: HttpResponse = events::show((
@@ -1100,8 +1100,8 @@ fn show_with_access_restricted_ticket_type_and_access_code() {
     assert_eq!(body, event_expected_json);
 }
 
-#[test]
-fn show_with_visibility_always_before_sale() {
+#[actix_rt::test]
+async fn show_with_visibility_always_before_sale() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -1139,8 +1139,8 @@ fn show_with_visibility_always_before_sale() {
     assert_eq!(result.ticket_types[0].status, TicketTypeStatus::OnSaleSoon);
 }
 
-#[test]
-fn show_with_visibility_always_before_sale_pricing() {
+#[actix_rt::test]
+async fn show_with_visibility_always_before_sale_pricing() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -1180,8 +1180,8 @@ fn show_with_visibility_always_before_sale_pricing() {
     assert_eq!(result.ticket_types[0].status, TicketTypeStatus::Published);
 }
 
-#[test]
-fn show_with_visibility_always_after_sale() {
+#[actix_rt::test]
+async fn show_with_visibility_always_after_sale() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -1221,8 +1221,8 @@ fn show_with_visibility_always_after_sale() {
     assert_eq!(result.ticket_types[0].status, TicketTypeStatus::SaleEnded);
 }
 
-#[test]
-fn show_with_hidden_ticket_type() {
+#[actix_rt::test]
+async fn show_with_hidden_ticket_type() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -2123,7 +2123,7 @@ mod redeem_ticket {
 }
 
 #[test]
-pub fn delete_fails_has_ticket_in_cart() {
+pub async fn delete_fails_has_ticket_in_cart() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -2153,16 +2153,16 @@ pub fn delete_fails_has_ticket_in_cart() {
     .unwrap();
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = events::delete((database.connection.clone().into(), path, auth_user)).into();
+    let response: HttpResponse = events::delete((database.connection.clone().into(), path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 }
 
-#[test]
-fn update_promoter_fails_lacks_event_id() {
+#[actix_rt::test]
+async fn update_promoter_fails_lacks_event_id() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -2183,16 +2183,16 @@ fn update_promoter_fails_lacks_event_id() {
         name: Some(new_name.to_string()),
         ..Default::default()
     });
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
     let response: HttpResponse =
-        events::update((database.connection.clone().into(), path, json, auth_user.clone())).into();
+        events::update((database.connection.clone().into(), path, json, auth_user.clone())).await.into();
     support::expects_unauthorized(&response);
 }
 
-#[test]
-fn dashboard_with_default_range() {
+#[actix_rt::test]
+async fn dashboard_with_default_range() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let org_admin = database.create_user().finish();
@@ -2236,8 +2236,8 @@ fn dashboard_with_default_range() {
     assert_eq!(cart.status, OrderStatus::Paid);
 
     let test_request = TestRequest::create_with_uri(&format!("/events/{}/dashboard?", event.id));
-    let query_parameters = Query::<DashboardParameters>::extract(&test_request.request).unwrap();
-    let mut path_parameters = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<DashboardParameters>::extract(&test_request.request).await.unwrap();
+    let mut path_parameters = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path_parameters.id = event.id;
 
     let response: HttpResponse = events::dashboard((
@@ -2264,7 +2264,7 @@ fn dashboard_with_default_range() {
 }
 
 #[test]
-pub fn show_from_organizations_past() {
+pub async fn show_from_organizations_past() {
     let database = TestDatabase::new();
 
     let organization = database.create_organization().finish();
@@ -2289,10 +2289,10 @@ pub fn show_from_organizations_past() {
     let expected_events = vec![event.id];
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     let test_request = TestRequest::create_with_uri(&format!("/events?past_or_upcoming=Past"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response =
         events::show_from_organizations((database.connection.into(), path, query_parameters, auth_user)).unwrap();
 
@@ -2304,7 +2304,7 @@ pub fn show_from_organizations_past() {
 }
 
 #[test]
-pub fn show_from_organizations_upcoming() {
+pub async fn show_from_organizations_upcoming() {
     let database = TestDatabase::new();
 
     let organization = database.create_organization().finish();
@@ -2328,10 +2328,10 @@ pub fn show_from_organizations_upcoming() {
 
     let expected_events = vec![event2.id];
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
     let test_request = TestRequest::create_with_uri(&format!("/events?past_or_upcoming=Upcoming"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response =
         events::show_from_organizations((database.connection.into(), path, query_parameters, auth_user)).unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -2341,7 +2341,7 @@ pub fn show_from_organizations_upcoming() {
     );
 }
 
-pub fn event_venue_entry(
+pub async fn event_venue_entry(
     event: &Event,
     venue: &Venue,
     artists: &Vec<DisplayEventArtist>,

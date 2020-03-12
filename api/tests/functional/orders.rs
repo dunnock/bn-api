@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use chrono::prelude::*;
 use diesel;
 use diesel::prelude::*;
@@ -18,7 +18,7 @@ use bigneon_db::models::*;
 use bigneon_db::schema;
 
 #[test]
-pub fn show() {
+pub async fn show() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let mut order = database.create_order().for_user(&user).finish();
@@ -36,11 +36,11 @@ pub fn show() {
     assert_eq!(order.status, OrderStatus::Paid);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).into();
+    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_order: DisplayOrder = serde_json::from_str(&body).unwrap();
@@ -48,7 +48,7 @@ pub fn show() {
 }
 
 #[test]
-pub fn show_for_box_office_purchased_user() {
+pub async fn show_for_box_office_purchased_user() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let box_office_user = database.create_user().finish();
@@ -71,11 +71,11 @@ pub fn show_for_box_office_purchased_user() {
     assert_eq!(order.status, OrderStatus::Paid);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).into();
+    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let found_order: DisplayOrder = serde_json::from_str(&body).unwrap();
@@ -83,7 +83,7 @@ pub fn show_for_box_office_purchased_user() {
 }
 
 #[test]
-pub fn resend_confirmation_on_draft_order() {
+pub async fn resend_confirmation_on_draft_order() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -99,7 +99,7 @@ pub fn resend_confirmation_on_draft_order() {
     assert_eq!(order.status, OrderStatus::Draft);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
 
     let response: HttpResponse = orders::resend_confirmation((
@@ -280,23 +280,23 @@ mod show_other_user_order_not_matching_users_organization_tests {
 }
 
 #[test]
-pub fn show_for_draft_returns_forbidden() {
+pub async fn show_for_draft_returns_forbidden() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let order = database.create_order().for_user(&user).finish();
     assert_eq!(order.status, OrderStatus::Draft);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).into();
+    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user)).await.into();
     support::expects_forbidden(&response, Some("You do not have access to this order"));
 }
 
 #[test]
-pub fn index() {
+pub async fn index() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let mut order1 = database.create_order().for_user(&user).finish();
@@ -338,8 +338,8 @@ pub fn index() {
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
     let test_request = TestRequest::create_with_uri(&format!("/?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
-    let response: HttpResponse = orders::index((database.connection.clone(), query_parameters, auth_user)).into();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
+    let response: HttpResponse = orders::index((database.connection.clone(), query_parameters, auth_user)).await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
@@ -479,7 +479,7 @@ mod refund_tests {
 }
 
 #[test]
-pub fn refund_for_non_refundable_tickets() {
+pub async fn refund_for_non_refundable_tickets() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database.create_organization().with_event_fee().with_fees().finish();
@@ -555,7 +555,7 @@ pub fn refund_for_non_refundable_tickets() {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = cart.id;
     let response: HttpResponse = orders::refund((
         database.connection.clone(),
@@ -586,7 +586,7 @@ pub fn refund_for_non_refundable_tickets() {
 }
 
 #[test]
-pub fn refund_hold_ticket() {
+pub async fn refund_hold_ticket() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database.create_organization().finish();
@@ -643,7 +643,7 @@ pub fn refund_hold_ticket() {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = cart.id;
     let response: HttpResponse = orders::refund((
         database.connection.clone(),

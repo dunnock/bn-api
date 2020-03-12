@@ -5,8 +5,8 @@ use bigneon_api::controllers::genres::GenreListItem;
 use bigneon_db::models::Genre;
 use serde_json;
 
-#[test]
-fn index() {
+#[actix_rt::test]
+async fn index() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let expected_genres: Vec<GenreListItem> = Genre::all(connection)

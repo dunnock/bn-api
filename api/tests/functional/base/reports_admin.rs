@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, web::Query};
+use actix_web::{FromRequest, http::StatusCode, web::Query};
 use bigneon_api::controllers::admin::reports::{self, *};
 use bigneon_api::errors::BigNeonError;
 use bigneon_api::models::WebPayload;
@@ -12,7 +12,7 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 
-pub fn domain_transaction_detail_report(role: Roles, should_succeed: bool) {
+pub async fn domain_transaction_detail_report(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let organization = database
@@ -85,7 +85,7 @@ pub fn domain_transaction_detail_report(role: Roles, should_succeed: bool) {
 
     let test_request = TestRequest::create_with_uri(&query);
 
-    let query = Query::<ReportQueryParameters>::extract(&test_request.request).unwrap();
+    let query = Query::<ReportQueryParameters>::extract(&test_request.request).await.unwrap();
     let response: Result<WebPayload<DomainTransactionReportRow>, BigNeonError> =
         reports::domain_transaction_detail_report((database.connection.clone().into(), query, auth_user));
 

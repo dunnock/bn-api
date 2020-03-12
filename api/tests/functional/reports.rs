@@ -5,7 +5,7 @@ use bigneon_db::prelude::*;
 use chrono::prelude::*;
 
 #[test]
-pub fn ticket_counts_report() {
+pub async fn ticket_counts_report() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -378,7 +378,7 @@ pub fn ticket_counts_report() {
     //    });
     //
     //    let test_request = TestRequest::create();
-    //    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    //    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     //    path.id = cart.id;
     //    let response: HttpResponse = orders::refund((
     //        database.connection.clone(),

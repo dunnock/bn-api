@@ -1,21 +1,21 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::Path};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::regions;
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
 use bigneon_db::models::{NewRegion, Region, RegionEditableAttributes, Roles};
 use serde_json;
 
-pub fn create(role: Roles, should_succeed: bool) {
+pub async fn create(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let name = "Region Example";
 
     let user = support::create_auth_user(role, None, &database);
     let json = Json(NewRegion { name: name.to_string() });
 
-    let response: HttpResponse = regions::create((database.connection.into(), json, user)).into();
+    let response: HttpResponse = regions::create((database.connection.into(), json, user)).await.into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);
@@ -27,21 +27,21 @@ pub fn create(role: Roles, should_succeed: bool) {
     assert_eq!(region.name, name);
 }
 
-pub fn update(role: Roles, should_succeed: bool) {
+pub async fn update(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let region = database.create_region().finish();
     let new_name = "New Name";
 
     let user = support::create_auth_user(role, None, &database);
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = region.id;
 
     let mut attributes: RegionEditableAttributes = Default::default();
     attributes.name = Some(new_name.to_string());
     let json = Json(attributes);
 
-    let response: HttpResponse = regions::update((database.connection.into(), path, json, user)).into();
+    let response: HttpResponse = regions::update((database.connection.into(), path, json, user)).await.into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;

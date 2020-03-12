@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::Path};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::holds::{self, *};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -173,8 +173,8 @@ mod update_tests {
     }
 }
 
-#[test]
-fn create_with_validation_errors() {
+#[actix_rt::test]
+async fn create_with_validation_errors() {
     let database = TestDatabase::new();
     let organization = database.create_organization().finish();
     let user = database.create_user().finish();
@@ -201,10 +201,10 @@ fn create_with_validation_errors() {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = holds::create((database.connection.into(), json, path, auth_user)).into();
+    let response: HttpResponse = holds::create((database.connection.into(), json, path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -217,8 +217,8 @@ fn create_with_validation_errors() {
     );
 }
 
-#[test]
-fn update_with_validation_errors() {
+#[actix_rt::test]
+async fn update_with_validation_errors() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -229,7 +229,7 @@ fn update_with_validation_errors() {
     let name = "New Name";
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = hold.id;
 
     let json = Json(UpdateHoldRequest {
@@ -238,7 +238,7 @@ fn update_with_validation_errors() {
         ..Default::default()
     });
 
-    let response: HttpResponse = holds::update((database.connection.clone(), json, path, auth_user)).into();
+    let response: HttpResponse = holds::update((database.connection.clone(), json, path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -252,7 +252,7 @@ fn update_with_validation_errors() {
 }
 
 #[test]
-pub fn read_hold() {
+pub async fn read_hold() {
     let database = TestDatabase::new();
     let organization = database.create_organization().finish();
     let user = database.create_user().finish();
@@ -279,18 +279,18 @@ pub fn read_hold() {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
     let response: HttpResponse =
-        holds::create((database.connection.clone().into(), json, path, auth_user.clone())).into();
+        holds::create((database.connection.clone().into(), json, path, auth_user.clone())).await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
     let created_hold: DisplayHold = serde_json::from_str(body).unwrap();
 
-    let mut hold_path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut hold_path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
 
     hold_path.id = created_hold.id;
-    let show_response = holds::show((database.connection.into(), hold_path, auth_user)).into();
+    let show_response = holds::show((database.connection.into(), hold_path, auth_user)).await.into();
     let show_body = support::unwrap_body_to_string(&show_response).unwrap();
 
     #[derive(Deserialize)]

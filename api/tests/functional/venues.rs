@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::venues;
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -10,8 +10,8 @@ use bigneon_db::models::*;
 use serde_json;
 use std::collections::HashMap;
 
-#[test]
-fn index_with_org_linked_and_private_venues() {
+#[actix_rt::test]
+async fn index_with_org_linked_and_private_venues() {
     let database = TestDatabase::new();
     let venue = database.create_venue().with_name("Venue1".to_string()).finish();
     let venue2 = database.create_venue().with_name("Venue2".to_string()).finish();
@@ -32,10 +32,10 @@ fn index_with_org_linked_and_private_venues() {
         .add_to_organization(organization.id, database.connection.get())
         .unwrap();
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     //first try with no user
     let response: HttpResponse =
-        venues::index((database.connection.clone().into(), query_parameters, OptionalUser(None))).into();
+        venues::index((database.connection.clone().into(), query_parameters, OptionalUser(None))).await.into();
 
     let mut expected_venues = vec![venue, venue2, venue3];
     let wrapped_expected_venues = Payload {
@@ -53,7 +53,7 @@ fn index_with_org_linked_and_private_venues() {
 
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, expected_json);
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     //now try with user that does not belong to org
     let response: HttpResponse = venues::index((
         database.connection.clone().into(),
@@ -74,7 +74,7 @@ fn index_with_org_linked_and_private_venues() {
     );
     expected_venues.push(venue4);
 
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = venues::index((
         database.connection.into(),
         query_parameters,
@@ -98,16 +98,16 @@ fn index_with_org_linked_and_private_venues() {
 }
 
 #[test]
-pub fn show() {
+pub async fn show() {
     let database = TestDatabase::new();
     let venue = database.create_venue().finish();
     let venue_expected_json = serde_json::to_string(&venue).unwrap();
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = venue.id;
 
-    let response: HttpResponse = venues::show((database.connection.into(), path)).into();
+    let response: HttpResponse = venues::show((database.connection.into(), path)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, venue_expected_json);
@@ -405,7 +405,7 @@ mod show_from_organizations_tests {
 }
 
 #[test]
-pub fn show_from_organizations_private_venue_same_org() {
+pub async fn show_from_organizations_private_venue_same_org() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database
@@ -444,11 +444,11 @@ pub fn show_from_organizations_private_venue_same_org() {
 
     let test_request = TestRequest::create();
 
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = organization.id;
 
     let test_request = TestRequest::create_with_uri(&format!("/limits?"));
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
     let response: HttpResponse = venues::show_from_organizations((
         database.connection.into(),
         path,

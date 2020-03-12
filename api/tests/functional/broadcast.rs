@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::RequestBuilder;
-use actix_web::{http::StatusCode, HttpResponse, Path};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, Path};
 use bigneon_api::controllers::broadcasts;
 use bigneon_api::models::PathParameters;
 use bigneon_db::models::enums::{BroadcastAudience, BroadcastChannel, BroadcastType};
@@ -10,8 +10,8 @@ use bigneon_db::prelude::Broadcast;
 use serde_json::Value;
 use std::string::ToString;
 
-#[test]
-fn broadcast_counter() {
+#[actix_rt::test]
+async fn broadcast_counter() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -40,7 +40,7 @@ fn broadcast_counter() {
     let mut path: Path<PathParameters> = request.path();
     path.id = broadcast_id;
 
-    let response: HttpResponse = broadcasts::tracking_count((conn.into(), path, auth_user)).into();
+    let response: HttpResponse = broadcasts::tracking_count((conn.into(), path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let result: Value = support::unwrap_body_to_object(&response).unwrap();
     assert_eq!(result["event_id"], json!(event_id));

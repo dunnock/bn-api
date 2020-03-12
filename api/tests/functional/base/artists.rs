@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, web::Path};
+use actix_web::{FromRequest, http::StatusCode, FromRequest, HttpResponse, web::Path};
 use bigneon_api::controllers::artists;
 use bigneon_api::extractors::*;
 use bigneon_api::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest};
@@ -25,7 +25,7 @@ pub async fn create(role: Roles, should_test_succeed: bool) {
         ..Default::default()
     });
 
-    let response: HttpResponse = artists::create((database.connection.into(), json, auth_user)).await.into();
+    let response: HttpResponse = artists::create((database.connection.into(), json, auth_user)).await.await.into();
 
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();
@@ -56,7 +56,7 @@ pub async fn create_with_organization(role: Roles, should_test_succeed: bool) {
         ..Default::default()
     });
 
-    let response: HttpResponse = artists::create((database.connection.into(), json, auth_user.clone())).await.into();
+    let response: HttpResponse = artists::create((database.connection.into(), json, auth_user.clone())).await.await.into();
 
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();
@@ -78,7 +78,7 @@ pub async fn toggle_privacy(role: Roles, should_test_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = artist.id;
 
-    let response: HttpResponse = artists::toggle_privacy((database.connection.into(), path, auth_user)).await.into();
+    let response: HttpResponse = artists::toggle_privacy((database.connection.into(), path, auth_user)).await.await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {
@@ -130,7 +130,7 @@ pub async fn update(role: Roles, should_test_succeed: bool) {
     attributes.genres = Some(vec!["emo".to_string()]);
     let json = Json(attributes);
 
-    let response: HttpResponse = artists::update((database.connection.clone().into(), path, json, auth_user)).await.into();
+    let response: HttpResponse = artists::update((database.connection.clone().into(), path, json, auth_user)).await.await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {
@@ -182,7 +182,7 @@ pub async fn update_with_organization(role: Roles, should_test_succeed: bool, is
     attributes.youtube_video_urls = Some(Vec::new());
     let json = Json(attributes);
 
-    let response: HttpResponse = artists::update((database.connection.into(), path, json, auth_user.clone())).await.into();
+    let response: HttpResponse = artists::update((database.connection.into(), path, json, auth_user.clone())).await.await.into();
     if should_test_succeed {
         let body = support::unwrap_body_to_string(&response).unwrap();
         assert_eq!(response.status(), StatusCode::OK);

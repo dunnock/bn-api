@@ -2,7 +2,7 @@ use crate::jwt::{decode, encode, Header, Validation};
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse};
 use bigneon_api::auth::{claims::AccessToken, claims::RefreshToken, TokenResponse};
 use bigneon_api::controllers::auth;
 use bigneon_api::controllers::auth::{LoginRequest, RefreshRequest};
@@ -11,8 +11,8 @@ use bigneon_api::models::*;
 use serde_json;
 use uuid::Uuid;
 
-#[test]
-fn token() {
+#[actix_rt::test]
+async fn token() {
     let database = TestDatabase::new();
     let email = "fake@localhost";
     let password = "strong_password";
@@ -23,7 +23,7 @@ fn token() {
         .finish();
 
     let test_request = TestRequest::create();
-    let state = test_request.extract_state();
+    let state = test_request.extract_state().await;
     let json = Json(LoginRequest::new("fake@localhost", "strong_password"));
 
     let response: TokenResponse = auth::token((
@@ -54,8 +54,8 @@ fn token() {
     assert_eq!(refresh_token.claims.get_id().unwrap(), user.id);
 }
 
-#[test]
-fn token_invalid_email() {
+#[actix_rt::test]
+async fn token_invalid_email() {
     let database = TestDatabase::new();
     database.create_user().finish();
 
@@ -73,8 +73,8 @@ fn token_invalid_email() {
     assert_eq!("Email or password incorrect", response.err().unwrap().to_string());
 }
 
-#[test]
-fn token_incorrect_password() {
+#[actix_rt::test]
+async fn token_incorrect_password() {
     let database = TestDatabase::new();
     let user = database.create_user().with_email("fake@localhost".to_string()).finish();
 
@@ -92,20 +92,20 @@ fn token_incorrect_password() {
     assert_eq!("Email or password incorrect", response.err().unwrap().to_string());
 }
 
-#[test]
-fn token_refresh() {
+#[actix_rt::test]
+async fn token_refresh() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
 
     let test_request = TestRequest::create();
-    let state = test_request.extract_state();
+    let state = test_request.extract_state().await;
     let token_secret = &state.config.token_secret.clone();
     let refresh_token_claims = RefreshToken::new(&user.id, state.config.token_issuer.clone());
     let refresh_token = encode(&Header::default(), &refresh_token_claims, token_secret.as_bytes()).unwrap();
 
     let json = Json(RefreshRequest::new(&refresh_token));
 
-    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).into();
+    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).await.into();
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let response: TokenResponse = serde_json::from_str(&body).unwrap();
@@ -116,50 +116,50 @@ fn token_refresh() {
     assert_eq!(access_token.claims.get_id().unwrap(), user.id);
 }
 
-#[test]
-fn token_refresh_invalid_refresh_token_secret() {
+#[actix_rt::test]
+async fn token_refresh_invalid_refresh_token_secret() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
 
     let test_request = TestRequest::create();
-    let state = test_request.extract_state();
+    let state = test_request.extract_state().await;
     let refresh_token_claims = RefreshToken::new(&user.id, state.config.token_issuer.clone());
     let refresh_token = encode(&Header::default(), &refresh_token_claims, b"incorrect-secret").unwrap();
 
     let json = Json(RefreshRequest::new(&refresh_token));
 
-    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).into();
+    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).await.into();
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, json!({"error": "Invalid token"}).to_string());
 }
 
-#[test]
-fn token_refresh_invalid_refresh_token() {
+#[actix_rt::test]
+async fn token_refresh_invalid_refresh_token() {
     let database = TestDatabase::new();
     database.create_user().finish();
 
     let test_request = TestRequest::create();
 
-    let state = test_request.extract_state();
+    let state = test_request.extract_state().await;
     let json = Json(RefreshRequest::new(&"not.a.real.token"));
 
-    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).into();
+    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).await.into();
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, json!({"error": "Invalid token"}).to_string());
 }
 
-#[test]
-fn token_refresh_user_does_not_exist() {
+#[actix_rt::test]
+async fn token_refresh_user_does_not_exist() {
     let database = TestDatabase::new();
 
     let user = database.create_user().finish();
     let test_request = TestRequest::create();
 
-    let state = test_request.extract_state();
+    let state = test_request.extract_state().await;
     let mut refresh_token_claims = RefreshToken::new(&user.id, state.config.token_issuer.clone());
     refresh_token_claims.sub = Uuid::new_v4().to_string();
 
@@ -171,13 +171,13 @@ fn token_refresh_user_does_not_exist() {
     .unwrap();
     let json = Json(RefreshRequest::new(&refresh_token));
 
-    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).into();
+    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).await.into();
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[test]
-fn token_refresh_password_reset_since_issued() {
+#[actix_rt::test]
+async fn token_refresh_password_reset_since_issued() {
     let database = TestDatabase::new();
 
     let user = database.create_user().finish();
@@ -185,7 +185,7 @@ fn token_refresh_password_reset_since_issued() {
 
     let test_request = TestRequest::create();
 
-    let state = test_request.extract_state();
+    let state = test_request.extract_state().await;
     let mut refresh_token_claims = RefreshToken::new(&user.id, state.config.token_issuer.clone());
 
     // Issued a second prior to the latest password
@@ -198,15 +198,15 @@ fn token_refresh_password_reset_since_issued() {
     .unwrap();
     let json = Json(RefreshRequest::new(&refresh_token));
 
-    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).into();
+    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).await.into();
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     let body = support::unwrap_body_to_string(&response).unwrap();
     assert_eq!(body, json!({"error": "Invalid token"}).to_string());
 }
 
-#[test]
-fn token_refreshed_after_password_change() {
+#[actix_rt::test]
+async fn token_refreshed_after_password_change() {
     let database = TestDatabase::new();
 
     let user = database.create_user().finish();
@@ -214,7 +214,7 @@ fn token_refreshed_after_password_change() {
 
     let test_request = TestRequest::create();
 
-    let state = test_request.extract_state();
+    let state = test_request.extract_state().await;
     let token_secret = &state.config.token_secret.clone();
     let mut refresh_token_claims = RefreshToken::new(&user.id, state.config.token_issuer.clone());
 
@@ -223,7 +223,7 @@ fn token_refreshed_after_password_change() {
     let refresh_token = encode(&Header::default(), &refresh_token_claims, token_secret.as_bytes()).unwrap();
     let json = Json(RefreshRequest::new(&refresh_token));
 
-    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).into();
+    let response: HttpResponse = auth::token_refresh((state, database.connection.into(), json)).await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();

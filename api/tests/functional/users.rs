@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse};
 use bigneon_api::auth::TokenResponse;
 use bigneon_api::controllers::users;
 use bigneon_api::extractors::*;
@@ -382,8 +382,8 @@ mod users_show_tests {
     }
 }
 
-#[test]
-fn register_address_exists() {
+#[actix_rt::test]
+async fn register_address_exists() {
     let database = TestDatabase::new();
     let request = TestRequest::create();
     let existing_user = database.create_user().finish();
@@ -397,15 +397,15 @@ fn register_address_exists() {
         None,
     ));
 
-    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).into();
+    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).await.into();
 
     if response.status() == StatusCode::OK {
         panic!("Duplicate email was allowed when it should not be")
     }
 }
 
-#[test]
-fn register_succeeds_without_name() {
+#[actix_rt::test]
+async fn register_succeeds_without_name() {
     let database = TestDatabase::new();
     let request = TestRequest::create();
     let json = Json(RegisterRequest {
@@ -417,12 +417,12 @@ fn register_succeeds_without_name() {
         captcha_response: None,
     });
 
-    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).into();
+    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).await.into();
     assert_eq!(response.status(), StatusCode::CREATED);
 }
 
-#[test]
-fn register_succeeds() {
+#[actix_rt::test]
+async fn register_succeeds() {
     let database = TestDatabase::new();
     let request = TestRequest::create();
     let json = Json(RegisterRequest::new(
@@ -434,12 +434,12 @@ fn register_succeeds() {
         None,
     ));
 
-    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).into();
+    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).await.into();
     assert_eq!(response.status(), StatusCode::CREATED);
 }
 
-#[test]
-fn register_succeeds_with_login() {
+#[actix_rt::test]
+async fn register_succeeds_with_login() {
     let database = TestDatabase::new();
     let request = TestRequest::create();
     let json = Json(RegisterRequest::new(
@@ -465,8 +465,8 @@ fn register_succeeds_with_login() {
     assert_eq!(token_response.refresh_token.is_empty(), false);
 }
 
-#[test]
-fn register_with_validation_errors() {
+#[actix_rt::test]
+async fn register_with_validation_errors() {
     let database = TestDatabase::new();
     let request = TestRequest::create();
     let json = Json(RegisterRequest::new(
@@ -478,7 +478,7 @@ fn register_with_validation_errors() {
         None,
     ));
 
-    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).into();
+    let response: HttpResponse = users::register((request.request, database.connection.into(), json)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -488,8 +488,8 @@ fn register_with_validation_errors() {
     assert_eq!(&email[0].message.clone().unwrap().into_owned(), "Email is invalid");
 }
 
-#[test]
-fn current_user() {
+#[actix_rt::test]
+async fn current_user() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
@@ -511,8 +511,8 @@ fn current_user() {
     assert!(response.organization_scopes.is_empty());
 }
 
-#[test]
-fn current_user_organization_owner() {
+#[actix_rt::test]
+async fn current_user_organization_owner() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -592,8 +592,8 @@ fn current_user_organization_owner() {
     assert_eq!(expected_roles, current_user.organization_roles);
 }
 
-#[test]
-fn current_user_organization_member() {
+#[actix_rt::test]
+async fn current_user_organization_member() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -673,7 +673,7 @@ fn current_user_organization_member() {
 }
 
 #[test]
-pub fn update_current_user() {
+pub async fn update_current_user() {
     let database = TestDatabase::new();
     let user = support::create_auth_user(Roles::User, None, &database);
     let email = "new-email@tari.com";
@@ -686,7 +686,7 @@ pub fn update_current_user() {
 }
 
 #[test]
-pub fn update_current_user_with_validation_errors() {
+pub async fn update_current_user_with_validation_errors() {
     let database = TestDatabase::new();
     let user = support::create_auth_user(Roles::User, None, &database);
     let mut attributes: UserProfileAttributes = Default::default();
@@ -698,7 +698,7 @@ pub fn update_current_user_with_validation_errors() {
             .err()
             .unwrap());
 
-    let response: HttpResponse = result.into();
+    let response: HttpResponse = result.await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     let validation_response = support::validation_response_from_response(&response).unwrap();
     let email = validation_response.fields.get("email").unwrap();
@@ -706,8 +706,8 @@ pub fn update_current_user_with_validation_errors() {
     assert_eq!(&email[0].message.clone().unwrap().into_owned(), "Email is invalid");
 }
 
-#[test]
-fn update_current_user_address_exists() {
+#[actix_rt::test]
+async fn update_current_user_address_exists() {
     let database = TestDatabase::new();
     let existing_user = database.create_user().finish();
 
@@ -720,7 +720,7 @@ fn update_current_user_address_exists() {
         Err(users::update_current_user((database.connection.into(), json, user))
             .err()
             .unwrap());
-    let response: HttpResponse = result.into();
+    let response: HttpResponse = result.await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     let validation_response = support::validation_response_from_response(&response).unwrap();
     let email = validation_response.fields.get("email").unwrap();

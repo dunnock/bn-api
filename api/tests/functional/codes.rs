@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::Path};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::Path};
 use bigneon_api::controllers::codes::{self, *};
 use bigneon_api::extractors::*;
 use bigneon_api::models::PathParameters;
@@ -175,8 +175,8 @@ mod destroy_tests {
     }
 }
 
-#[test]
-fn create_with_validation_errors() {
+#[actix_rt::test]
+async fn create_with_validation_errors() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -201,11 +201,11 @@ fn create_with_validation_errors() {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
     let response: HttpResponse =
-        codes::create((database.connection.clone().into(), json, path, auth_user.clone())).into();
+        codes::create((database.connection.clone().into(), json, path, auth_user.clone())).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -231,11 +231,11 @@ fn create_with_validation_errors() {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
     let response: HttpResponse =
-        codes::create((database.connection.clone().into(), json, path, auth_user.clone())).into();
+        codes::create((database.connection.clone().into(), json, path, auth_user.clone())).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -257,10 +257,10 @@ fn create_with_validation_errors() {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user)).into();
+    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -269,8 +269,8 @@ fn create_with_validation_errors() {
     assert_eq!(discount_err[0].code, "only_single_discount_type_allowed");
 }
 
-#[test]
-fn create_fails_adding_ticket_type_id_from_other_event() {
+#[actix_rt::test]
+async fn create_fails_adding_ticket_type_id_from_other_event() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -296,10 +296,10 @@ fn create_fails_adding_ticket_type_id_from_other_event() {
     });
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = event.id;
 
-    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user)).into();
+    let response: HttpResponse = codes::create((database.connection.clone().into(), json, path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -312,8 +312,8 @@ fn create_fails_adding_ticket_type_id_from_other_event() {
     );
 }
 
-#[test]
-fn update_with_validation_errors() {
+#[actix_rt::test]
+async fn update_with_validation_errors() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -323,7 +323,7 @@ fn update_with_validation_errors() {
     let auth_user = support::create_auth_user_from_user(&user, Roles::OrgOwner, Some(&organization), &database);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = code.id;
 
     let start_date = NaiveDateTime::from(Utc::now().naive_utc() + Duration::days(1));
@@ -335,7 +335,7 @@ fn update_with_validation_errors() {
         ..Default::default()
     });
 
-    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user)).into();
+    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -348,8 +348,8 @@ fn update_with_validation_errors() {
     );
 }
 
-#[test]
-fn update_fails_adding_ticket_type_id_from_other_event() {
+#[actix_rt::test]
+async fn update_fails_adding_ticket_type_id_from_other_event() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -361,7 +361,7 @@ fn update_fails_adding_ticket_type_id_from_other_event() {
     let auth_user = support::create_auth_user_from_user(&user, Roles::OrgOwner, Some(&organization), &database);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = code.id;
 
     let json = Json(UpdateCodeRequest {
@@ -369,7 +369,7 @@ fn update_fails_adding_ticket_type_id_from_other_event() {
         ..Default::default()
     });
 
-    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user)).into();
+    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user)).await.into();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(response.error().is_some());
 
@@ -383,7 +383,7 @@ fn update_fails_adding_ticket_type_id_from_other_event() {
 }
 
 #[test]
-pub fn update_adding_keeping_and_removing_ticket_types() {
+pub async fn update_adding_keeping_and_removing_ticket_types() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -412,7 +412,7 @@ pub fn update_adding_keeping_and_removing_ticket_types() {
     let auth_user = support::create_auth_user_from_user(&user, Roles::OrgOwner, Some(&organization), &database);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = code.id;
 
     // Keep ticket_type, remove ticket_type2, add ticket_type3
@@ -421,7 +421,7 @@ pub fn update_adding_keeping_and_removing_ticket_types() {
         ..Default::default()
     });
 
-    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user)).into();
+    let response: HttpResponse = codes::update((database.connection.clone().into(), json, path, auth_user)).await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);

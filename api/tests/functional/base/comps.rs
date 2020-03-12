@@ -1,7 +1,7 @@
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, FromRequest, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::comps::{self, NewCompRequest};
 use bigneon_api::controllers::holds::UpdateHoldRequest;
 use bigneon_api::extractors::*;
@@ -80,7 +80,7 @@ pub async fn show(role: Roles, should_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = comp_id;
 
-    let response: HttpResponse = comps::show((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = comps::show((database.connection.clone().into(), path, auth_user)).await.await.into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -149,7 +149,7 @@ pub async fn destroy(role: Roles, should_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = comp.id;
 
-    let response: HttpResponse = comps::destroy((database.connection.clone().into(), path, auth_user)).await.into();
+    let response: HttpResponse = comps::destroy((database.connection.clone().into(), path, auth_user)).await.await.into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -179,7 +179,7 @@ pub async fn update(role: Roles, should_test_succeed: bool) {
         ..Default::default()
     });
 
-    let response: HttpResponse = comps::update((database.connection.clone().into(), json, path, auth_user)).await.into();
+    let response: HttpResponse = comps::update((database.connection.clone().into(), json, path, auth_user)).await.await.into();
     let body = support::unwrap_body_to_string(&response).unwrap();
 
     if should_test_succeed {

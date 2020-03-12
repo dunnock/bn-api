@@ -2,7 +2,7 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use actix_web::{http::StatusCode, HttpResponse, web::{Path, Query}};
+use actix_web::{FromRequest, http::StatusCode, HttpResponse, web::{Path, Query}};
 use bigneon_api::controllers::transfers::{self, *};
 use bigneon_api::errors::BigNeonError;
 use bigneon_api::models::*;
@@ -212,7 +212,7 @@ mod cancel_tests {
 }
 
 #[test]
-pub fn activity() {
+pub async fn activity() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -243,8 +243,8 @@ pub fn activity() {
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, Some(&organization), &database);
     let test_request = TestRequest::create_with_uri("/transfers/activity?past_or_upcoming=Upcoming");
-    let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
-    let filter_parameters = Query::<PastOrUpcomingParameters>::extract(&test_request.request).unwrap();
+    let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
+    let filter_parameters = Query::<PastOrUpcomingParameters>::extract(&test_request.request).await.unwrap();
     let response: Result<WebPayload<UserTransferActivitySummary>, BigNeonError> = transfers::activity((
         database.connection.clone().into(),
         paging_parameters,
@@ -277,7 +277,7 @@ pub fn activity() {
 }
 
 #[test]
-pub fn show_by_transfer_key() {
+pub async fn show_by_transfer_key() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -312,9 +312,9 @@ pub fn show_by_transfer_key() {
     transfer.update_associated_orders(connection).unwrap();
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = transfer.transfer_key;
-    let response: HttpResponse = transfers::show_by_transfer_key((database.connection.clone().into(), path)).into();
+    let response: HttpResponse = transfers::show_by_transfer_key((database.connection.clone().into(), path)).await.into();
 
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
@@ -323,8 +323,8 @@ pub fn show_by_transfer_key() {
     assert_eq!(found_transfer.status, TransferStatus::Pending);
 }
 
-#[test]
-fn index() {
+#[actix_rt::test]
+async fn index() {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -382,9 +382,9 @@ fn index() {
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
     let test_request = TestRequest::create_with_uri("/transfers?source_or_destination=source");
-    let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
-    let filter_parameters = Query::<TransferFilters>::extract(&test_request.request).unwrap();
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).unwrap();
+    let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
+    let filter_parameters = Query::<TransferFilters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = None;
     let response: Result<WebPayload<DisplayTransfer>, BigNeonError> = transfers::index((
         database.connection.clone().into(),
@@ -432,9 +432,9 @@ fn index() {
     assert_eq!(expected_transfers[0].ticket_ids, vec![ticket2.id]);
 
     let test_request = TestRequest::create_with_uri("/transfers?source_or_destination=destination");
-    let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
-    let filter_parameters = Query::<TransferFilters>::extract(&test_request.request).unwrap();
-    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).unwrap();
+    let paging_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
+    let filter_parameters = Query::<TransferFilters>::extract(&test_request.request).await.unwrap();
+    let mut path = Path::<OptionalPathParameters>::extract(&test_request.request).await.unwrap();
     path.id = None;
     let response: Result<WebPayload<DisplayTransfer>, BigNeonError> = transfers::index((
         database.connection.clone().into(),
