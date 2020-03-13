@@ -64,12 +64,13 @@ SELECT o.id                                                                     
        CAST(COALESCE(COUNT(DISTINCT ti.id) FILTER (WHERE ti.status = 'Reserved' AND ti.reserved_until > NOW()),
                      0) AS BIGINT)                                                      AS reserved_count,
        CAST(
-           COALESCE(COUNT(DISTINCT ti.id) FILTER (WHERE ti.status = 'Redeemed'), 0) AS BIGINT)   AS redeemed_count,
+           COALESCE(COUNT(DISTINCT ti.id) FILTER (WHERE ti.status = 'Redeemed' AND rt2.id IS NULL), 0) AS BIGINT)   AS redeemed_count,
        CAST(
-           COALESCE(COUNT(DISTINCT ti.id) FILTER (WHERE ti.status in ('Purchased', 'Redeemed')), 0) AS BIGINT)  AS purchased_count,
+           COALESCE(COUNT(DISTINCT ti.id) FILTER (WHERE ti.status in ('Purchased', 'Redeemed') AND rt2.id IS NULL), 0) AS BIGINT)  AS purchased_count,
        CAST(
          COALESCE(COUNT(DISTINCT ti.id) FILTER (
               WHERE ti.status in ('Purchased', 'Redeemed')
+              AND rt2.id IS NULL
               AND CASE WHEN CURRENT_DATE + run_hour < now()
                 THEN o2.paid_at >= CURRENT_DATE - 1 + run_hour
                 ELSE o2.paid_at >= CURRENT_DATE - 2 + run_hour END
@@ -80,6 +81,7 @@ SELECT o.id                                                                     
        CAST(
          COALESCE(COUNT(DISTINCT ti.id) FILTER (
               WHERE ti.hold_id IS NOT NULL
+              AND rt2.id IS NULL
               AND h.hold_type = 'Comp'
               AND ti.status in ('Purchased', 'Redeemed')
               AND CASE WHEN CURRENT_DATE + run_hour < now()
@@ -108,10 +110,10 @@ SELECT o.id                                                                     
                      0) AS BIGINT)                                                      AS comp_available_count,
        -- comp_count - comp_available_count = the sum of these
        CAST(COALESCE(
-           COUNT(DISTINCT ti.id) FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type = 'Comp' AND ti.status = 'Redeemed'),
+           COUNT(DISTINCT ti.id) FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type = 'Comp' AND ti.status = 'Redeemed' AND rt2.id IS NULL),
            0) AS BIGINT)                                                                AS comp_redeemed_count,
        CAST(COALESCE(
-           COUNT(DISTINCT ti.id) FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type = 'Comp' AND ti.status in ('Purchased', 'Redeemed')),
+           COUNT(DISTINCT ti.id) FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type = 'Comp' AND ti.status in ('Purchased', 'Redeemed') AND rt2.id IS NULL),
            0) AS BIGINT)                                                                AS comp_purchased_count,
        CAST(COALESCE(COUNT(DISTINCT ti.id)
                            FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type = 'Comp' AND ti.status = 'Reserved' AND
@@ -132,10 +134,10 @@ SELECT o.id                                                                     
                      0) AS BIGINT)                                                      AS hold_available_count,
        -- hold_count - hold_available_count = the sum of these
        CAST(COALESCE(
-           COUNT(DISTINCT ti.id) FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type != 'Comp' AND ti.status = 'Redeemed'),
+           COUNT(DISTINCT ti.id) FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type != 'Comp' AND ti.status = 'Redeemed' AND rt2.id IS NULL),
            0) AS BIGINT)                                                                AS hold_redeemed_count,
        CAST(COALESCE(
-           COUNT(DISTINCT ti.id) FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type != 'Comp' AND ti.status in ('Purchased', 'Redeemed')),
+           COUNT(DISTINCT ti.id) FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type != 'Comp' AND ti.status in ('Purchased', 'Redeemed') AND rt2.id IS NULL),
            0) AS BIGINT)                                                                AS hold_purchased_count,
        CAST(COALESCE(COUNT(DISTINCT ti.id)
                            FILTER (WHERE ti.hold_id IS NOT NULL AND h.hold_type != 'Comp' AND ti.status = 'Reserved' AND
@@ -147,7 +149,6 @@ SELECT o.id                                                                     
        ------------------ END HOLDS -------------------
 FROM ticket_instances ti
          LEFT JOIN holds h ON (h.id = ti.hold_id)
-         LEFT JOIN refunded_tickets rt ON (rt.ticket_instance_id = ti.id)
          LEFT JOIN assets a ON (a.id = ti.asset_id)
          LEFT JOIN (SELECT tt.id, tt.name, tt.status FROM ticket_types tt WHERE $3 LIKE '%ticket_type%') AS tt
                    ON tt.id = a.ticket_type_id
@@ -159,6 +160,8 @@ FROM ticket_instances ti
          LEFT JOIN organizations o ON o.id = e2.organization_id
          LEFT JOIN order_items oi ON (oi.id = ti.order_item_id)
          LEFT JOIN orders o2 ON (o2.id = oi.order_id)
+         LEFT JOIN refunded_tickets rt ON (ti.id = rt.ticket_instance_id)
+         LEFT JOIN refunded_tickets rt2 ON (ti.id = rt2.ticket_instance_id AND ti.order_item_id = rt2.order_item_id)
 WHERE ($1 IS NULL OR e2.id = $1)
   AND ($2 IS NULL OR e2.organization_id = $2)
   AND (tt2.deleted_at IS NULL)
