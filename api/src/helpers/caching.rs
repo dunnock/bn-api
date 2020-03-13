@@ -1,14 +1,13 @@
-//use crate::config::Config;
+use crate::config::Config;
 use crate::errors::*;
-//use crate::helpers::*;
+use crate::helpers::*;
 use crate::utils::redis::*;
-//use actix_web::HttpResponse;
+use actix_web::HttpResponse;
 use cache::CacheConnection;
 use serde::Serialize;
-//use serde_json::{self, Value};
-//use std::borrow::Borrow;
+use serde_json::{self, Value};
+use std::borrow::Borrow;
 
-/*
 pub(crate) fn set_cached_value<T: Serialize>(
     mut cache_connection: impl CacheConnection,
     config: &Config,
@@ -44,7 +43,6 @@ pub(crate) fn get_cached_value<T: Serialize>(
     }
     None
 }
-*/
 
 pub(crate) fn delete_by_key_fragment(
     mut cache_connection: impl CacheConnection,

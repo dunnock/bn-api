@@ -1,11 +1,11 @@
 use crate::db::Connection;
 use crate::extractors::*;
 use crate::helpers::*;
-use crate::server::AppState;
+use crate::server::GetAppState;
 use actix_web::http::header::*;
-use actix_web::http::{HttpTryFrom, Method, StatusCode};
-use actix_web::middleware::{Middleware, Response, Started};
-use actix_web::{Body, FromRequest, HttpRequest, HttpResponse, Result};
+use actix_web::http::{Method, StatusCode};
+use actix_web::{FromRequest, HttpRequest, HttpResponse, dev};
+use actix_web::error;
 use bigneon_db::models::*;
 use bigneon_http::caching::*;
 use itertools::Itertools;
@@ -15,13 +15,13 @@ use uuid::Uuid;
 
 const CACHED_RESPONSE_HEADER: &'static str = "X-Cached-Response";
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum OrganizationLoad {
     // /organizations/{id}/..
     Path,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum CacheUsersBy {
     // Logged in users and anonymous users receive cached results
     None,
@@ -37,14 +37,15 @@ pub enum CacheUsersBy {
     OrganizationScopePresence(OrganizationLoad, Scopes),
 }
 
-pub struct CacheResource {
-    cache_users_by: CacheUsersBy,
+enum Cache {
+    Miss(CacheConfiguration),
+    Hit(HttpResponse, CacheConfiguration),
+    Skip,
 }
 
-impl CacheResource {
-    pub fn new(cache_users_by: CacheUsersBy) -> CacheResource {
-        CacheResource { cache_users_by }
-    }
+#[derive(Clone)]
+struct CacheResource {
+    pub cache_users_by: CacheUsersBy,
 }
 
 pub struct CacheConfiguration {
@@ -67,15 +68,16 @@ impl CacheConfiguration {
     }
 }
 
-impl Middleware<AppState> for CacheResource {
-    fn start(&self, request: &HttpRequest<AppState>) -> Result<Started> {
+impl CacheResource {
+    async fn start(&self, request: &HttpRequest) -> Cache {
         let mut cache_configuration = CacheConfiguration::new();
         if request.method() == Method::GET {
-            let query_parameters = request.query().clone();
-            for (key, value) in query_parameters.iter() {
-                cache_configuration
-                    .cache_data
-                    .insert(key.to_string(), value.to_string());
+            if let Ok(url) = url::Url::parse(&request.uri().to_string()) {
+                for (key, value) in url.query_pairs() {
+                    cache_configuration
+                        .cache_data
+                        .insert(key.to_string(), value.to_string());
+                }
             }
             let user_text = "x-user-role".to_string();
             cache_configuration
@@ -88,13 +90,12 @@ impl Middleware<AppState> for CacheResource {
             let config = state.config.clone();
 
             if self.cache_users_by != CacheUsersBy::None {
-                let user = match OptionalUser::from_request(request, &()) {
+                let user = match OptionalUser::from_request(request, &mut dev::Payload::None).await {
                     Ok(user) => user,
                     Err(error) => {
                         cache_configuration.error = true;
                         error!("CacheResource Middleware start: {:?}", error);
-                        request.extensions_mut().insert(cache_configuration);
-                        return Ok(Started::Done);
+                        return Cache::Miss(cache_configuration);
                     }
                 };
                 if let Some(user) = user.0 {
@@ -102,7 +103,7 @@ impl Middleware<AppState> for CacheResource {
                         CacheUsersBy::None => (),
                         CacheUsersBy::AnonymousOnly => {
                             // Do not cache
-                            return Ok(Started::Done);
+                            return Cache::Skip;
                         }
                         CacheUsersBy::UserId => {
                             cache_configuration.user_key = Some(user.id().to_string());
@@ -123,8 +124,7 @@ impl Middleware<AppState> for CacheResource {
                                             Err(error) => {
                                                 cache_configuration.error = true;
                                                 error!("CacheResource Middleware start: {:?}", error);
-                                                request.extensions_mut().insert(cache_configuration);
-                                                return Ok(Started::Done);
+                                                return Cache::Miss(cache_configuration);
                                             }
                                         };
 
@@ -134,8 +134,7 @@ impl Middleware<AppState> for CacheResource {
                                                 Err(error) => {
                                                     cache_configuration.error = true;
                                                     error!("CacheResource Middleware start: {:?}", error);
-                                                    request.extensions_mut().insert(cache_configuration);
-                                                    return Ok(Started::Done);
+                                                    return Cache::Miss(cache_configuration);
                                                 }
                                             };
 
@@ -146,8 +145,7 @@ impl Middleware<AppState> for CacheResource {
                             } else {
                                 cache_configuration.error = true;
                                 error!("CacheResource Middleware start: unable to load connection");
-                                request.extensions_mut().insert(cache_configuration);
-                                return Ok(Started::Done);
+                                return Cache::Miss(cache_configuration);
                             }
                         }
                     }
@@ -167,69 +165,64 @@ impl Middleware<AppState> for CacheResource {
             if let Some(response) = cached_value {
                 // Insert self into extensions to let response know not to set the value
                 cache_configuration.served_cache = true;
-                request.extensions_mut().insert(cache_configuration);
-                return Ok(Started::Response(response));
+                return Cache::Hit(response, cache_configuration);
             }
         }
 
         cache_configuration.cache_response = true;
-        request.extensions_mut().insert(cache_configuration);
-        Ok(Started::Done)
+        Cache::Miss(cache_configuration)
     }
 
-    fn response(&self, request: &HttpRequest<AppState>, mut response: HttpResponse) -> Result<Response> {
-        let state = request.state().clone();
-        let cache_database = state.database.cache_database.clone();
-        let path = request.path().to_string();
+    async fn response(cache_configuration: CacheConfiguration, mut response: dev::ServiceResponse) -> dev::ServiceResponse {
+        match *response.request().method() {
+            Method::GET if response.status() == StatusCode::OK => {
+                let state = response.request().state();
+                let cache_database = state.database.cache_database.clone();
+                let config = state.config.clone();
 
-        if request.method() == Method::GET {
-            if response.status() == StatusCode::OK {
-                let extensions = request.extensions();
-                if let Some(cache_configuration) = extensions.get::<CacheConfiguration>() {
-                    let config = state.config.clone();
-                    if cache_configuration.cache_response {
-                        cache_database.inner.clone().and_then(|conn| {
-                            caching::set_cached_value(conn, &config, &response, &cache_configuration.cache_data).ok()
-                        });
+                if cache_configuration.cache_response {
+                    cache_database.inner.clone().and_then(|conn| {
+                        caching::set_cached_value(conn, &config, response.response(), &cache_configuration.cache_data).ok()
+                    });
+                }
+
+                if cache_configuration.served_cache {
+                    response.headers_mut().insert(
+                        CACHED_RESPONSE_HEADER.parse().unwrap(),
+                        HeaderValue::from_static("1"),
+                    );
+                }
+
+                // If an error occurred fetching db data, do not send caching headers
+                if !cache_configuration.error {
+                    // Cache headers for client
+                    if let Ok(cache_control_header_value) = HeaderValue::from_str(&format!(
+                        "{}, max-age={}",
+                        if cache_configuration.user_key.is_none() {
+                            "public"
+                        } else {
+                            "private"
+                        },
+                        config.client_cache_period
+                    )) {
+                        response
+                            .headers_mut()
+                            .insert(CACHE_CONTROL, cache_control_header_value);
                     }
 
-                    if cache_configuration.served_cache {
-                        response.headers_mut().insert(
-                            &HeaderName::try_from(CACHED_RESPONSE_HEADER).unwrap(),
-                            HeaderValue::from_static("1"),
-                        );
-                    }
-
-                    // If an error occurred fetching db data, do not send caching headers
-                    if !cache_configuration.error {
-                        // Cache headers for client
-                        if let Ok(cache_control_header_value) = HeaderValue::from_str(&format!(
-                            "{}, max-age={}",
-                            if cache_configuration.user_key.is_none() {
-                                "public"
-                            } else {
-                                "private"
-                            },
-                            config.client_cache_period
-                        )) {
-                            response
-                                .headers_mut()
-                                .insert(&CACHE_CONTROL, cache_control_header_value);
-                        }
-
-                        if let Ok(response_str) = application::unwrap_body_to_string(&response) {
-                            if let Ok(payload) = serde_json::from_str::<Value>(&response_str) {
-                                let etag_hash = etag_hash(&payload.to_string());
-                                if let Ok(new_header_value) = HeaderValue::from_str(&etag_hash) {
-                                    response.headers_mut().insert(&ETAG, new_header_value);
-                                    if request.headers().contains_key(IF_NONE_MATCH) {
-                                        let etag = ETag(EntityTag::weak(etag_hash.to_string()));
-                                        if let Ok(header_value) = request.headers()[IF_NONE_MATCH].to_str() {
-                                            let etag_header = ETag(EntityTag::weak(header_value.to_string()));
-                                            if etag.weak_eq(&etag_header) {
-                                                response.set_body(Body::Empty);
-                                                *response.status_mut() = StatusCode::NOT_MODIFIED;
-                                            }
+                    if let Ok(response_str) = application::unwrap_body_to_string(response.response()) {
+                        if let Ok(payload) = serde_json::from_str::<Value>(&response_str) {
+                            let etag_hash = etag_hash(&payload.to_string());
+                            if let Ok(new_header_value) = HeaderValue::from_str(&etag_hash) {
+                                response.headers_mut().insert(ETAG, new_header_value);
+                                let headers = response.request().headers();
+                                if headers.contains_key(IF_NONE_MATCH) {
+                                    let etag = ETag(EntityTag::weak(etag_hash.to_string()));
+                                    let if_none_match = headers.get(IF_NONE_MATCH).map(|h| h.to_str().ok());
+                                    if let Some(Some(header_value)) = if_none_match {
+                                        let etag_header = ETag(EntityTag::weak(header_value.to_string()));
+                                        if etag.weak_eq(&etag_header) {
+                                            return response.into_response(HttpResponse::NotModified().finish());
                                         }
                                     }
                                 }
@@ -237,22 +230,116 @@ impl Middleware<AppState> for CacheResource {
                         }
                     }
                 }
-            }
-        } else {
-            // Method besides GET requested, PUT/POST/DELETE so clear any matching path cache
-            match *request.method() {
-                Method::PUT | Method::PATCH | Method::POST | Method::DELETE => {
-                    if response.error().is_none() {
-                        cache_database
-                            .inner
-                            .clone()
-                            .and_then(|conn| caching::delete_by_key_fragment(conn, path).ok());
-                    }
+            },
+            Method::PUT | Method::PATCH | Method::POST | Method::DELETE => {
+                if response.response().error().is_none() {
+                    let path = response.request().path().to_owned();
+                    let state = response.request().state();
+                    let cache_database = state.database.cache_database.clone();
+    
+                    cache_database
+                        .inner
+                        .clone()
+                        .and_then(|conn| caching::delete_by_key_fragment(conn, path).ok());
                 }
-                _ => (),
             }
-        }
+            _ => (),
+        };
 
-        Ok(Response::Done(response))
+        response
+    }
+}
+
+use actix_service::Service;
+use actix_web::dev::Transform;
+use futures::future::{Ready, ok};
+use std::task::{Context, Poll};
+use std::rc::Rc;
+use std::cell::RefCell;
+use std::pin::Pin;
+use std::future::Future;
+
+pub struct CacheResourceService<S> {
+    service: Rc<RefCell<S>>,
+    resource: CacheResource,
+}
+
+impl<S> CacheResourceService<S> {
+    fn new(service: S, resource: CacheResource) -> Self {
+        Self {
+            service: Rc::new(RefCell::new(service)),
+            resource
+        }
+    }
+}
+
+impl<S> Service for CacheResourceService<S>
+where
+    S: Service<Request=dev::ServiceRequest, Response=dev::ServiceResponse, Error=error::Error> + 'static,
+{
+    type Request = S::Request;
+    type Response = dev::ServiceResponse;
+    type Error = S::Error;
+    type Future = Pin<Box<dyn Future<Output=Result<Self::Response, Self::Error>>>>;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.service.borrow_mut().poll_ready(cx).map_err(error::Error::from)
+    }
+
+    fn call(&mut self, request: Self::Request) -> Self::Future {
+        let service = self.service.clone();
+        let resource = self.resource.clone();
+        Box::pin(
+            async move {
+                let (http_req, payload) = request.into_parts();
+                let cache = resource.start(&http_req).await;
+                let (response, status) = match cache {
+                    Cache::Hit(response, status) => {
+                        (dev::ServiceResponse::new(http_req, response), status)
+                    },
+                    Cache::Miss(status) => {
+                        let request = dev::ServiceRequest::from_parts(http_req, payload)
+                            .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
+                        let fut = service.borrow_mut().call(request);
+                        (fut.await?, status)
+                    },
+                    Cache::Skip => {
+                        let request = dev::ServiceRequest::from_parts(http_req, payload)
+                            .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
+                        let fut = service.borrow_mut().call(request);
+                        return fut.await 
+                    },
+                };
+                Ok(CacheResource::response(status, response).await)
+            }
+        )
+    }
+}
+
+pub struct CacheResourceTransform {
+    cache_users_by: CacheUsersBy,
+}
+
+impl CacheResourceTransform {
+    pub fn new(cache_users_by: CacheUsersBy) -> Self {
+        Self { cache_users_by }
+    }
+}
+
+impl<S> Transform<S> for CacheResourceTransform
+where
+    S: Service<Request=dev::ServiceRequest, Response=dev::ServiceResponse, Error=error::Error> + 'static,
+{
+    type Request = S::Request;
+    type Response = S::Response;
+    type Error = S::Error;
+    type InitError = ();
+    type Transform = CacheResourceService<S>;
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+
+    fn new_transform(&self, service: S) -> Self::Future {
+        let cache_users_by = self.cache_users_by.clone();
+        let resource = CacheResource { cache_users_by };
+        ok(CacheResourceService::new(service, resource))
     }
 }
