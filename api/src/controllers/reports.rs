@@ -62,6 +62,7 @@ pub async fn get_report(
         "box_office_sales_summary" => box_office_sales_summary((connection, query, path, user)),
         "transaction_details" => Ok(transaction_detail_report((connection, query, path, user))?.into_http_response()?),
         "event_summary" => event_summary_report((connection, query, path, user)),
+        "scan_count" => scan_counts((connection, query, user)),
         "weekly_settlement" => weekly_settlement_report((connection, query, path, user)),
         "ticket_count" => ticket_counts((connection, query, path, user)),
         "audit_report" => audit_report((connection, query, path, user)),
@@ -120,8 +121,7 @@ pub fn event_summary_report(
         let event = Event::find(event_id, connection)?;
         user.requires_scope_for_organization_event(Scopes::EventFinancialReports, &organization, &event, connection)?;
     } else {
-        // TODO: Switch this out for bad request
-        return application::unprocessable("event_id parameter is required");
+        return application::bad_request("event_id parameter is required");
     }
 
     let result = Report::summary_event_report(
@@ -144,8 +144,7 @@ pub fn audit_report(
         let event = Event::find(event_id, connection)?;
         user.requires_scope_for_organization_event(Scopes::EventFinancialReports, &organization, &event, connection)?;
     } else {
-        // TODO: Switch this out for bad request
-        return application::unprocessable("event_id parameter is required");
+        return application::bad_request("event_id parameter is required");
     }
 
     let all_sales_result = Report::summary_event_report(
@@ -187,6 +186,27 @@ pub fn weekly_settlement_report(
 
     let result = Report::organization_summary_report(path.id, query.start_utc, query.end_utc, connection)?;
     Ok(HttpResponse::Ok().json(result))
+}
+
+pub fn scan_counts(
+    (connection, query, user): (Connection, Query<ReportQueryParameters>, AuthUser),
+) -> Result<HttpResponse, BigNeonError> {
+    let connection = connection.get();
+    if let Some(event_id) = query.event_id {
+        let event = Event::find(event_id, connection)?;
+        let organization = event.organization(connection)?;
+        user.requires_scope_for_organization_event(Scopes::ScanReportRead, &organization, &event, connection)?;
+
+        let result = Report::scan_count_report(
+            query.event_id.unwrap(),
+            query.page.unwrap_or(0),
+            query.limit.unwrap_or(100),
+            connection,
+        )?;
+        Ok(HttpResponse::Ok().json(result))
+    } else {
+        application::bad_request("event_id parameter is required")
+    }
 }
 
 pub fn ticket_counts(

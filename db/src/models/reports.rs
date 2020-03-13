@@ -471,6 +471,19 @@ pub struct EventSummaryOtherFees {
     pub client_fee_in_cents: i64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Queryable, QueryableByName)]
+pub struct ScanCountReportRow {
+    #[serde(skip_serializing)]
+    #[sql_type = "Nullable<BigInt>"]
+    pub total: Option<i64>,
+    #[sql_type = "Text"]
+    pub ticket_type_name: String,
+    #[sql_type = "BigInt"]
+    pub scanned_count: i64,
+    #[sql_type = "BigInt"]
+    pub not_scanned_count: i64,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ReconciliationSummaryResult {
     pub payment_method: String,
@@ -986,6 +999,29 @@ impl Report {
         conn: &PgConnection,
     ) -> Result<TicketSalesAndCounts, DatabaseError> {
         Report::ticket_sales_and_counts(event_id, organization_id, None, None, true, true, true, false, conn)
+    }
+
+    pub fn scan_count_report(
+        event_id: Uuid,
+        page: u32,
+        limit: u32,
+        conn: &PgConnection,
+    ) -> Result<Payload<ScanCountReportRow>, DatabaseError> {
+        let query = include_str!("../queries/reports/reports_scan_counts.sql");
+        let scan_count_rows: Vec<ScanCountReportRow> = diesel::sql_query(query)
+            .bind::<dUuid, _>(event_id)
+            .bind::<BigInt, _>((page * limit) as i64)
+            .bind::<BigInt, _>(limit as i64)
+            .get_results(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not fetch report results")?;
+        let total = if scan_count_rows.is_empty() {
+            0
+        } else {
+            scan_count_rows[0].total.unwrap_or(0)
+        };
+        let mut paging = Paging::new(page, limit);
+        paging.total = total as u64;
+        Ok(Payload::new(scan_count_rows, paging))
     }
 
     pub fn promo_code_report(

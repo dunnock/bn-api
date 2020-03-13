@@ -17,6 +17,81 @@ use diesel;
 use diesel::prelude::*;
 use serde_json;
 
+pub fn scan_counts(role: Roles, should_succeed: bool) {
+    let database = TestDatabase::new();
+    let connection = database.connection.get();
+    let organization = database.create_organization().finish();
+    let user = database.create_user().finish();
+    let event = database
+        .create_event()
+        .with_organization(&organization)
+        .with_ticket_type_count(1)
+        .with_ticket_pricing()
+        .finish();
+    let ticket_types = event.ticket_types(true, None, connection).unwrap();
+    let mut order = database
+        .create_order()
+        .quantity(10)
+        .for_tickets(ticket_types[0].id)
+        .for_user(&user)
+        .is_paid()
+        .finish();
+
+    let tickets = TicketInstance::find_for_user(user.id, connection).unwrap();
+    let ticket = &tickets[0];
+    let ticket2 = &tickets[1];
+    let ticket3 = &tickets[2];
+
+    // Scan 2 of the tickets
+    for t in vec![ticket, ticket2] {
+        TicketInstance::redeem_ticket(
+            t.id,
+            t.redeem_key.clone().unwrap(),
+            user.id,
+            CheckInSource::GuestList,
+            connection,
+        )
+        .unwrap();
+    }
+
+    // Refund one scanned, one unscanned tickets
+    let refund_items = vec![RefundItemRequest {
+        order_item_id: ticket.order_item_id.unwrap(),
+        ticket_instance_id: Some(ticket.id),
+    }];
+    order.refund(&refund_items, user.id, None, false, connection).unwrap();
+    let refund_items = vec![RefundItemRequest {
+        order_item_id: ticket3.order_item_id.unwrap(),
+        ticket_instance_id: Some(ticket3.id),
+    }];
+    order.refund(&refund_items, user.id, None, false, connection).unwrap();
+
+    let auth_db_user = database.create_user().finish();
+    let auth_user = support::create_auth_user_from_user(&auth_db_user, role, Some(&organization), &database);
+
+    let test_request = TestRequest::create_with_uri(&format!("/reports?report=scan_count&event_id={}", event.id));
+    let query = Query::<ReportQueryParameters>::extract(&test_request.request).unwrap();
+    let response: HttpResponse = reports::scan_counts((database.connection.clone().into(), query, auth_user)).into();
+
+    if !should_succeed {
+        support::expects_unauthorized(&response);
+        return;
+    }
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = support::unwrap_body_to_string(&response).unwrap();
+    let report_data: Payload<ScanCountReportRow> = serde_json::from_str(&body).unwrap();
+    assert_eq!(
+        vec![ScanCountReportRow {
+            total: None,
+            ticket_type_name: ticket_types[0].name.clone(),
+            scanned_count: 1,
+            not_scanned_count: 7
+        }],
+        report_data.data
+    );
+}
+
 pub async fn box_office_sales_summary(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let box_office_user = database.create_user().with_first_name("BoxOfficeUser1").finish();

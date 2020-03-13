@@ -1116,14 +1116,11 @@ impl Event {
     }
 
     pub fn find(id: Uuid, conn: &PgConnection) -> Result<Event, DatabaseError> {
-        DatabaseError::wrap(
-            ErrorCode::QueryError,
-            "Error loading event",
-            events::table
-                .filter(events::deleted_at.is_null())
-                .find(id)
-                .first::<Event>(conn),
-        )
+        events::table
+            .filter(events::deleted_at.is_null())
+            .find(id)
+            .first::<Event>(conn)
+            .to_db_error(ErrorCode::QueryError, "Error loading event")
     }
 
     pub fn find_incl_org_venue_fees(

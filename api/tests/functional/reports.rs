@@ -391,6 +391,51 @@ pub async fn ticket_counts_report() {
 }
 
 #[cfg(test)]
+mod scan_counts_tests {
+    use super::*;
+    #[test]
+    fn scan_counts_org_member() {
+        base::reports::scan_counts(Roles::OrgMember, true);
+    }
+    #[test]
+    fn scan_counts_admin() {
+        base::reports::scan_counts(Roles::Admin, true);
+    }
+    #[test]
+    fn scan_counts_super() {
+        base::reports::scan_counts(Roles::Super, true);
+    }
+    #[test]
+    fn scan_counts_user() {
+        base::reports::scan_counts(Roles::User, false);
+    }
+    #[test]
+    fn scan_counts_org_owner() {
+        base::reports::scan_counts(Roles::OrgOwner, true);
+    }
+    #[test]
+    fn scan_counts_door_person() {
+        base::reports::scan_counts(Roles::DoorPerson, false);
+    }
+    #[test]
+    fn scan_counts_promoter() {
+        base::reports::scan_counts(Roles::Promoter, true);
+    }
+    #[test]
+    fn scan_counts_promoter_read_only() {
+        base::reports::scan_counts(Roles::PromoterReadOnly, true);
+    }
+    #[test]
+    fn scan_counts_org_admin() {
+        base::reports::scan_counts(Roles::OrgAdmin, true);
+    }
+    #[test]
+    fn scan_counts_box_office() {
+        base::reports::scan_counts(Roles::OrgBoxOffice, false);
+    }
+}
+
+#[cfg(test)]
 mod box_office_sales_summary_tests {
     use super::*;
     #[actix_rt::test]

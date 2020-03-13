@@ -8,6 +8,100 @@ use diesel;
 use diesel::prelude::*;
 
 #[test]
+fn scan_count_report() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let user = project.create_user().finish();
+    let event = project
+        .create_event()
+        .with_ticket_type_count(2)
+        .with_ticket_pricing()
+        .finish();
+    let ticket_types = event.ticket_types(true, None, connection).unwrap();
+    assert_eq!(ticket_types.len(), 2);
+
+    let report_rows = Report::scan_count_report(event.id, 0, 100, connection).unwrap();
+    assert_eq!(report_rows.paging.total, 2);
+    assert_eq!(&report_rows.data[0].ticket_type_name, &ticket_types[0].name);
+    assert_eq!(report_rows.data[0].scanned_count, 0);
+    assert_eq!(report_rows.data[0].not_scanned_count, 0);
+    assert_eq!(&report_rows.data[1].ticket_type_name, &ticket_types[1].name);
+    assert_eq!(report_rows.data[1].scanned_count, 0);
+    assert_eq!(report_rows.data[1].not_scanned_count, 0);
+
+    let mut order = project
+        .create_order()
+        .quantity(10)
+        .for_tickets(ticket_types[0].id)
+        .for_user(&user)
+        .is_paid()
+        .finish();
+    let _order2 = project
+        .create_order()
+        .quantity(5)
+        .for_tickets(ticket_types[1].id)
+        .is_paid()
+        .finish();
+
+    let report_rows = Report::scan_count_report(event.id, 0, 100, connection).unwrap();
+    assert_eq!(report_rows.paging.total, 2);
+    assert_eq!(&report_rows.data[0].ticket_type_name, &ticket_types[0].name);
+    assert_eq!(report_rows.data[0].scanned_count, 0);
+    assert_eq!(report_rows.data[0].not_scanned_count, 10);
+    assert_eq!(&report_rows.data[1].ticket_type_name, &ticket_types[1].name);
+    assert_eq!(report_rows.data[1].scanned_count, 0);
+    assert_eq!(report_rows.data[1].not_scanned_count, 5);
+
+    let tickets = TicketInstance::find_for_user(user.id, connection).unwrap();
+    let ticket = &tickets[0];
+    let ticket2 = &tickets[1];
+    let ticket3 = &tickets[2];
+
+    for t in vec![ticket, ticket2] {
+        TicketInstance::redeem_ticket(
+            t.id,
+            t.redeem_key.clone().unwrap(),
+            user.id,
+            CheckInSource::GuestList,
+            connection,
+        )
+        .unwrap();
+    }
+
+    let report_rows = Report::scan_count_report(event.id, 0, 100, connection).unwrap();
+    assert_eq!(report_rows.paging.total, 2);
+    assert_eq!(&report_rows.data[0].ticket_type_name, &ticket_types[0].name);
+    assert_eq!(report_rows.data[0].scanned_count, 2);
+    assert_eq!(report_rows.data[0].not_scanned_count, 8);
+    assert_eq!(&report_rows.data[1].ticket_type_name, &ticket_types[1].name);
+    assert_eq!(report_rows.data[1].scanned_count, 0);
+    assert_eq!(report_rows.data[1].not_scanned_count, 5);
+
+    // Refund one of the tickets that was previously redeemed
+    let refund_items = vec![RefundItemRequest {
+        order_item_id: ticket.order_item_id.unwrap(),
+        ticket_instance_id: Some(ticket.id),
+    }];
+    order.refund(&refund_items, user.id, None, false, connection).unwrap();
+
+    // Also refund one of the tickets not yet used
+    let refund_items = vec![RefundItemRequest {
+        order_item_id: ticket3.order_item_id.unwrap(),
+        ticket_instance_id: Some(ticket3.id),
+    }];
+    order.refund(&refund_items, user.id, None, false, connection).unwrap();
+
+    let report_rows = Report::scan_count_report(event.id, 0, 100, connection).unwrap();
+    assert_eq!(report_rows.paging.total, 2);
+    assert_eq!(&report_rows.data[0].ticket_type_name, &ticket_types[0].name);
+    assert_eq!(report_rows.data[0].scanned_count, 1);
+    assert_eq!(report_rows.data[0].not_scanned_count, 7);
+    assert_eq!(&report_rows.data[1].ticket_type_name, &ticket_types[1].name);
+    assert_eq!(report_rows.data[1].scanned_count, 0);
+    assert_eq!(report_rows.data[1].not_scanned_count, 5);
+}
+
+#[test]
 fn find_event_reports_for_processing() {
     let project = TestProject::new();
     let connection = project.get_connection();
