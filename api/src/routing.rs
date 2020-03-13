@@ -1,5 +1,5 @@
 use crate::controllers::*;
-use crate::middleware::*;
+use crate::middleware::{CacheResource, CacheUsersBy, OrganizationLoad};
 use actix_web::web;
 use bigneon_db::models::Scopes;
 
@@ -15,19 +15,19 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/a/t").route(web::get().to(analytics::track)))
     .service(
         web::resource("/artists/search")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::AnonymousOnly))
+            .wrap(CacheResource::new(CacheUsersBy::AnonymousOnly))
             .route(web::get().to(artists::search)),
     )
     .service(web::resource("/artists/{id}/toggle_privacy").route(web::put().to(artists::toggle_privacy)))
     .service(
         web::resource("/artists/{id}")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .wrap(CacheResource::new(CacheUsersBy::None))
             .route(web::get().to(artists::show))
             .route(web::put().to(artists::update)),
     )
     .service(
         web::resource("/artists")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::AnonymousOnly))
+            .wrap(CacheResource::new(CacheUsersBy::AnonymousOnly))
             .route(web::get().to(artists::index))
             .route(web::post().to(artists::create)),
     )
@@ -67,7 +67,7 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(
         web::resource("/events")
         // In future it may be better to cache this for every user to save the database hit
-        .wrap(CacheResourceTransform::new(CacheUsersBy::GlobalRoles))
+        .wrap(CacheResource::new(CacheUsersBy::GlobalRoles))
         .route(web::get().to(events::index))
         .route(web::post().to(events::create)),
     )
@@ -75,7 +75,7 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(
         web::resource("/events/{id}")
         // In future it may be better to cache this for every user to save the database hit
-        .wrap(CacheResourceTransform::new(CacheUsersBy::GlobalRoles))
+        .wrap(CacheResource::new(CacheUsersBy::GlobalRoles))
         .route(web::get().to(events::show))
         .route(web::put().to(events::update))
         .route(web::delete().to(events::cancel)),
@@ -148,7 +148,7 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/external/facebook").route(web::delete().to(external::facebook::disconnect)))
     .service(
         web::resource("/genres")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .wrap(CacheResource::new(CacheUsersBy::None))
             .route(web::get().to(genres::index)),
     )
     .service(web::resource("/invitations/{id}").route(web::get().to(organization_invites::view)))
@@ -200,7 +200,7 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/organizations/{id}/export_event_data").route(web::get().to(events::export_event_data)))
     .service(
         web::resource("/organizations/{id}/fans/{user_id}/activity")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
+            .wrap(CacheResource::new(CacheUsersBy::OrganizationScopePresence(
                 OrganizationLoad::Path,
                 Scopes::OrgFans,
             )))
@@ -208,7 +208,7 @@ pub fn routes(app: &mut web::ServiceConfig) {
     )
     .service(
         web::resource("/organizations/{id}/fans/{user_id}/history")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
+            .wrap(CacheResource::new(CacheUsersBy::OrganizationScopePresence(
                 OrganizationLoad::Path,
                 Scopes::OrgFans,
             )))
@@ -216,7 +216,7 @@ pub fn routes(app: &mut web::ServiceConfig) {
     )
     .service(
         web::resource("/organizations/{id}/fans/{user_id}")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
+            .wrap(CacheResource::new(CacheUsersBy::OrganizationScopePresence(
                 OrganizationLoad::Path,
                 Scopes::OrgFans,
             )))
@@ -229,7 +229,7 @@ pub fn routes(app: &mut web::ServiceConfig) {
     )
     .service(
         web::resource("/organizations/{id}/fans")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
+            .wrap(CacheResource::new(CacheUsersBy::OrganizationScopePresence(
                 OrganizationLoad::Path,
                 Scopes::OrgFans,
             )))
@@ -281,13 +281,13 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/redemption_codes/{code}").route(web::get().to(redemption_codes::show)))
     .service(
         web::resource("/regions/{id}")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .wrap(CacheResource::new(CacheUsersBy::None))
             .route(web::get().to(regions::show))
             .route(web::put().to(regions::update)),
     )
     .service(
         web::resource("/regions")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .wrap(CacheResource::new(CacheUsersBy::None))
             .route(web::get().to(regions::index))
             .route(web::post().to(regions::create)),
     )
@@ -364,19 +364,19 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/venues/{id}/toggle_privacy").route(web::put().to(venues::toggle_privacy)))
     .service(
         web::resource("/venues/{id}")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .wrap(CacheResource::new(CacheUsersBy::None))
             .route(web::get().to(venues::show))
             .route(web::put().to(venues::update)),
     )
     .service(
         web::resource("/venues")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::AnonymousOnly))
+            .wrap(CacheResource::new(CacheUsersBy::AnonymousOnly))
             .route(web::get().to(venues::index))
             .route(web::post().to(venues::create)),
     )
     .service(
         web::resource("/sitemap.xml")
-            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .wrap(CacheResource::new(CacheUsersBy::None))
             .route(web::get().to(sitemap_gen::index)),
     );
 }

@@ -1,11 +1,13 @@
 use crate::db::Connection;
 use crate::errors::BigNeonError;
-use actix_web::dev::{Payload, ServiceResponse};
+use actix_service::Service;
+use actix_web::dev;
 use actix_web::error;
 use actix_web::{FromRequest, HttpRequest};
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
 use std::error::Error;
+use futures::future::{ok, Ready};
 
 pub trait RequestConnection {
     fn connection(&self) -> error::Result<Connection>;
@@ -13,20 +15,19 @@ pub trait RequestConnection {
 
 impl RequestConnection for HttpRequest {
     fn connection(&self) -> error::Result<Connection> {
-        Ok(Connection::from_request(&self, &mut Payload::None).into_inner()?)
+        Ok(Connection::from_request(&self, &mut dev::Payload::None).into_inner()?)
     }
 }
 
-pub struct DatabaseTransaction {}
+pub struct DatabaseTransaction;
 
 impl DatabaseTransaction {
     pub fn new() -> DatabaseTransaction {
         DatabaseTransaction {}
     }
-}
 
-impl DatabaseTransaction {
-    pub fn response<B>(response: ServiceResponse<B>) -> error::Result<ServiceResponse<B>> {
+    // Reconcile reponse status and request's DB connection transaction
+    pub fn complete<B>(response: dev::ServiceResponse<B>) -> error::Result<dev::ServiceResponse<B>> {
         let request = response.request();
 
         let res = if let Some(connection) = request.extensions().get::<Connection>() {
@@ -59,3 +60,63 @@ impl DatabaseTransaction {
         }
     }
 }
+
+impl<S,B> dev::Transform<S> for DatabaseTransaction
+where
+    S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse<B>, Error = error::Error> + 'static,
+    B: dev::MessageBody,
+{
+    type Request = S::Request;
+    type Response = S::Response;
+    type Error = S::Error;
+    type InitError = ();
+    type Transform = DatabaseTransactionService<S>;
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+
+    fn new_transform(&self, service: S) -> Self::Future {
+        ok(DatabaseTransactionService::new(service))
+    }
+}
+
+
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+pub struct DatabaseTransactionService<S> {
+    service: S,
+}
+
+impl<S> DatabaseTransactionService<S> {
+    fn new(service: S) -> Self {
+        Self { service }
+    }
+}
+
+impl<S,B> Service for DatabaseTransactionService<S>
+where
+    S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse<B>, Error = error::Error> + 'static,
+    B: dev::MessageBody,
+{
+    type Request = S::Request;
+    type Response = S::Response;
+    type Error = S::Error;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.service.poll_ready(cx).map_err(error::Error::from)
+    }
+
+    fn call(&mut self, request: Self::Request) -> Self::Future {
+        let fut = self.service.call(request);
+        Box::pin(async move {
+            let response = fut.await?;
+            // In the case of error, connection to database 
+            // will be dropped and transaction will be rolled back
+            // We still need to process correct response 
+            // and commit or rollback based on that
+            DatabaseTransaction::complete(response)
+        })
+    }
+}
+

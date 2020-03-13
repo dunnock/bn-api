@@ -1,15 +1,19 @@
 use crate::extractors::Uuid;
-use actix_web::dev::{MessageBody, ServiceRequest, ServiceResponse};
-use actix_web::error;
-use actix_web::http::header;
-use actix_web::http::StatusCode;
+use actix_service::Service;
+use actix_web::{error, dev};
+use actix_web::http::{header, StatusCode};
+use futures::future::{ok, Ready};
 use log::Level;
 
 pub struct BigNeonLogger;
 
 impl BigNeonLogger {
+    pub fn new() -> Self {
+        Self { }
+    }
+
     // log message at the start of request lifecycle
-    pub fn start(sreq: &ServiceRequest) -> RequestLogData {
+    pub fn start(sreq: &dev::ServiceRequest) -> RequestLogData {
         let data = RequestLogData::from(sreq);
         if data.uri != "/status" {
             jlog!(
@@ -29,10 +33,10 @@ impl BigNeonLogger {
     }
 
     // log message at the end of request lifecycle
-    pub fn finish<B: MessageBody>(
+    pub fn finish<B>(
         data: &RequestLogData,
-        resp: error::Result<ServiceResponse<B>>,
-    ) -> error::Result<ServiceResponse<B>> {
+        resp: error::Result<dev::ServiceResponse<B>>,
+    ) -> error::Result<dev::ServiceResponse<B>> {
         let error = match resp {
             Err(ref error) => Some(error),
             Ok(ref resp) => resp.response().error(),
@@ -67,8 +71,9 @@ pub struct RequestLogData {
     user_agent: Option<String>,
     uri: String,
 }
+
 impl RequestLogData {
-    fn from(req: &ServiceRequest) -> Self {
+    fn from(req: &dev::ServiceRequest) -> Self {
         let uri = req.uri().to_string();
         let user = Uuid::from_request(req).ok();
         let ip_address = req.connection_info().remote().map(|i| i.to_string());
@@ -88,3 +93,65 @@ impl RequestLogData {
         }
     }
 }
+
+impl<S,B> dev::Transform<S> for BigNeonLogger
+where
+    S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse<B>, Error = error::Error> + 'static,
+    B: dev::MessageBody,
+{
+    type Request = S::Request;
+    type Response = S::Response;
+    type Error = S::Error;
+    type InitError = ();
+    type Transform = LoggerService<S>;
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+
+    fn new_transform(&self, service: S) -> Self::Future {
+        ok(LoggerService::new(service))
+    }
+}
+
+
+use std::cell::RefCell;
+use std::future::Future;
+use std::pin::Pin;
+use std::rc::Rc;
+use std::task::{Context, Poll};
+
+pub struct LoggerService<S> {
+    service: Rc<RefCell<S>>,
+}
+
+impl<S> LoggerService<S> {
+    fn new(service: S) -> Self {
+        Self {
+            service: Rc::new(RefCell::new(service)),
+        }
+    }
+}
+
+impl<S,B> Service for LoggerService<S>
+where
+    S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse<B>, Error = error::Error> + 'static,
+    B: dev::MessageBody,
+{
+    type Request = S::Request;
+    type Response = S::Response;
+    type Error = S::Error;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.service.borrow_mut().poll_ready(cx).map_err(error::Error::from)
+    }
+
+    fn call(&mut self, request: Self::Request) -> Self::Future {
+        let service = self.service.clone();
+        Box::pin(async move {
+            let data = BigNeonLogger::start(&request);
+            let fut = service.borrow_mut().call(request);
+            let response = fut.await;
+            BigNeonLogger::finish(&data, response)
+        })
+    }
+}
+

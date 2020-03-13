@@ -10,7 +10,6 @@ use crate::utils::ServiceLocator;
 use actix::Addr;
 use actix_cors::Cors;
 use actix_files as fs;
-use actix_service::Service;
 use actix_web::middleware::Logger;
 use actix_web::{dev::ServiceRequest, http, HttpRequest, HttpResponse};
 use actix_web::{web, web::Data, App, HttpServer};
@@ -143,21 +142,8 @@ impl Server {
                                 .finish()
                         })
                         .wrap(Logger::new(LOGGER_FORMAT))
-                        .wrap_fn(|sreq, serv| {
-                            let data = BigNeonLogger::start(&sreq);
-                            let fut = serv.call(sreq);
-                            async move {
-                                let resp = fut.await;
-                                BigNeonLogger::finish(&data, resp)
-                            }
-                        })
-                        .wrap_fn(|sreq, serv| {
-                            let srv_fut = serv.call(sreq);
-                            async move {
-                                let resp = srv_fut.await?;
-                                DatabaseTransaction::response(resp)
-                            }
-                        })
+                        .wrap(BigNeonLogger::new())
+                        .wrap(DatabaseTransaction::new())
                         .wrap(AppVersionHeader::new())
                         /*TODO .middleware(Metatags::new(
                             conf.ssr_trigger_header.clone(),

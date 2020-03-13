@@ -2,6 +2,7 @@ use crate::db::Connection;
 use crate::extractors::*;
 use crate::helpers::*;
 use crate::server::GetAppState;
+use actix_service::Service;
 use actix_web::error;
 use actix_web::http::header::*;
 use actix_web::http::{Method, StatusCode};
@@ -12,6 +13,7 @@ use itertools::Itertools;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use uuid::Uuid;
+use futures::future::{ok, Ready};
 
 const CACHED_RESPONSE_HEADER: &'static str = "X-Cached-Response";
 
@@ -44,11 +46,11 @@ enum Cache {
 }
 
 #[derive(Clone)]
-struct CacheResource {
+pub struct CacheResource {
     pub cache_users_by: CacheUsersBy,
 }
 
-pub struct CacheConfiguration {
+struct CacheConfiguration {
     cache_response: bool,
     served_cache: bool,
     error: bool,
@@ -57,7 +59,7 @@ pub struct CacheConfiguration {
 }
 
 impl CacheConfiguration {
-    pub fn new() -> CacheConfiguration {
+    fn new() -> CacheConfiguration {
         CacheConfiguration {
             cache_response: false,
             served_cache: false,
@@ -69,6 +71,12 @@ impl CacheConfiguration {
 }
 
 impl CacheResource {
+    pub fn new(cache_users_by: CacheUsersBy) -> Self {
+        Self { cache_users_by }
+    }
+
+    // Identify caching action and data based on request
+    // When resulting in Cache::Hit route handler will be skipped
     async fn start(&self, request: &HttpRequest) -> Cache {
         let mut cache_configuration = CacheConfiguration::new();
         if request.method() == Method::GET {
@@ -173,7 +181,9 @@ impl CacheResource {
         Cache::Miss(cache_configuration)
     }
 
-    async fn response(
+    // Updates cached data based on Cache result
+    // This method will also issue unmodified when actual result did not change
+    fn update(
         cache_configuration: CacheConfiguration,
         mut response: dev::ServiceResponse,
     ) -> dev::ServiceResponse {
@@ -251,9 +261,25 @@ impl CacheResource {
     }
 }
 
-use actix_service::Service;
-use actix_web::dev::Transform;
-use futures::future::{ok, Ready};
+impl<S> dev::Transform<S> for CacheResource
+where
+    S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse, Error = error::Error> + 'static,
+{
+    type Request = S::Request;
+    type Response = S::Response;
+    type Error = S::Error;
+    type InitError = ();
+    type Transform = CacheResourceService<S>;
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+
+    fn new_transform(&self, service: S) -> Self::Future {
+        let cache_users_by = self.cache_users_by.clone();
+        let resource = CacheResource { cache_users_by };
+        ok(CacheResourceService::new(service, resource))
+    }
+}
+
+
 use std::cell::RefCell;
 use std::future::Future;
 use std::pin::Pin;
@@ -308,35 +334,7 @@ where
                     return fut.await;
                 }
             };
-            Ok(CacheResource::response(status, response).await)
+            Ok(CacheResource::update(status, response))
         })
-    }
-}
-
-pub struct CacheResourceTransform {
-    cache_users_by: CacheUsersBy,
-}
-
-impl CacheResourceTransform {
-    pub fn new(cache_users_by: CacheUsersBy) -> Self {
-        Self { cache_users_by }
-    }
-}
-
-impl<S> Transform<S> for CacheResourceTransform
-where
-    S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse, Error = error::Error> + 'static,
-{
-    type Request = S::Request;
-    type Response = S::Response;
-    type Error = S::Error;
-    type InitError = ();
-    type Transform = CacheResourceService<S>;
-    type Future = Ready<Result<Self::Transform, Self::InitError>>;
-
-    fn new_transform(&self, service: S) -> Self::Future {
-        let cache_users_by = self.cache_users_by.clone();
-        let resource = CacheResource { cache_users_by };
-        ok(CacheResourceService::new(service, resource))
     }
 }
