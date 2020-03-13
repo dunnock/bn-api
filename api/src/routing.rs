@@ -13,21 +13,23 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/admin/orders").route(web::get().to(admin::admin::orders)))
     .service(web::resource("/admin/reports").route(web::get().to(admin::reports::get_report)))
     .service(web::resource("/a/t").route(web::get().to(analytics::track)))
-    .service(web::resource("/artists/search")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::AnonymousOnly))
-        .route(web::get().to(artists::search)))
+    .service(
+        web::resource("/artists/search")
+            .wrap(CacheResourceTransform::new(CacheUsersBy::AnonymousOnly))
+            .route(web::get().to(artists::search)),
+    )
     .service(web::resource("/artists/{id}/toggle_privacy").route(web::put().to(artists::toggle_privacy)))
     .service(
         web::resource("/artists/{id}")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::None))
-        .route(web::get().to(artists::show))
-        .route(web::put().to(artists::update)),
+            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .route(web::get().to(artists::show))
+            .route(web::put().to(artists::update)),
     )
     .service(
         web::resource("/artists")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::AnonymousOnly))
-        .route(web::get().to(artists::index))
-        .route(web::post().to(artists::create)),
+            .wrap(CacheResourceTransform::new(CacheUsersBy::AnonymousOnly))
+            .route(web::get().to(artists::index))
+            .route(web::post().to(artists::create)),
     )
     .service(web::resource("/auth/token").route(web::post().to(auth::token)))
     .service(web::resource("/auth/token/refresh").route(web::post().to(auth::token_refresh)))
@@ -144,9 +146,11 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/external/facebook/web_login").route(web::post().to(external::facebook::web_login)))
     .service(web::resource("/external/facebook/scopes").route(web::get().to(external::facebook::scopes)))
     .service(web::resource("/external/facebook").route(web::delete().to(external::facebook::disconnect)))
-    .service(web::resource("/genres")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::None))
-        .route(web::get().to(genres::index)))
+    .service(
+        web::resource("/genres")
+            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .route(web::get().to(genres::index)),
+    )
     .service(web::resource("/invitations/{id}").route(web::get().to(organization_invites::view)))
     .service(web::resource("/invitations").route(web::post().to(organization_invites::accept_request)))
     .service(web::resource("/ipns/globee").route(web::post().to(ipns::globee)))
@@ -194,35 +198,43 @@ pub fn routes(app: &mut web::ServiceConfig) {
     )
     .service(web::resource("/organizations/{id}/events").route(web::get().to(events::show_from_organizations)))
     .service(web::resource("/organizations/{id}/export_event_data").route(web::get().to(events::export_event_data)))
-    .service(web::resource("/organizations/{id}/fans/{user_id}/activity")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
-            OrganizationLoad::Path,
-            Scopes::OrgFans,
-        )))
-        .route(web::get().to(users::activity)))
-    .service(web::resource("/organizations/{id}/fans/{user_id}/history")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
-            OrganizationLoad::Path,
-            Scopes::OrgFans,
-        )))
-        .route(web::get().to(users::history)))
-    .service(web::resource("/organizations/{id}/fans/{user_id}")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
-            OrganizationLoad::Path,
-            Scopes::OrgFans,
-        )))
-        .route(web::get().to(users::profile)))
+    .service(
+        web::resource("/organizations/{id}/fans/{user_id}/activity")
+            .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
+                OrganizationLoad::Path,
+                Scopes::OrgFans,
+            )))
+            .route(web::get().to(users::activity)),
+    )
+    .service(
+        web::resource("/organizations/{id}/fans/{user_id}/history")
+            .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
+                OrganizationLoad::Path,
+                Scopes::OrgFans,
+            )))
+            .route(web::get().to(users::history)),
+    )
+    .service(
+        web::resource("/organizations/{id}/fans/{user_id}")
+            .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
+                OrganizationLoad::Path,
+                Scopes::OrgFans,
+            )))
+            .route(web::get().to(users::profile)),
+    )
     .service(
         web::resource("/organizations/{id}/fee_schedule")
             .route(web::get().to(organizations::show_fee_schedule))
             .route(web::post().to(organizations::add_fee_schedule)),
     )
-    .service(web::resource("/organizations/{id}/fans")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
-            OrganizationLoad::Path,
-            Scopes::OrgFans,
-        )))
-        .route(web::get().to(organizations::search_fans)))
+    .service(
+        web::resource("/organizations/{id}/fans")
+            .wrap(CacheResourceTransform::new(CacheUsersBy::OrganizationScopePresence(
+                OrganizationLoad::Path,
+                Scopes::OrgFans,
+            )))
+            .route(web::get().to(organizations::search_fans)),
+    )
     .service(
         web::resource("/organizations/{id}/invites/{invite_id}").route(web::delete().to(organization_invites::destroy)),
     )
@@ -269,15 +281,15 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/redemption_codes/{code}").route(web::get().to(redemption_codes::show)))
     .service(
         web::resource("/regions/{id}")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::None))
-        .route(web::get().to(regions::show))
-        .route(web::put().to(regions::update)),
+            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .route(web::get().to(regions::show))
+            .route(web::put().to(regions::update)),
     )
     .service(
         web::resource("/regions")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::None))
-        .route(web::get().to(regions::index))
-        .route(web::post().to(regions::create)),
+            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .route(web::get().to(regions::index))
+            .route(web::post().to(regions::create)),
     )
     .service(web::resource("/reports/{id}").route(web::get().to(reports::get_report)))
     .service(web::resource("/slugs").route(web::get().to(slugs::index)))
@@ -352,17 +364,19 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/venues/{id}/toggle_privacy").route(web::put().to(venues::toggle_privacy)))
     .service(
         web::resource("/venues/{id}")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::None))
-        .route(web::get().to(venues::show))
-        .route(web::put().to(venues::update)),
+            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .route(web::get().to(venues::show))
+            .route(web::put().to(venues::update)),
     )
     .service(
         web::resource("/venues")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::AnonymousOnly))
-        .route(web::get().to(venues::index))
-        .route(web::post().to(venues::create)),
+            .wrap(CacheResourceTransform::new(CacheUsersBy::AnonymousOnly))
+            .route(web::get().to(venues::index))
+            .route(web::post().to(venues::create)),
     )
-    .service(web::resource("/sitemap.xml")
-        .wrap(CacheResourceTransform::new(CacheUsersBy::None))
-        .route(web::get().to(sitemap_gen::index)));
+    .service(
+        web::resource("/sitemap.xml")
+            .wrap(CacheResourceTransform::new(CacheUsersBy::None))
+            .route(web::get().to(sitemap_gen::index)),
+    );
 }

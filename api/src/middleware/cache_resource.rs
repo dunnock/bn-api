@@ -2,10 +2,10 @@ use crate::db::Connection;
 use crate::extractors::*;
 use crate::helpers::*;
 use crate::server::GetAppState;
+use actix_web::error;
 use actix_web::http::header::*;
 use actix_web::http::{Method, StatusCode};
-use actix_web::{FromRequest, HttpRequest, HttpResponse, dev};
-use actix_web::error;
+use actix_web::{dev, FromRequest, HttpRequest, HttpResponse};
 use bigneon_db::models::*;
 use bigneon_http::caching::*;
 use itertools::Itertools;
@@ -173,7 +173,10 @@ impl CacheResource {
         Cache::Miss(cache_configuration)
     }
 
-    async fn response(cache_configuration: CacheConfiguration, mut response: dev::ServiceResponse) -> dev::ServiceResponse {
+    async fn response(
+        cache_configuration: CacheConfiguration,
+        mut response: dev::ServiceResponse,
+    ) -> dev::ServiceResponse {
         match *response.request().method() {
             Method::GET if response.status() == StatusCode::OK => {
                 let state = response.request().state();
@@ -182,15 +185,15 @@ impl CacheResource {
 
                 if cache_configuration.cache_response {
                     cache_database.inner.clone().and_then(|conn| {
-                        caching::set_cached_value(conn, &config, response.response(), &cache_configuration.cache_data).ok()
+                        caching::set_cached_value(conn, &config, response.response(), &cache_configuration.cache_data)
+                            .ok()
                     });
                 }
 
                 if cache_configuration.served_cache {
-                    response.headers_mut().insert(
-                        CACHED_RESPONSE_HEADER.parse().unwrap(),
-                        HeaderValue::from_static("1"),
-                    );
+                    response
+                        .headers_mut()
+                        .insert(CACHED_RESPONSE_HEADER.parse().unwrap(), HeaderValue::from_static("1"));
                 }
 
                 // If an error occurred fetching db data, do not send caching headers
@@ -205,9 +208,7 @@ impl CacheResource {
                         },
                         config.client_cache_period
                     )) {
-                        response
-                            .headers_mut()
-                            .insert(CACHE_CONTROL, cache_control_header_value);
+                        response.headers_mut().insert(CACHE_CONTROL, cache_control_header_value);
                     }
 
                     if let Ok(response_str) = application::unwrap_body_to_string(response.response()) {
@@ -230,13 +231,13 @@ impl CacheResource {
                         }
                     }
                 }
-            },
+            }
             Method::PUT | Method::PATCH | Method::POST | Method::DELETE => {
                 if response.response().error().is_none() {
                     let path = response.request().path().to_owned();
                     let state = response.request().state();
                     let cache_database = state.database.cache_database.clone();
-    
+
                     cache_database
                         .inner
                         .clone()
@@ -252,12 +253,12 @@ impl CacheResource {
 
 use actix_service::Service;
 use actix_web::dev::Transform;
-use futures::future::{Ready, ok};
-use std::task::{Context, Poll};
-use std::rc::Rc;
+use futures::future::{ok, Ready};
 use std::cell::RefCell;
-use std::pin::Pin;
 use std::future::Future;
+use std::pin::Pin;
+use std::rc::Rc;
+use std::task::{Context, Poll};
 
 pub struct CacheResourceService<S> {
     service: Rc<RefCell<S>>,
@@ -268,19 +269,19 @@ impl<S> CacheResourceService<S> {
     fn new(service: S, resource: CacheResource) -> Self {
         Self {
             service: Rc::new(RefCell::new(service)),
-            resource
+            resource,
         }
     }
 }
 
 impl<S> Service for CacheResourceService<S>
 where
-    S: Service<Request=dev::ServiceRequest, Response=dev::ServiceResponse, Error=error::Error> + 'static,
+    S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse, Error = error::Error> + 'static,
 {
     type Request = S::Request;
     type Response = dev::ServiceResponse;
     type Error = S::Error;
-    type Future = Pin<Box<dyn Future<Output=Result<Self::Response, Self::Error>>>>;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.borrow_mut().poll_ready(cx).map_err(error::Error::from)
@@ -289,30 +290,26 @@ where
     fn call(&mut self, request: Self::Request) -> Self::Future {
         let service = self.service.clone();
         let resource = self.resource.clone();
-        Box::pin(
-            async move {
-                let (http_req, payload) = request.into_parts();
-                let cache = resource.start(&http_req).await;
-                let (response, status) = match cache {
-                    Cache::Hit(response, status) => {
-                        (dev::ServiceResponse::new(http_req, response), status)
-                    },
-                    Cache::Miss(status) => {
-                        let request = dev::ServiceRequest::from_parts(http_req, payload)
-                            .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
-                        let fut = service.borrow_mut().call(request);
-                        (fut.await?, status)
-                    },
-                    Cache::Skip => {
-                        let request = dev::ServiceRequest::from_parts(http_req, payload)
-                            .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
-                        let fut = service.borrow_mut().call(request);
-                        return fut.await 
-                    },
-                };
-                Ok(CacheResource::response(status, response).await)
-            }
-        )
+        Box::pin(async move {
+            let (http_req, payload) = request.into_parts();
+            let cache = resource.start(&http_req).await;
+            let (response, status) = match cache {
+                Cache::Hit(response, status) => (dev::ServiceResponse::new(http_req, response), status),
+                Cache::Miss(status) => {
+                    let request = dev::ServiceRequest::from_parts(http_req, payload)
+                        .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
+                    let fut = service.borrow_mut().call(request);
+                    (fut.await?, status)
+                }
+                Cache::Skip => {
+                    let request = dev::ServiceRequest::from_parts(http_req, payload)
+                        .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
+                    let fut = service.borrow_mut().call(request);
+                    return fut.await;
+                }
+            };
+            Ok(CacheResource::response(status, response).await)
+        })
     }
 }
 
@@ -328,7 +325,7 @@ impl CacheResourceTransform {
 
 impl<S> Transform<S> for CacheResourceTransform
 where
-    S: Service<Request=dev::ServiceRequest, Response=dev::ServiceResponse, Error=error::Error> + 'static,
+    S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse, Error = error::Error> + 'static,
 {
     type Request = S::Request;
     type Response = S::Response;
