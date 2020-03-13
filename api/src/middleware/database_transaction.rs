@@ -6,8 +6,8 @@ use actix_web::error;
 use actix_web::{FromRequest, HttpRequest};
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
-use std::error::Error;
 use futures::future::{ok, Ready};
+use std::error::Error;
 
 pub trait RequestConnection {
     fn connection(&self) -> error::Result<Connection>;
@@ -61,7 +61,7 @@ impl DatabaseTransaction {
     }
 }
 
-impl<S,B> dev::Transform<S> for DatabaseTransaction
+impl<S, B> dev::Transform<S> for DatabaseTransaction
 where
     S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse<B>, Error = error::Error> + 'static,
     B: dev::MessageBody,
@@ -78,7 +78,6 @@ where
     }
 }
 
-
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -93,7 +92,7 @@ impl<S> DatabaseTransactionService<S> {
     }
 }
 
-impl<S,B> Service for DatabaseTransactionService<S>
+impl<S, B> Service for DatabaseTransactionService<S>
 where
     S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse<B>, Error = error::Error> + 'static,
     B: dev::MessageBody,
@@ -111,12 +110,11 @@ where
         let fut = self.service.call(request);
         Box::pin(async move {
             let response = fut.await?;
-            // In the case of error, connection to database 
+            // In the case of error, connection to database
             // will be dropped and transaction will be rolled back
-            // We still need to process correct response 
+            // We still need to process correct response
             // and commit or rollback based on that
             DatabaseTransaction::complete(response)
         })
     }
 }
-

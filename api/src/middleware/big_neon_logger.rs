@@ -1,7 +1,7 @@
 use crate::extractors::Uuid;
 use actix_service::Service;
-use actix_web::{error, dev};
 use actix_web::http::{header, StatusCode};
+use actix_web::{dev, error};
 use futures::future::{ok, Ready};
 use log::Level;
 
@@ -9,7 +9,7 @@ pub struct BigNeonLogger;
 
 impl BigNeonLogger {
     pub fn new() -> Self {
-        Self { }
+        Self {}
     }
 
     // log message at the start of request lifecycle
@@ -94,7 +94,7 @@ impl RequestLogData {
     }
 }
 
-impl<S,B> dev::Transform<S> for BigNeonLogger
+impl<S, B> dev::Transform<S> for BigNeonLogger
 where
     S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse<B>, Error = error::Error> + 'static,
     B: dev::MessageBody,
@@ -110,7 +110,6 @@ where
         ok(LoggerService::new(service))
     }
 }
-
 
 use std::cell::RefCell;
 use std::future::Future;
@@ -130,7 +129,7 @@ impl<S> LoggerService<S> {
     }
 }
 
-impl<S,B> Service for LoggerService<S>
+impl<S, B> Service for LoggerService<S>
 where
     S: Service<Request = dev::ServiceRequest, Response = dev::ServiceResponse<B>, Error = error::Error> + 'static,
     B: dev::MessageBody,
@@ -154,4 +153,3 @@ where
         })
     }
 }
-

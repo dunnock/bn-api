@@ -9,11 +9,11 @@ use actix_web::http::{Method, StatusCode};
 use actix_web::{dev, FromRequest, HttpRequest, HttpResponse};
 use bigneon_db::models::*;
 use bigneon_http::caching::*;
+use futures::future::{ok, Ready};
 use itertools::Itertools;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use uuid::Uuid;
-use futures::future::{ok, Ready};
 
 const CACHED_RESPONSE_HEADER: &'static str = "X-Cached-Response";
 
@@ -183,10 +183,7 @@ impl CacheResource {
 
     // Updates cached data based on Cache result
     // This method will also issue unmodified when actual result did not change
-    fn update(
-        cache_configuration: CacheConfiguration,
-        mut response: dev::ServiceResponse,
-    ) -> dev::ServiceResponse {
+    fn update(cache_configuration: CacheConfiguration, mut response: dev::ServiceResponse) -> dev::ServiceResponse {
         match *response.request().method() {
             Method::GET if response.status() == StatusCode::OK => {
                 let state = response.request().state();
@@ -278,7 +275,6 @@ where
         ok(CacheResourceService::new(service, resource))
     }
 }
-
 
 use std::cell::RefCell;
 use std::future::Future;

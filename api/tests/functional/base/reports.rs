@@ -70,7 +70,9 @@ pub async fn scan_counts(role: Roles, should_succeed: bool) {
     let auth_user = support::create_auth_user_from_user(&auth_db_user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create_with_uri(&format!("/reports?report=scan_count&event_id={}", event.id));
-    let query = Query::<ReportQueryParameters>::extract(&test_request.request).await.unwrap();
+    let query = Query::<ReportQueryParameters>::extract(&test_request.request)
+        .await
+        .unwrap();
     let response: HttpResponse = reports::scan_counts((database.connection.clone().into(), query, auth_user)).into();
 
     if !should_succeed {

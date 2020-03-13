@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::db::*;
 use crate::domain_events::DomainActionMonitor;
-use crate::middleware::{AppVersionHeader, BigNeonLogger, DatabaseTransaction}; //, Metatags};
+use crate::middleware::{AppVersionHeader, BigNeonLogger, DatabaseTransaction, Metatags};
 use crate::models::*;
 use crate::routing;
 use crate::utils::redis::*;
@@ -145,12 +145,7 @@ impl Server {
                         .wrap(BigNeonLogger::new())
                         .wrap(DatabaseTransaction::new())
                         .wrap(AppVersionHeader::new())
-                        /*TODO .middleware(Metatags::new(
-                            conf.ssr_trigger_header.clone(),
-                            conf.ssr_trigger_value.clone(),
-                            conf.front_end_url.clone(),
-                            conf.app_name.clone(),
-                        ))*/
+                        .wrap(Metatags::new(&conf))
                         .configure( routing::routes )
                         .configure( |conf| {
                             if let Some(static_file_path) = &static_file_conf.static_file_path {

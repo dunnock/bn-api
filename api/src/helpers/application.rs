@@ -1,14 +1,14 @@
 use crate::auth::user::User as AuthUser;
 use crate::errors::*;
-use actix_web::{
-    body::{Body, ResponseBody},
-    http,
-    http::StatusCode,
-    HttpResponse, Responder,
-};
+use actix_web::dev::{self, Body, BodySize, MessageBody};
+use actix_web::{error, http, http::StatusCode, HttpResponse, Responder};
+use bytes::{BufMut, Bytes, BytesMut};
+use futures::stream::StreamExt;
 use serde_json::{self, Value};
 use std::collections::HashMap;
 use std::str;
+
+const DEFAULT_BUF_SIZE: usize = 64 * 1024;
 
 pub fn unauthorized<T: Responder>(
     user: Option<AuthUser>,
@@ -64,10 +64,24 @@ pub fn redirect(url: &str) -> Result<HttpResponse, BigNeonError> {
 
 pub fn unwrap_body_to_string(response: &HttpResponse) -> Result<&str, &'static str> {
     match response.body() {
-        ResponseBody::Body(Body::Bytes(binary)) => match str::from_utf8(binary.as_ref()) {
-            Ok(value) => Ok(value),
-            Err(_) => Err("Unable to unwrap body"),
-        },
+        dev::ResponseBody::Body(Body::Bytes(binary)) | dev::ResponseBody::Other(Body::Bytes(binary)) => {
+            match str::from_utf8(binary.as_ref()) {
+                Ok(value) => Ok(value),
+                Err(_) => Err("Unable to unwrap body"),
+            }
+        }
         _ => Err("Unexpected response body"),
     }
+}
+
+pub async fn extract_response_bytes<B: MessageBody>(body: &mut dev::ResponseBody<B>) -> Result<Bytes, error::Error> {
+    let size_hint = match body.size() {
+        BodySize::Sized(n) => n,
+        _ => DEFAULT_BUF_SIZE,
+    };
+    let mut buf = BytesMut::with_capacity(size_hint);
+    while let Some(item) = body.next().await {
+        buf.put(item?);
+    }
+    Ok(buf.freeze())
 }
