@@ -3,14 +3,14 @@ const expect = require('chai').expect;
 const mocha = require('mocha');
 const tv4 = require('tv4');
 const fs = require('fs');
-const pm = require('../pm');
-const debug = require("debug");
-var log=debug('bn-api');
+const pm = require('../../pm');
+const debug=require('debug');
+var log = debug('bn-api');
 
 const baseUrl = supertest(pm.environment.get('server'));
 
-const apiEndPoint = '/events?query=&page=0&status=Published';
-const apiEndPoint2 = '/events';
+const apiEndPoint = '/artists/search?q=Artist&spotify=1';
+const apiEndPoint2 = '/artists/search?q=Artist';
 
 
 var response;
@@ -50,7 +50,7 @@ const getCached = async function (endpoint, request_body, etag) {
 let requestBody = ``;
 
 
-describe('Guest - events cache - Published', function () {
+describe('Guest - Search Artist - Cached', function () {
     before(async function () {
         response = await get(apiEndPoint, requestBody);
         log(response.request.header);
@@ -61,7 +61,7 @@ describe('Guest - events cache - Published', function () {
         //log(pm);
         log(response.status);
         log(responseBody);
-
+    
         etag = response.header['etag'];
         cachedResponse = await getCached(apiEndPoint, requestBody, etag);
         cachedResponseBody = cachedResponse.body;
@@ -80,7 +80,7 @@ describe('Guest - events cache - Published', function () {
 
     });
 
-    it("first response should be 200", function () {
+    it("should be 200", function () {
         expect(response.status).to.equal(200);
     })
 
