@@ -3,17 +3,22 @@ const expect = require('chai').expect;
 const mocha = require('mocha');
 const tv4 = require('tv4');
 const fs = require('fs');
-const pm = require('../pm');const debug = require("debug");var log=debug('bn-api');
+const pm = require('../pm');
+const debug = require("debug");
+var log=debug('bn-api');
 
 const baseUrl = supertest(pm.environment.get('server'));
 
 const apiEndPoint = '/events?query=&page=0&status=Published';
+const apiEndPoint2 = '/events';
 
 
 var response;
 var responseBody;
-var cached_response;
+var cachedResponse;
 var cachedResponseBody;
+var responseDiffStatement;
+var responseBodyDiffStatement;
 
 
 const post = async function (request_body) {
@@ -33,9 +38,18 @@ const get = async function (request_body) {
         .send();
 };
 
-const get_cached = async function (request_body, etag) {
+const getCached = async function (request_body, etag) {
     return baseUrl
         .get(pm.substitute(apiEndPoint))
+
+        .set('If-None-Match', etag)
+        .set('Accept', 'application/json')
+        .send();
+};
+
+const getDiffStatement = async function (request_body, etag) {
+    return baseUrl
+        .get(pm.substitute(apiEndPoint2))
 
         .set('If-None-Match', etag)
         .set('Accept', 'application/json')
@@ -58,11 +72,15 @@ describe('Guest - events cache - Published', function () {
         log(responseBody);
 
         etag = response.header['etag'];
-        cached_response = await get_cached(requestBody, etag);
+        cachedResponse = await getCached(requestBody, etag);
         cachedResponseBody = cached_response.body;
         log(cached_response.status);
         log(cachedResponseBody);
-        cachedResponseBody
+
+        responseDiffStatement = await getDiffStatement(requestBody2, etag);
+        responseBodyDiffStatement = responseDiffStatement.body;
+        log(responseDiffStatement.status);
+        log(responseBodyDiffStatement);
     });
 
     after(async function () {
@@ -75,12 +93,16 @@ describe('Guest - events cache - Published', function () {
         expect(response.status).to.equal(200);
     })
 
-    it("second response should be 304", function () {
-        expect(cached_response.status).to.equal(304);
+    it("same query with same etag status should be 304", function () {
+        expect(cachedResponse.status).to.equal(304);
     })
 
-    it("second response should be empty", function () {
-        expect(cachedResponseBody).to.equal("");
+    it("same query with same etag response should be empty", function () {
+        expect(cachedResponseBody).to.be.empty;
+    })
+
+    it("different query with same etag should be 200", function () {
+        expect(responseDiffStatement.status).to.equal(200);
     })
 
 });
