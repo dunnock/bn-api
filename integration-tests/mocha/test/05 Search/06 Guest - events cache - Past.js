@@ -73,11 +73,11 @@ describe('Guest - events cache - Published', function () {
 
         etag = response.header['etag'];
         cachedResponse = await getCached(requestBody, etag);
-        cachedResponseBody = cached_response.body;
-        log(cached_response.status);
+        cachedResponseBody = cachedResponse.body;
+        log(cachedResponse.status);
         log(cachedResponseBody);
 
-        responseDiffStatement = await getDiffStatement(requestBody2, etag);
+        responseDiffStatement = await getDiffStatement(requestBody, etag);
         responseBodyDiffStatement = responseDiffStatement.body;
         log(responseDiffStatement.status);
         log(responseBodyDiffStatement);
