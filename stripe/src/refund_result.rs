@@ -1,6 +1,6 @@
+use crate::StripeError;
 use reqwest;
 use serde_json;
-use StripeError;
 
 pub struct RefundResult {
     pub id: String,

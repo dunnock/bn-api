@@ -1,6 +1,6 @@
+use crate::StripeError;
 use reqwest;
 use serde_json;
-use StripeError;
 
 #[derive(Deserialize, Serialize)]
 pub struct ChargeResult {

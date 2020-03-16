@@ -1,8 +1,8 @@
+use crate::ChargeResult;
+use crate::Customer;
+use crate::RefundResult;
+use crate::StripeError;
 use reqwest;
-use ChargeResult;
-use Customer;
-use RefundResult;
-use StripeError;
 
 #[derive(Clone)]
 pub struct StripeClient {
