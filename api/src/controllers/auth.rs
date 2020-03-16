@@ -62,7 +62,8 @@ pub async fn token(
                     google_recaptcha_secret_key,
                     captcha_response.to_owned(),
                     remote_ip,
-                )?;
+                )
+                .await?;
                 if !captcha_response.success {
                     return application::unauthorized_with_message("Captcha value invalid", None, Some(login_log_data));
                 }

@@ -276,8 +276,8 @@ pub async fn register(
     log_data.insert("email", parameters.email.clone().into());
 
     if let Some(ref google_recaptcha_secret_key) = state.config.google_recaptcha_secret_key {
-        if let Err(err) = verify_recaptcha(google_recaptcha_secret_key, &parameters.captcha_response, remote_ip) {
-            return application::unauthorized_with_message(err.reason.as_str(), None, Some(log_data));
+        if let Err(err) = verify_recaptcha(google_recaptcha_secret_key, &parameters.captcha_response, remote_ip).await {
+            return application::unauthorized_with_message(&err.to_string(), None, Some(log_data));
         }
     }
 
@@ -309,8 +309,8 @@ pub async fn register_and_login(
     log_data.insert("email", parameters.email.clone().into());
 
     if let Some(ref google_recaptcha_secret_key) = state.config.google_recaptcha_secret_key {
-        if let Err(err) = verify_recaptcha(google_recaptcha_secret_key, &parameters.captcha_response, remote_ip) {
-            return application::unauthorized_with_message(err.reason.as_str(), None, Some(log_data));
+        if let Err(err) = verify_recaptcha(google_recaptcha_secret_key, &parameters.captcha_response, remote_ip).await {
+            return application::unauthorized_with_message(&err.to_string(), None, Some(log_data));
         }
     }
 
@@ -368,21 +368,22 @@ fn current_user_from_user(user: &User, connection: &PgConnection) -> Result<Curr
     })
 }
 
-fn verify_recaptcha(
+async fn verify_recaptcha(
     google_recaptcha_secret_key: &str,
     captcha_response: &Option<String>,
     remote_ip: Option<&str>,
-) -> Result<google_recaptcha::Response, ApplicationError> {
+) -> Result<google_recaptcha::Response, BigNeonError> {
     match captcha_response {
         Some(ref captcha_response) => {
             let captcha_response =
-                google_recaptcha::verify_response(google_recaptcha_secret_key, captcha_response.to_owned(), remote_ip)?;
+                google_recaptcha::verify_response(google_recaptcha_secret_key, captcha_response.to_owned(), remote_ip)
+                    .await?;
             if !captcha_response.success {
-                return Err(ApplicationError::new("Captcha value invalid".to_string()));
+                return Err(ApplicationError::new("Captcha value invalid".to_string()).into());
             }
             Ok(captcha_response)
         }
-        None => Err(ApplicationError::new("Captcha required".to_string())),
+        None => Err(ApplicationError::new("Captcha required".to_string()).into()),
     }
 }
 
