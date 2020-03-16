@@ -181,7 +181,7 @@ pub async fn pages((connection, user): (Connection, AuthUser)) -> Result<HttpRes
     let fb_login = fb_login.unwrap();
 
     let client = FacebookClient::from_user_access_token(fb_login.access_token.clone());
-    let permissions = client.permissions.list(&fb_login.external_user_id)?;
+    let permissions = client.permissions.list(&fb_login.external_user_id).await?;
     let list_pages_permission = permissions.data.iter().find(|p| p.permission == "pages_show_list");
     if list_pages_permission
         .as_ref()
@@ -195,7 +195,8 @@ pub async fn pages((connection, user): (Connection, AuthUser)) -> Result<HttpRes
     let pages = client
         .me
         .accounts
-        .list()?
+        .list()
+        .await?
         .into_iter()
         .map(|p| FacebookPage { id: p.id, name: p.name })
         .collect_vec();
@@ -244,7 +245,8 @@ pub async fn create_event(
     let client = FacebookClient::from_app_access_token(
         config.facebook_app_id.as_ref().unwrap(),
         config.facebook_app_secret.as_ref().unwrap(),
-    )?;
+    )
+    .await?;
 
     let mut validation_errors: Result<(), ValidationErrors> = Ok(());
 
@@ -297,7 +299,7 @@ pub async fn create_event(
 
     fb_event.admins.push(data.page_id.clone());
 
-    let fb_id = match client.official_events.create(fb_event) {
+    let fb_id = match client.official_events.create(fb_event).await {
         Ok(i) => i,
         Err(err) => match err {
             FacebookError::FacebookError(e) => {
