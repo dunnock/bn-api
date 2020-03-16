@@ -1,4 +1,4 @@
-use crate::extractors::Uuid;
+use crate::extractors::AuthorizationUuid;
 use actix_service::Service;
 use actix_web::http::{header, StatusCode};
 use actix_web::{dev, error};
@@ -65,7 +65,7 @@ impl BigNeonLogger {
 }
 
 pub struct RequestLogData {
-    user: Option<uuid::Uuid>, // NOTE: this used to be Option<Option<uuid::Uuid>>
+    user: Option<uuid::Uuid>,
     ip_address: Option<String>,
     method: String,
     user_agent: Option<String>,
@@ -75,7 +75,7 @@ pub struct RequestLogData {
 impl RequestLogData {
     fn from(req: &dev::ServiceRequest) -> Self {
         let uri = req.uri().to_string();
-        let user = Uuid::from_request(req).ok();
+        let user = AuthorizationUuid::from_request(req).ok();
         let ip_address = req.connection_info().remote().map(|i| i.to_string());
         let method = req.method().to_string();
         let user_agent = if let Some(ua) = req.headers().get(header::USER_AGENT) {

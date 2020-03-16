@@ -4,8 +4,8 @@ use crate::server::GetAppState;
 use actix_web::error::{self, ErrorBadRequest, ErrorUnauthorized};
 use actix_web::HttpMessage;
 
-pub(crate) struct Uuid;
-impl Uuid {
+pub(crate) struct AuthorizationUuid;
+impl AuthorizationUuid {
     pub(crate) fn from_request<R>(req: &R) -> error::Result<uuid::Uuid>
     where
         R: HttpMessage + GetAppState,

@@ -1,4 +1,4 @@
-use super::Uuid;
+use super::AuthorizationUuid;
 use crate::auth::user::User;
 use crate::middleware::RequestConnection;
 use actix_web::error::*;
@@ -12,7 +12,7 @@ impl FromRequest for User {
     type Future = Ready<Result<User, Error>>;
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        let id = match Uuid::from_request(req) {
+        let id = match AuthorizationUuid::from_request(req) {
             Ok(id) => id,
             Err(e) => return err(e),
         };
@@ -21,7 +21,6 @@ impl FromRequest for User {
             Err(e) => return err(e),
         };
         match DbUser::find(id, connection.get()) {
-            // ^^ should be moved to web::block(|| ) but would require Connection to be Sync
             Ok(user) => {
                 if user.deleted_at.is_some() {
                     err(ErrorUnauthorized("User account is disabled"))
