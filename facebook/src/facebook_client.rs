@@ -1,6 +1,6 @@
-use access_token::AccessToken;
-use endpoints::*;
-use error::FacebookError;
+use crate::access_token::AccessToken;
+use crate::endpoints::*;
+use crate::error::FacebookError;
 use std::rc::Rc;
 
 use url::form_urlencoded;

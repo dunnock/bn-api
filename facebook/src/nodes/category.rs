@@ -1,4 +1,4 @@
-use error::FacebookError;
+use crate::error::FacebookError;
 use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Debug)]

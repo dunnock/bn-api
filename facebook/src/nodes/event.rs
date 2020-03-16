@@ -1,6 +1,6 @@
-use fbid::FBID;
-use nodes::Category;
-use nodes::CoverPhoto;
+use crate::fbid::FBID;
+use crate::nodes::Category;
+use crate::nodes::CoverPhoto;
 
 #[derive(Serialize, Debug)]
 pub struct Event {

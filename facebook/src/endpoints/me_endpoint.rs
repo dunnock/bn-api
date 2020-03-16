@@ -1,5 +1,5 @@
-use endpoints::accounts_endpoint::AccountsEndpoint;
-use facebook_client::FacebookClientInner;
+use crate::endpoints::accounts_endpoint::AccountsEndpoint;
+use crate::facebook_client::FacebookClientInner;
 use std::rc::Rc;
 
 pub struct MeEndpoint {

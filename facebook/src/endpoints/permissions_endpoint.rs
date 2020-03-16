@@ -1,7 +1,7 @@
-use error::{FacebookError, FacebookErrorResponse};
-use facebook_client::FacebookClientInner;
-use paging::Paging;
-use permission::Permission;
+use crate::error::{FacebookError, FacebookErrorResponse};
+use crate::facebook_client::FacebookClientInner;
+use crate::paging::Paging;
+use crate::permission::Permission;
 use reqwest::StatusCode;
 use std::rc::Rc;
 

@@ -1,7 +1,7 @@
-use edges::Account;
-use error::FacebookError;
-use facebook_client::FacebookClientInner;
-use paging::Paging;
+use crate::edges::Account;
+use crate::error::FacebookError;
+use crate::facebook_client::FacebookClientInner;
+use crate::paging::Paging;
 use std::rc::Rc;
 
 pub struct AccountsEndpoint {

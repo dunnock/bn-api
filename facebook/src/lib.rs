@@ -25,12 +25,12 @@ mod paging;
 mod permission;
 
 pub mod prelude {
-    pub use access_token::*;
-    pub use edges::*;
-    pub use error::*;
-    pub use facebook_client::*;
-    pub use fbid::*;
-    pub use nodes::*;
-    pub use paging::*;
-    pub use permission::*;
+    pub use crate::access_token::*;
+    pub use crate::edges::*;
+    pub use crate::error::*;
+    pub use crate::facebook_client::*;
+    pub use crate::fbid::*;
+    pub use crate::nodes::*;
+    pub use crate::paging::*;
+    pub use crate::permission::*;
 }
