@@ -18,6 +18,7 @@ pub struct ServiceLocator {
     branch_io_timeout: u64,
     api_keys_encryption_key: String,
     country_lookup_service: CountryLookup,
+    token_issuer: Box<dyn TokenIssuer>,
 }
 
 impl ServiceLocator {
@@ -38,11 +39,16 @@ impl ServiceLocator {
             branch_io_timeout: config.branch_io_timeout,
             api_keys_encryption_key: config.api_keys_encryption_key.clone(),
             country_lookup_service,
+            token_issuer: config.token_issuer.clone(),
         })
     }
 
     pub fn country_lookup_service(&self) -> &CountryLookup {
         &self.country_lookup_service
+    }
+
+    pub fn token_issuer(&self) -> &dyn TokenIssuer {
+        &*self.token_issuer
     }
 
     pub fn create_payment_processor(

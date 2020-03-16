@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use chrono::Duration;
 use chrono_tz::Tz;
 use diesel;
 use diesel::prelude::*;
@@ -6,7 +7,6 @@ use diesel::sql_types::{BigInt, Bool, Nullable, Text, Time, Timestamp, Uuid as d
 use itertools::Itertools;
 use models::*;
 use std::collections::HashMap;
-use time::Duration;
 use utils::errors::*;
 use uuid::Uuid;
 

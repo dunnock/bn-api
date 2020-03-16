@@ -1,11 +1,11 @@
 use chrono::prelude::*;
+use chrono::Duration;
 use chrono::NaiveDateTime;
 use diesel;
 use diesel::result::Error;
 use diesel::sql_types;
 use diesel::Connection;
 use diesel::RunQueryDsl;
-use time::Duration;
 use uuid::Uuid;
 
 use bigneon_db::dev::times;

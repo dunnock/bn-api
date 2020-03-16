@@ -3,12 +3,12 @@ use bigneon_db::models::*;
 use bigneon_db::schema::orders;
 use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::prelude::*;
+use chrono::Duration;
 use chrono::NaiveDateTime;
 use diesel;
 use diesel::dsl;
 use diesel::prelude::*;
 use diesel::query_dsl::RunQueryDsl;
-use time::Duration;
 use uuid::Uuid;
 
 #[test]

@@ -1,6 +1,7 @@
 pub use self::activities::*;
 pub use self::artists::*;
 pub use self::assets::*;
+pub use self::auth::*;
 pub use self::broadcasts::*;
 pub use self::codes::*;
 pub use self::communication::*;
@@ -69,6 +70,7 @@ mod activities;
 pub mod analytics;
 mod artists;
 mod assets;
+mod auth;
 mod broadcasts;
 mod codes;
 mod communication;

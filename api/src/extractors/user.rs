@@ -17,21 +17,17 @@ impl FromRequest for User {
             Err(e) => return err(e),
         };
         let connection = match req.connection() {
-            Ok(conn) => conn,
+            Ok(conn) => conn.get(),
             Err(e) => return err(e),
         };
-        match DbUser::find(id, connection.get()) {
-            Ok(user) => {
-                if user.deleted_at.is_some() {
-                    err(ErrorUnauthorized("User account is disabled"))
-                } else {
-                    match User::new(user, req) {
-                        Ok(u) => ok(u),
-                        Err(_) => err(ErrorUnauthorized("User has invalid role data")),
-                    }
-                }
-            }
-            Err(e) => err(ErrorInternalServerError(e)),
+
+        let user = DbUser::find(user_id, &connection).map_err(|_| ErrorUnauthorized("Invalid Token"))?;
+
+        if user.deleted_at.is_some() {
+            Err(ErrorUnauthorized("User account is disabled"))
+        } else {
+            Ok(User::new(user, req, token.claims.scopes)
+                .map_err(|_| ErrorUnauthorized("User has invalid role data"))?)
         }
     }
 }

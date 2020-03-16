@@ -1,13 +1,14 @@
-use crate::jwt::{decode, Validation};
+use crate::jwt::Validation;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::{http::StatusCode, HttpResponse};
-use bigneon_api::auth::{claims::AccessToken, claims::RefreshToken, TokenResponse};
+use bigneon_api::auth::TokenResponse;
 use bigneon_api::controllers::password_resets::{self, CreatePasswordResetParameters, UpdatePasswordResetParameters};
 use bigneon_api::db::Connection as BigNeonConnection;
 use bigneon_api::extractors::*;
 use bigneon_db::models::concerns::users::password_resetable::*;
+use bigneon_db::models::TokenIssuer;
 use bigneon_db::models::User;
 use chrono::{Duration, Utc};
 use diesel;
@@ -74,11 +75,13 @@ async fn update() {
 
     let test_request = TestRequest::create();
     let state = test_request.extract_state().await;
-    let token_secret = &state.config.token_secret.clone();
     let json = Json(UpdatePasswordResetParameters {
         password_reset_token: user.password_reset_token.unwrap(),
         password: new_password.to_string(),
     });
+
+    let token_issuer = state.config.token_issuer.clone();
+
     let response: HttpResponse = password_resets::update((state, connection_object, json)).await.into();
 
     let user = User::find(user.id, database.connection.get()).unwrap();
@@ -89,19 +92,13 @@ async fn update() {
     assert_eq!(response.status(), StatusCode::OK);
     let body = support::unwrap_body_to_string(&response).unwrap();
     let token_response: TokenResponse = serde_json::from_str(&body).unwrap();
-
-    let access_token = decode::<AccessToken>(
-        &token_response.access_token,
-        token_secret.as_bytes(),
-        &Validation::default(),
-    )
-    .unwrap();
+    let refresh_token = token_issuer.decode(&token_response.refresh_token).unwrap();
+    let access_token = token_issuer.decode(&token_response.access_token).unwrap();
     assert_eq!(access_token.claims.get_id().unwrap(), user.id);
 
     let mut validation = Validation::default();
     validation.validate_exp = false;
-    let refresh_token =
-        decode::<RefreshToken>(&token_response.refresh_token, token_secret.as_bytes(), &validation).unwrap();
+
     assert_eq!(refresh_token.claims.get_id().unwrap(), user.id);
 }
 

@@ -4,12 +4,12 @@ use bigneon_db::utils::dates;
 use bigneon_db::utils::errors::DatabaseError;
 use bigneon_db::utils::errors::ErrorCode::*;
 use chrono::prelude::*;
+use chrono::Duration;
 use chrono_tz::Tz;
 use diesel;
 use diesel::sql_types;
 use diesel::RunQueryDsl;
 use tari_client::*;
-use time::Duration;
 use uuid::Uuid;
 
 #[test]
@@ -235,9 +235,7 @@ fn receive_url() {
     transfer.add_transfer_ticket(ticket.id, connection).unwrap();
 
     assert_eq!(
-        transfer
-            .receive_url("http://example.com".to_string(), connection)
-            .unwrap(),
+        transfer.receive_url("http://example.com", connection).unwrap(),
         format!(
             "http://example.com/tickets/transfers/receive?sender_user_id={}&transfer_key={}&num_tickets=1&signature={}",
             transfer.source_user_id,

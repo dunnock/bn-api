@@ -13,7 +13,7 @@ pub fn send_tickets(
     from_user: &User,
     conn: &PgConnection,
 ) -> Result<(), BigNeonError> {
-    let receive_tickets_link = transfer.receive_url(config.front_end_url.clone(), conn)?;
+    let receive_tickets_link = transfer.receive_url(&config.front_end_url, conn)?;
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(email);
     let title = "{sender_name} has sent you some tickets".to_string();
@@ -59,7 +59,7 @@ pub fn transfer_drip_reminder(
     config: &Config,
     conn: &PgConnection,
 ) -> Result<(), BigNeonError> {
-    let receive_tickets_link = transfer.receive_url(config.front_end_url.clone(), conn)?;
+    let receive_tickets_link = transfer.receive_url(&config.front_end_url, conn)?;
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(email.clone());
     let title = "BigNeon: Ticket transfer reminder".to_string();

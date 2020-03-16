@@ -3,6 +3,7 @@ use actix_web::{
     web::{Data, Path, Query},
     FromRequest, HttpRequest,
 };
+use bigneon_api::auth::default_token_issuer::DefaultTokenIssuer;
 use bigneon_api::config::Config;
 use bigneon_api::db::Database;
 use bigneon_api::server::AppState;
@@ -33,8 +34,7 @@ impl TestRequest {
 
     pub fn create_with_uri_custom_params(path: &str, params: Vec<&'static str>) -> TestRequest {
         let mut config = Config::new(Environment::Test);
-        config.token_secret = "test_secret".into();
-        config.token_issuer = "bn-api-test".into();
+        config.token_issuer = Box::new(DefaultTokenIssuer::new("test_secret".into(), "bn-api-test".into()));
         config.api_keys_encryption_key = "test_encryption_key".to_string();
         config.google_recaptcha_secret_key = None;
         if config.spotify_auth_token.is_some() {

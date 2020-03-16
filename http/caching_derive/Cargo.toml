@@ -9,7 +9,7 @@ proc-macro = true
 [dependencies]
 syn = "0.15.26"
 quote = "0.6.11"
-ring = "0.13.5"
+ring = "^0.13.5"
 
 [dev-dependencies]
 serde = "1.0"

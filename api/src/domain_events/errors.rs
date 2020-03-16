@@ -1,6 +1,7 @@
 use bigneon_db::prelude::*;
 use diesel;
 use diesel::prelude::ConnectionError;
+use errors::BigNeonError;
 use r2d2;
 use std::error;
 use std::fmt;
@@ -54,5 +55,11 @@ impl fmt::Display for DomainActionError {
             DomainActionError::Simple(s) => f.write_str(s),
             DomainActionError::CausedBy(c) => f.write_str(&c.to_string()),
         }
+    }
+}
+
+impl From<BigNeonError> for DomainActionError {
+    fn from(source: BigNeonError) -> Self {
+        DomainActionError::CausedBy(Box::new(source))
     }
 }

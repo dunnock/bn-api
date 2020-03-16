@@ -2,6 +2,7 @@ use chrono::NaiveDateTime;
 use diesel;
 use diesel::prelude::*;
 use models::*;
+use schema;
 use schema::{temporary_user_links, temporary_users};
 use utils::errors::*;
 use uuid::Uuid;
@@ -69,6 +70,15 @@ impl TemporaryUser {
         }
     }
 
+    pub fn users(&self, conn: &PgConnection) -> Result<Vec<User>, DatabaseError> {
+        temporary_user_links::table
+            .inner_join(schema::users::table)
+            .filter(temporary_user_links::temporary_user_id.eq(self.id))
+            .select(schema::users::all_columns)
+            .order_by(temporary_user_links::created_at.desc())
+            .get_results(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not find users for temporary user")
+    }
     pub fn find_by_user_id(user_id: Uuid, conn: &PgConnection) -> Result<Vec<TemporaryUser>, DatabaseError> {
         temporary_user_links::table
             .inner_join(temporary_users::table.on(temporary_users::id.eq(temporary_user_links::temporary_user_id)))

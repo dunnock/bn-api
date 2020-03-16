@@ -6,11 +6,11 @@ use bigneon_db::utils::dates;
 use bigneon_db::utils::errors::DatabaseError;
 use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::prelude::*;
+use chrono::Duration;
 use diesel;
 use diesel::prelude::*;
 use diesel::sql_types;
 use std::collections::HashMap;
-use time::Duration;
 use uuid::Uuid;
 
 #[test]

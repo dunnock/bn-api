@@ -44,7 +44,8 @@ pub async fn show() {
     path.id = order.id;
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+    let state = test_request.extract_state().await;
+    let response: HttpResponse = orders::show((state, database.connection.clone(), path, auth_user))
         .await
         .into();
     assert_eq!(response.status(), StatusCode::OK);
@@ -81,7 +82,8 @@ pub async fn show_for_box_office_purchased_user() {
     path.id = order.id;
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+    let state = test_request.extract_state().await;
+    let response: HttpResponse = orders::show((state, database.connection.clone(), path, auth_user))
         .await
         .into();
     assert_eq!(response.status(), StatusCode::OK);
@@ -300,7 +302,8 @@ pub async fn show_for_draft_returns_forbidden() {
     path.id = order.id;
 
     let auth_user = support::create_auth_user_from_user(&user, Roles::User, None, &database);
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+    let state = test_request.extract_state().await;
+    let response: HttpResponse = orders::show((state, database.connection.clone(), path, auth_user))
         .await
         .into();
     support::expects_forbidden(&response, Some("You do not have access to this order"));

@@ -2,7 +2,7 @@ use bigneon_db::dev::TestProject;
 use bigneon_db::models::*;
 use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::prelude::*;
-use time::Duration;
+use chrono::Duration;
 use uuid::Uuid;
 
 #[test]

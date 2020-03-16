@@ -37,7 +37,7 @@ pub fn transfer_drip_reminder(
     conn: &PgConnection,
     deep_linker: &dyn DeepLinker,
 ) -> Result<(), BigNeonError> {
-    let receive_tickets_link = transfer.receive_url(config.front_end_url.clone(), conn)?;
+    let receive_tickets_link = transfer.receive_url(&config.front_end_url, conn)?;
     let link = deep_linker.create_deep_link_with_fallback(&receive_tickets_link);
     let source = CommAddress::from(config.communication_default_source_phone.clone());
     let destinations = CommAddress::from(phone);
@@ -70,7 +70,7 @@ pub fn send_tickets(
     conn: &PgConnection,
     deep_linker: &dyn DeepLinker,
 ) -> Result<(), BigNeonError> {
-    let receive_tickets_link = transfer.receive_url(config.front_end_url.clone(), conn)?;
+    let receive_tickets_link = transfer.receive_url(&config.front_end_url, conn)?;
     let link = deep_linker.create_deep_link_with_fallback(&receive_tickets_link);
 
     let source = CommAddress::from(config.communication_default_source_phone.clone());

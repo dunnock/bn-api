@@ -12,15 +12,15 @@
 #![recursion_limit = "256"]
 #[macro_use]
 extern crate diesel;
-extern crate diesel_migrations;
-
 extern crate argon2rs;
 extern crate backtrace;
 extern crate bigneon_http;
 extern crate chrono;
 extern crate chrono_tz;
+extern crate diesel_migrations;
 extern crate hex;
 extern crate itertools;
+extern crate jsonwebtoken;
 //#[macro_use]
 extern crate log;
 #[macro_use]
@@ -36,7 +36,6 @@ extern crate regex;
 extern crate ring;
 #[macro_use]
 extern crate embed_dirs_derive;
-extern crate time;
 extern crate uuid;
 #[macro_use]
 extern crate serde_derive;

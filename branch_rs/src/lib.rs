@@ -17,6 +17,8 @@ extern crate serde;
 
 use log::Level::Debug;
 use reqwest::StatusCode;
+use serde_json::Value;
+use std::collections::HashMap;
 use std::time::Duration;
 
 pub struct BranchClient {
@@ -113,6 +115,8 @@ pub struct DeepLinkData {
     pub android_deeplink_path: Option<String>,
     #[serde(rename = "$web_only")]
     pub web_only: bool,
+    #[serde(flatten)]
+    pub custom_data: HashMap<String, Value>,
 }
 
 #[derive(Debug, Error)]

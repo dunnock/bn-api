@@ -30,6 +30,7 @@ chrono = { version = "0.4", features = ["serde"] }
 chrono-tz = "0.4"
 argon2rs = "0.2"
 itertools = "0.7"
+jsonwebtoken="5"
 log = "0.4"
 logging = {path="../logging"}
 macros={path="../macros"}
@@ -43,7 +44,6 @@ clap="2.32"
 diesel_migrations =  "1.4"
 validator = "0.8"
 validator_derive = "0.8"
-time="0.1"
 tari-client= {path="../tari-client"}
 unidecode= "0.3"
 url = "1.7.1"

@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use chrono::Duration;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use models::*;
@@ -6,7 +7,6 @@ use rand::distributions::Alphanumeric;
 use rand::prelude::*;
 use rand::{thread_rng, Rng};
 use test::builders::*;
-use time::Duration;
 use uuid::Uuid;
 
 pub struct CodeBuilder<'a> {

@@ -1,4 +1,4 @@
-use crate::auth::{claims::RefreshToken, TokenResponse};
+use crate::auth::TokenResponse;
 use crate::db::Connection;
 use crate::errors::*;
 use crate::extractors::*;
@@ -9,8 +9,10 @@ use crate::server::{AppState, GetAppState};
 use crate::utils::google_recaptcha;
 use actix_web::{web::Data, HttpRequest, HttpResponse};
 use bigneon_db::prelude::*;
+use diesel::PgConnection;
 use log::Level::Info;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
@@ -90,12 +92,7 @@ pub async fn token(
 
     user.login_domain_event(json!(request_info), connection.get())?;
     jlog!(Info, "User logged in via email and password", {"id": user.id, "email": user.email.clone()});
-    let response = TokenResponse::create_from_user(
-        &state.config.token_secret,
-        &state.config.token_issuer,
-        &state.config.jwt_expiry_time,
-        &user,
-    )?;
+    let response = TokenResponse::create_from_user(&*state.config.token_issuer, state.config.jwt_expiry_time, &user)?;
     Ok(response)
 }
 
@@ -104,26 +101,56 @@ pub async fn token_refresh(
 ) -> Result<HttpResponse, BigNeonError> {
     let mut validation = Validation::default();
     validation.validate_exp = false;
-    let token = decode::<RefreshToken>(
+    let token = decode::<AccessToken>(
         &refresh_request.refresh_token,
-        state.config.token_secret.as_bytes(),
+        state.config.token_issuer.token_secret.as_bytes(),
         &validation,
     )?;
-    let user = User::find(token.claims.get_id()?, connection.get())?;
-
-    // If the user changes their password invalidate all refresh tokens
-    let password_modified_timestamp = user.password_modified_at.timestamp() as u64;
-    if password_modified_timestamp > token.claims.issued {
-        return application::unauthorized_with_message("Invalid token", None, None);
+    let conn = connection.get();
+    let user_id = token.claims.get_id()?;
+    let user;
+    if let Some(ref scopes) = token.claims.scopes {
+        // Promote temp user
+        if scopes.contains(&Scopes::TemporaryUserPromote.to_string()) {
+            user = promote_temp_to_user(user_id, conn)?;
+        } else if !scopes.contains(&Scopes::TokenRefresh.to_string()) {
+            return application::unauthorized_with_message(
+                "Token does not have the scope needed to refresh",
+                None,
+                None,
+            );
+        } else {
+            user = User::find(user_id, conn)?;
+            let password_modified_timestamp = user.password_modified_at.timestamp() as u64;
+            // If the user changes their password invalidate all refresh tokens
+            if password_modified_timestamp > token.claims.issued {
+                return application::unauthorized_with_message("Token no longer valid", None, None);
+            }
+        }
+    } else {
+        return application::unauthorized_with_message("Token can not be used to refresh", None, None);
     }
 
-    let response = TokenResponse::create_from_refresh_token(
-        &state.config.token_secret,
-        &state.config.token_issuer,
-        &state.config.jwt_expiry_time,
-        &user.id,
-        &refresh_request.refresh_token,
-    )?;
+    let response =
+        TokenResponse::create_from_refresh_token(&*state.config.token_issuer, state.config.jwt_expiry_time, user.id)?;
 
     Ok(HttpResponse::Ok().json(response))
+}
+
+fn promote_temp_to_user(user_id: Uuid, conn: &PgConnection) -> Result<User, BigNeonError> {
+    let temp_user = TemporaryUser::find(user_id, &conn)?;
+    let user = temp_user.users(&conn)?.into_iter().next();
+    if let Some(user) = user {
+        return Ok(user);
+    }
+    let user = User::create(
+        None,
+        None,
+        temp_user.email.clone(),
+        temp_user.phone.clone(),
+        &Uuid::new_v4().to_string(),
+    )
+    .commit(None, &conn)?;
+    temp_user.associate_user(user.id, conn)?;
+    Ok(user)
 }

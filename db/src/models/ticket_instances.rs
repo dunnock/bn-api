@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use chrono::Duration;
 use diesel;
 use diesel::dsl::*;
 use diesel::expression::dsl;
@@ -16,7 +17,6 @@ use schema::{
 };
 use std::cmp;
 use tari_client::*;
-use time::Duration;
 use utils::errors::*;
 use uuid::Uuid;
 use validators::*;

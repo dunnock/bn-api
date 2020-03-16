@@ -19,7 +19,7 @@ pub struct FeeSchedule {
 }
 
 impl FeeSchedule {
-    pub fn create(organization_id: Uuid, name: String, ranges: Vec<(NewFeeScheduleRange)>) -> NewFeeSchedule {
+    pub fn create(organization_id: Uuid, name: String, ranges: Vec<NewFeeScheduleRange>) -> NewFeeSchedule {
         NewFeeSchedule {
             organization_id,
             name,

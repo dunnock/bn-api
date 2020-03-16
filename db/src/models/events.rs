@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use chrono::Duration;
 use chrono::Utc;
 use chrono_tz::Tz;
 use dev::times;
@@ -23,7 +24,6 @@ use services::*;
 use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use time::Duration;
 use utils::errors::*;
 use utils::pagination::*;
 use utils::text;

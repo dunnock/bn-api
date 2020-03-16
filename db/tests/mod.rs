@@ -15,7 +15,6 @@ extern crate diesel;
 extern crate rand;
 #[macro_use]
 extern crate serde_json;
-extern crate time;
 extern crate uuid;
 extern crate validator;
 #[macro_use]

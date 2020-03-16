@@ -118,6 +118,16 @@ impl Error for ParseError {
     }
 }
 
+use jsonwebtoken;
+impl From<jsonwebtoken::errors::Error> for DatabaseError {
+    fn from(s: jsonwebtoken::errors::Error) -> DatabaseError {
+        DatabaseError::new(
+            ErrorCode::InternalError,
+            Some(format!("JSON Web Token error: {}", s.description())),
+        )
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct DatabaseError {
     pub code: i32,

@@ -1,3 +1,4 @@
+use chrono::Duration;
 use chrono::NaiveDateTime;
 use chrono::Utc;
 use diesel;
@@ -7,7 +8,6 @@ use diesel::prelude::*;
 use models::*;
 use schema::{orders, payments};
 use serde_json;
-use time::Duration;
 use utils::errors::*;
 use uuid::Uuid;
 

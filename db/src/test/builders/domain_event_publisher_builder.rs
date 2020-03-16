@@ -6,7 +6,6 @@ pub struct DomainEventPublisherBuilder<'a> {
     organization_id: Option<Uuid>,
     event_types: Option<Vec<DomainEventTypes>>,
     webhook_url: Option<String>,
-    import_historic_events: bool,
     connection: &'a PgConnection,
 }
 
@@ -16,7 +15,6 @@ impl<'a> DomainEventPublisherBuilder<'a> {
             organization_id: None,
             event_types: None,
             webhook_url: None,
-            import_historic_events: false,
             connection,
         }
     }
@@ -36,17 +34,11 @@ impl<'a> DomainEventPublisherBuilder<'a> {
         self
     }
 
-    pub fn import_historic_events(mut self) -> Self {
-        self.import_historic_events = true;
-        self
-    }
-
     pub fn finish(self) -> DomainEventPublisher {
         DomainEventPublisher::create(
             self.organization_id,
             self.event_types.unwrap_or(vec![DomainEventTypes::OrderCreated]),
             self.webhook_url.unwrap_or("https://www.tari.com".to_string()),
-            self.import_historic_events,
         )
         .commit(self.connection)
         .unwrap()

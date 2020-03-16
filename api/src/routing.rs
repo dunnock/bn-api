@@ -292,6 +292,8 @@ pub fn routes(app: &mut web::ServiceConfig) {
             .route(web::post().to(regions::create)),
     )
     .service(web::resource("/reports/{id}").route(web::get().to(reports::get_report)))
+    .service(web::resource("/send_download_link").route(web::post().to(send_download_link::create)))
+    .service(web::resource("/send_download_link/resend").route(web::post().to(send_download_link::resend)))
     .service(web::resource("/slugs").route(web::get().to(slugs::index)))
     .service(
         web::resource("/slugs/{id}")

@@ -90,7 +90,8 @@ pub async fn show_other_user_order(role: Roles, should_succeed: bool) {
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
 
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+    let state = test_request.extract_state().await;
+    let response: HttpResponse = orders::show((state, database.connection.clone(), path, auth_user))
         .await
         .into();
 
@@ -203,8 +204,8 @@ pub async fn show_other_user_order_not_matching_users_organization(role: Roles, 
     let test_request = TestRequest::create();
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
-
-    let response: HttpResponse = orders::show((database.connection.clone(), path, auth_user))
+    let state = test_request.extract_state().await;
+    let response: HttpResponse = orders::show((state, database.connection.clone(), path, auth_user))
         .await
         .into();
 

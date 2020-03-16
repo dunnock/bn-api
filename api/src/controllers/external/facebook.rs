@@ -63,9 +63,8 @@ pub async fn web_login(
             connection,
         )?;
         let response = TokenResponse::create_from_user(
-            &state.config.token_secret,
-            &state.config.token_issuer,
-            &state.config.jwt_expiry_time,
+            &*state.config.token_issuer,
+            state.config.jwt_expiry_time,
             &auth_user.user,
         )?;
         return Ok(HttpResponse::Ok().json(response));
@@ -131,12 +130,7 @@ pub async fn web_login(
             }
         }
     };
-    let response = TokenResponse::create_from_user(
-        &state.config.token_secret,
-        &state.config.token_issuer,
-        &state.config.jwt_expiry_time,
-        &user,
-    )?;
+    let response = TokenResponse::create_from_user(&*state.config.token_issuer, state.config.jwt_expiry_time, &user)?;
     Ok(HttpResponse::Ok().json(response))
 }
 
