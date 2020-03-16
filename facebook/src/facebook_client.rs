@@ -34,10 +34,14 @@ impl FacebookClient {
         }
     }
 
-    pub fn from_app_access_token(app_id: &str, app_secret: &str) -> Result<FacebookClient, FacebookError> {
+    pub async fn from_app_access_token(app_id: &str, app_secret: &str) -> Result<FacebookClient, FacebookError> {
         let inner = FacebookClientInner {
             base_url: BASE_URL,
-            app_access_token: Some(FacebookClient::get_app_access_token(app_id, app_secret)?.access_token),
+            app_access_token: Some(
+                FacebookClient::get_app_access_token(app_id, app_secret)
+                    .await?
+                    .access_token,
+            ),
             page_access_token: None,
             user_access_token: None,
         };
@@ -94,16 +98,17 @@ impl FacebookClient {
         format!("https://www.facebook.com/{}/dialog/oauth?{}", API_VERSION, result)
     }
 
-    pub fn get_app_access_token(app_id: &str, app_secret: &str) -> Result<AccessToken, FacebookError> {
+    pub async fn get_app_access_token(app_id: &str, app_secret: &str) -> Result<AccessToken, FacebookError> {
         let client = reqwest::Client::new();
-        let mut resp = client
+        let resp = client
             .get(&format!(
                 "{}/{}/oauth/access_token?client_id={}&client_secret={}&grant_type=client_credentials",
                 BASE_URL, API_VERSION, app_id, app_secret,
             ))
-            .send()?;
+            .send()
+            .await?;
         //        let status = resp.status();
-        let value: serde_json::Value = resp.json()?;
+        let value: serde_json::Value = resp.json().await?;
         println!("{:?}", value);
         let result: AccessToken = serde_json::from_value(value)?;
         Ok(result)

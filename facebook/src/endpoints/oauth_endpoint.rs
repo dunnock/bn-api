@@ -11,7 +11,7 @@ impl OAuthEndpoint {
         OAuthEndpoint { client }
     }
 
-    pub fn access_token(&self, redirect_uri: Option<&str>, code: &str) -> AccessToken {
+    pub async fn access_token(&self, redirect_uri: Option<&str>, code: &str) -> AccessToken {
         let client = reqwest::Client::new();
          let mut resp = client
             .get(&format!(
@@ -22,9 +22,9 @@ impl OAuthEndpoint {
                 &self.client.secret,
                 code
             ))
-            .send()?;
+            .send().await?;
         let status = resp.status();
-        let value: serde_json::Value = resp.json()?;
+        let value: serde_json::Value = resp.json().await?;
         println!("{:?}", value);
     }
 }
