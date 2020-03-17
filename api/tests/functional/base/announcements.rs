@@ -1,4 +1,11 @@
-use actix_web::{http::StatusCode, FromRequest, HttpResponse, Path, Query};
+use crate::support;
+use crate::support::database::TestDatabase;
+use crate::support::test_request::TestRequest;
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    FromRequest, HttpResponse,
+};
 use bigneon_api::controllers::announcements;
 use bigneon_api::extractors::*;
 use bigneon_api::models::*;
@@ -9,11 +16,8 @@ use diesel::query_dsl::RunQueryDsl;
 use diesel::sql_types;
 use serde_json;
 use std::collections::HashMap;
-use support;
-use support::database::TestDatabase;
-use support::test_request::TestRequest;
 
-pub fn create(role: Roles, should_succeed: bool) {
+pub async fn create(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let message = "Announcement Example";
 
@@ -23,7 +27,9 @@ pub fn create(role: Roles, should_succeed: bool) {
         organization_id: None,
     });
 
-    let response: HttpResponse = announcements::create((database.connection.into(), json, user)).into();
+    let response: HttpResponse = announcements::create((database.connection.into(), json, user))
+        .await
+        .into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);
@@ -36,21 +42,23 @@ pub fn create(role: Roles, should_succeed: bool) {
     assert!(announcement.organization_id.is_none());
 }
 
-pub fn update(role: Roles, should_succeed: bool) {
+pub async fn update(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let announcement = database.create_announcement().finish();
     let new_message = "New Message";
 
     let user = support::create_auth_user(role, None, &database);
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = announcement.id;
 
     let mut attributes: AnnouncementEditableAttributes = Default::default();
     attributes.message = Some(new_message.to_string());
     let json = Json(attributes);
 
-    let response: HttpResponse = announcements::update((database.connection.into(), path, json, user)).into();
+    let response: HttpResponse = announcements::update((database.connection.into(), path, json, user))
+        .await
+        .into();
     if !should_succeed {
         support::expects_unauthorized(&response);
         return;
@@ -61,7 +69,7 @@ pub fn update(role: Roles, should_succeed: bool) {
     assert_eq!(updated_announcement.message, new_message);
 }
 
-pub fn destroy(role: Roles, should_succeed: bool) {
+pub async fn destroy(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let user = database.create_user().finish();
@@ -70,10 +78,12 @@ pub fn destroy(role: Roles, should_succeed: bool) {
     let auth_user = support::create_auth_user_from_user(&user, role, Some(&organization), &database);
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = announcement.id;
 
-    let response: HttpResponse = announcements::destroy((database.connection.clone().into(), path, auth_user)).into();
+    let response: HttpResponse = announcements::destroy((database.connection.clone().into(), path, auth_user))
+        .await
+        .into();
 
     if should_succeed {
         assert_eq!(response.status(), StatusCode::OK);
@@ -84,7 +94,7 @@ pub fn destroy(role: Roles, should_succeed: bool) {
     }
 }
 
-pub fn index(role: Roles, should_succeed: bool) {
+pub async fn index(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let connection = database.connection.get();
     let announcement = database.create_announcement().finish();
@@ -116,10 +126,10 @@ pub fn index(role: Roles, should_succeed: bool) {
     };
 
     let test_request = TestRequest::create();
-    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).unwrap();
+    let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
 
     let user = support::create_auth_user(role, None, &database);
-    let response = announcements::index((database.connection.into(), query_parameters, user));
+    let response = announcements::index((database.connection.into(), query_parameters, user)).await;
 
     if !should_succeed {
         assert_eq!(
@@ -134,7 +144,7 @@ pub fn index(role: Roles, should_succeed: bool) {
     assert_eq!(wrapped_expected_announcements, *response.payload());
 }
 
-pub fn show(role: Roles, should_succeed: bool) {
+pub async fn show(role: Roles, should_succeed: bool) {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
     let organization = database.create_organization().finish();
@@ -144,9 +154,11 @@ pub fn show(role: Roles, should_succeed: bool) {
     let expected_json = serde_json::to_string(&announcement).unwrap();
 
     let test_request = TestRequest::create();
-    let mut path = Path::<PathParameters>::extract(&test_request.request).unwrap();
+    let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = announcement.id;
-    let response: HttpResponse = announcements::show((database.connection.into(), path, auth_user.clone())).into();
+    let response: HttpResponse = announcements::show((database.connection.into(), path, auth_user.clone()))
+        .await
+        .into();
 
     if !should_succeed {
         support::expects_unauthorized(&response);

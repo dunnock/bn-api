@@ -1,18 +1,22 @@
-use actix_web::{http::StatusCode, HttpResponse, Path, Query};
-use auth::user::User;
+use crate::auth::user::User;
+use crate::db::Connection;
+use crate::errors::*;
+use crate::extractors::*;
+use crate::models::PathParameters;
+use crate::models::WebPayload;
+use actix_web::{
+    http::StatusCode,
+    web::{Path, Query},
+    HttpResponse,
+};
 use bigneon_db::models::*;
-use db::Connection;
-use errors::*;
-use extractors::*;
-use models::PathParameters;
-use models::WebPayload;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct EngagementData {
     pub action: Option<AnnouncementEngagementAction>,
 }
 
-pub fn index(
+pub async fn index(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, User),
 ) -> Result<WebPayload<Announcement>, BigNeonError> {
     user.requires_scope(Scopes::AnnouncementRead)?;
@@ -27,7 +31,7 @@ pub fn index(
     ))
 }
 
-pub fn show(
+pub async fn show(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     user.requires_scope(Scopes::AnnouncementRead)?;
@@ -36,7 +40,7 @@ pub fn show(
     Ok(HttpResponse::Ok().json(&announcement))
 }
 
-pub fn create(
+pub async fn create(
     (connection, new_announcement, user): (Connection, Json<NewAnnouncement>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     user.requires_scope(Scopes::AnnouncementWrite)?;
@@ -45,7 +49,7 @@ pub fn create(
     Ok(HttpResponse::Created().json(&announcement))
 }
 
-pub fn destroy(
+pub async fn destroy(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     user.requires_scope(Scopes::AnnouncementDelete)?;
@@ -56,7 +60,7 @@ pub fn destroy(
     Ok(HttpResponse::Ok().json({}))
 }
 
-pub fn show_from_organization(
+pub async fn show_from_organization(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -67,7 +71,7 @@ pub fn show_from_organization(
     Ok(HttpResponse::Ok().json(&announcements))
 }
 
-pub fn engage(
+pub async fn engage(
     (connection, parameters, engagement_data, user): (Connection, Path<PathParameters>, Json<EngagementData>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = connection.get();
@@ -86,7 +90,7 @@ pub fn engage(
     Ok(HttpResponse::Ok().json(json!({})))
 }
 
-pub fn update(
+pub async fn update(
     (connection, parameters, announcement_parameters, user): (
         Connection,
         Path<PathParameters>,
