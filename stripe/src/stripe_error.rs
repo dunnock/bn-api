@@ -32,8 +32,9 @@ impl fmt::Display for StripeError {
 }
 
 impl StripeError {
-    pub fn from_response(response: &mut reqwest::Response) -> StripeError {
-        let response_text = response.text().unwrap_or("<Error reading response body>".to_string());
+    pub async fn from_response(response: reqwest::Response) -> StripeError {
+        let status = response.status();
+        let response_text = response.text().await.unwrap_or("<Error reading response body>".to_string());
 
         #[derive(Deserialize)]
         struct R {
@@ -48,7 +49,7 @@ impl StripeError {
         StripeError {
             description: format!(
                 "Error calling Stripe: HTTP Code {}: Body:{}",
-                response.status(),
+                status,
                 response_text
             ),
             cause: None,

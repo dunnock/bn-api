@@ -11,16 +11,16 @@ impl Customer {
     pub fn to_json(&self) -> String {
         self.raw_data.clone()
     }
-    pub fn from_response(mut resp: reqwest::Response) -> Result<Customer, StripeError> {
-        let raw: String = resp.text()?;
+    pub async fn from_response(resp: reqwest::Response) -> Result<Customer, StripeError> {
+        let raw_data: String = resp.text().await?;
         #[derive(Deserialize)]
         struct R {
             id: String,
         }
-        let result: R = serde_json::from_str(&raw)?;
+        let result: R = serde_json::from_str(&raw_data)?;
         Ok(Customer {
             id: result.id,
-            raw_data: raw,
+            raw_data,
         })
     }
 }

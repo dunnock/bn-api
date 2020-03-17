@@ -14,7 +14,7 @@ impl StripeClient {
         StripeClient { api_key }
     }
 
-    pub fn charge(
+    pub async fn charge(
         &self,
         token: &str,
         amount: i64,
@@ -22,10 +22,10 @@ impl StripeClient {
         description: &str,
         metadata: Vec<(String, String)>,
     ) -> Result<ChargeResult, StripeError> {
-        self.create_charge(token, amount, currency, description, true, metadata)
+        self.create_charge(token, amount, currency, description, true, metadata).await
     }
 
-    pub fn auth(
+    pub async fn auth(
         &self,
         token: &str,
         amount: i64,
@@ -33,10 +33,10 @@ impl StripeClient {
         description: &str,
         metadata: Vec<(String, String)>,
     ) -> Result<ChargeResult, StripeError> {
-        self.create_charge(token, amount, currency, description, false, metadata)
+        self.create_charge(token, amount, currency, description, false, metadata).await
     }
 
-    pub fn update_metadata(
+    pub async fn update_metadata(
         &self,
         charge_id: &str,
         metadata: Vec<(String, String)>,
@@ -47,20 +47,21 @@ impl StripeClient {
         }
 
         let client = reqwest::Client::new();
-        let mut resp = client
+        let resp = client
             .post(&format!("https://api.stripe.com/v1/charges/{}", charge_id))
             .basic_auth(&self.api_key, Some(""))
             .form(&params)
-            .send()?;
+            .send()
+            .await?;
         match resp.status() {
             reqwest::StatusCode::OK => {
-                return ChargeResult::from_response(resp);
+                return ChargeResult::from_response(resp).await;
             }
-            _ => return Err(StripeError::from_response(&mut resp)),
+            _ => return Err(StripeError::from_response(resp).await),
         }
     }
 
-    fn create_charge(
+    async fn create_charge(
         &self,
         token: &str,
         amount: i64,
@@ -88,72 +89,76 @@ impl StripeClient {
             params.push((format!("metadata[{}]", key_value.0), key_value.1));
         }
         let client = reqwest::Client::new();
-        let mut resp = client
+        let resp = client
             .post("https://api.stripe.com/v1/charges")
             .basic_auth(&self.api_key, Some(""))
             .form(&params)
-            .send()?;
+            .send()
+            .await?;
         match resp.status() {
             reqwest::StatusCode::OK => {
-                return ChargeResult::from_response(resp);
+                return ChargeResult::from_response(resp).await;
             }
-            _ => return Err(StripeError::from_response(&mut resp)),
+            _ => return Err(StripeError::from_response(resp).await),
         }
     }
 
-    pub fn refund(&self, charge_id: &str) -> Result<RefundResult, StripeError> {
+    pub async fn refund(&self, charge_id: &str) -> Result<RefundResult, StripeError> {
         let params = vec![("charge".to_string(), charge_id.to_string())];
 
         let client = reqwest::Client::new();
-        let mut resp = client
+        let resp = client
             .post("https://api.stripe.com/v1/refunds")
             .basic_auth(&self.api_key, Some(""))
             .form(&params)
-            .send()?;
+            .send()
+            .await?;
         match resp.status() {
             reqwest::StatusCode::OK => {
-                return RefundResult::from_response(resp);
+                return RefundResult::from_response(resp).await;
             }
-            _ => return Err(StripeError::from_response(&mut resp)),
+            _ => return Err(StripeError::from_response(resp).await),
         }
     }
 
-    pub fn partial_refund(&self, charge_id: &str, amount: i64) -> Result<RefundResult, StripeError> {
+    pub async fn partial_refund(&self, charge_id: &str, amount: i64) -> Result<RefundResult, StripeError> {
         let params = vec![
             ("charge".to_string(), charge_id.to_string()),
             ("amount".to_string(), amount.to_string()),
         ];
 
         let client = reqwest::Client::new();
-        let mut resp = client
+        let resp = client
             .post("https://api.stripe.com/v1/refunds")
             .basic_auth(&self.api_key, Some(""))
             .form(&params)
-            .send()?;
+            .send()
+            .await?;
         match resp.status() {
             reqwest::StatusCode::OK => {
-                return RefundResult::from_response(resp);
+                return RefundResult::from_response(resp).await;
             }
-            _ => return Err(StripeError::from_response(&mut resp)),
+            _ => return Err(StripeError::from_response(resp).await),
         }
     }
 
-    pub fn complete(&self, charge_id: &str) -> Result<ChargeResult, StripeError> {
+    pub async fn complete(&self, charge_id: &str) -> Result<ChargeResult, StripeError> {
         let client = reqwest::Client::new();
 
-        let mut resp = client
+        let resp = client
             .post(&format!("https://api.stripe.com/v1/charges/{}/capture", charge_id))
             .basic_auth(&self.api_key, Some(""))
-            .send()?;
+            .send()
+            .await?;
         match resp.status() {
             reqwest::StatusCode::OK => {
-                return ChargeResult::from_response(resp);
+                return ChargeResult::from_response(resp).await;
             }
-            _ => return Err(StripeError::from_response(&mut resp)),
+            _ => return Err(StripeError::from_response(resp).await),
         }
     }
 
-    pub fn update_customer(
+    pub async fn update_customer(
         &self,
         client_id: &str,
         description: &str,
@@ -169,20 +174,21 @@ impl StripeClient {
             params.push((format!("metadata[{}]", key_value.0), key_value.1));
         }
         let client = reqwest::Client::new();
-        let mut resp = client
+        let resp = client
             .post(&format!("https://api.stripe.com/v1/customers/{}", client_id,))
             .basic_auth(&self.api_key, Some(""))
             .form(&params)
-            .send()?;
+            .send()
+            .await?;
         match resp.status() {
             reqwest::StatusCode::OK => {
-                return Customer::from_response(resp);
+                return Customer::from_response(resp).await;
             }
-            _ => return Err(StripeError::from_response(&mut resp)),
+            _ => return Err(StripeError::from_response(resp).await),
         }
     }
 
-    pub fn create_customer(
+    pub async fn create_customer(
         &self,
         description: &str,
         source: &str,
@@ -197,16 +203,17 @@ impl StripeClient {
             params.push((format!("metadata[{}]", key_value.0), key_value.1));
         }
         let client = reqwest::Client::new();
-        let mut resp = client
+        let resp = client
             .post("https://api.stripe.com/v1/customers")
             .basic_auth(&self.api_key, Some(""))
             .form(&params)
-            .send()?;
+            .send()
+            .await?;
         match resp.status() {
             reqwest::StatusCode::OK => {
-                return Customer::from_response(resp);
+                return Customer::from_response(resp).await;
             }
-            _ => return Err(StripeError::from_response(&mut resp)),
+            _ => return Err(StripeError::from_response(resp).await),
         }
     }
 }
