@@ -30,7 +30,7 @@ diesel="1.4.2"
 dotenv = "0.13"
 # Pulling from github as dependency fix merged into master has yet to be released
 expo-server-sdk = { git = "https://github.com/expo/expo-server-sdk-rust", rev="a4334d2d7243ac5e0ecb77478bb42774bbd9af54" }
-facebook = { path="../facebook"}
+facebook = { version = "0.2.0", path = "../facebook"}
 futures = "0.3"
 globee={path="../globee"}
 itertools = "0.7"
@@ -48,7 +48,7 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 serde_with = "0.2"
-stripe = {path="../stripe"}
+stripe = { version = "0.2.0", path = "../stripe" }
 tari-client= {path="../tari-client"}
 tokio = { version = "0.2", features = ["rt-core", "rt-threaded", "time"] }
 # TODO move this to the bigneon org? Currently just testing this lib, so if we
