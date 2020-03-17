@@ -1,33 +1,44 @@
-use super::AuthorizationUuid;
+use super::AccessTokenExtractor;
 use crate::auth::user::User;
+use crate::errors::{AuthError, BigNeonError};
 use crate::middleware::RequestConnection;
-use actix_web::error::*;
 use actix_web::{dev::Payload, FromRequest, HttpRequest};
 use bigneon_db::models::User as DbUser;
-use futures::future::{err, ok, Ready};
+use futures::future::{err, ready, Ready};
 
 impl FromRequest for User {
     type Config = ();
-    type Error = Error;
-    type Future = Ready<Result<User, Error>>;
+    type Error = BigNeonError;
+    type Future = Ready<Result<User, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        let id = match AuthorizationUuid::from_request(req) {
-            Ok(id) => id,
-            Err(e) => return err(e),
-        };
-        let connection = match req.connection() {
-            Ok(conn) => conn.get(),
+        let token = match AccessTokenExtractor::from_request(req) {
+            Ok(token) => token,
             Err(e) => return err(e),
         };
 
-        let user = DbUser::find(user_id, &connection).map_err(|_| ErrorUnauthorized("Invalid Token"))?;
+        let connection = match req.connection() {
+            Ok(conn) => conn,
+            Err(e) => return err(e),
+        };
+
+        let user_id = match token.get_id() {
+            Ok(id) => id,
+            Err(_) => return err(AuthError::unauthorized("Invalid Token").into()),
+        };
+
+        let user = match DbUser::find(user_id, connection.get()) {
+            Ok(user) => user,
+            Err(_) => return err(AuthError::unauthorized("Invalid Token").into()),
+        };
 
         if user.deleted_at.is_some() {
-            Err(ErrorUnauthorized("User account is disabled"))
+            err(AuthError::unauthorized("User account is disabled").into())
         } else {
-            Ok(User::new(user, req, token.claims.scopes)
-                .map_err(|_| ErrorUnauthorized("User has invalid role data"))?)
+            ready(
+                User::new(user, req, token.scopes)
+                    .map_err(|_| AuthError::unauthorized("User has invalid role data").into()),
+            )
         }
     }
 }

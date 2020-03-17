@@ -2,12 +2,11 @@ use crate::config::Config;
 use crate::db::*;
 use crate::domain_events::errors::DomainActionError;
 use crate::domain_events::routing::{DomainActionExecutor, DomainActionRouter};
+use crate::domain_events::webhook_publisher::WebhookPublisher;
+use crate::utils::ServiceLocator;
 use bigneon_db::prelude::*;
-use bigneon_db::prelude::*;
-use domain_events::webhook_publisher::WebhookPublisher;
 use futures::future::TryFutureExt;
 use log::Level::*;
-use logging::*;
 use logging::*;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
@@ -16,7 +15,6 @@ use std::time::Duration;
 use std::{cmp, thread};
 use tokio::runtime::Runtime;
 use tokio::time::timeout;
-use utils::ServiceLocator;
 
 pub struct DomainActionMonitor {
     config: Config,

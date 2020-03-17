@@ -1,5 +1,5 @@
+use crate::auth::default_token_issuer::DefaultTokenIssuer;
 use crate::errors::{ApplicationError, BigNeonError};
-use auth::default_token_issuer::DefaultTokenIssuer;
 use bigneon_db::models::{EmailProvider, Environment};
 use bigneon_db::utils::errors::EnumParseError;
 use chrono::Duration;

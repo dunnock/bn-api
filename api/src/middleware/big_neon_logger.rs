@@ -1,4 +1,4 @@
-use crate::extractors::AuthorizationUuid;
+use crate::extractors::AccessTokenExtractor;
 use actix_service::Service;
 use actix_web::http::{header, StatusCode};
 use actix_web::{dev, error};
@@ -75,7 +75,10 @@ pub struct RequestLogData {
 impl RequestLogData {
     fn from(req: &dev::ServiceRequest) -> Self {
         let uri = req.uri().to_string();
-        let user = AuthorizationUuid::from_request(req).ok();
+        let user = AccessTokenExtractor::from_request(req)
+            .ok()
+            .map(|token| token.get_id().ok())
+            .flatten();
         let ip_address = req.connection_info().remote().map(|i| i.to_string());
         let method = req.method().to_string();
         let user_agent = if let Some(ua) = req.headers().get(header::USER_AGENT) {

@@ -47,7 +47,7 @@ pub async fn activity(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub fn show(
+pub async fn show(
     (state, conn, path, auth_user): (Data<AppState>, Connection, Path<PathParameters>, User),
 ) -> Result<HttpResponse, BigNeonError> {
     let connection = conn.get();

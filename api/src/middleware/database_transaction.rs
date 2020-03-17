@@ -10,12 +10,12 @@ use futures::future::{ok, Ready};
 use std::error::Error;
 
 pub trait RequestConnection {
-    fn connection(&self) -> error::Result<Connection>;
+    fn connection(&self) -> Result<Connection, BigNeonError>;
 }
 
 impl RequestConnection for HttpRequest {
-    fn connection(&self) -> error::Result<Connection> {
-        Ok(Connection::from_request(&self, &mut dev::Payload::None).into_inner()?)
+    fn connection(&self) -> Result<Connection, BigNeonError> {
+        Connection::from_request(&self, &mut dev::Payload::None).into_inner()
     }
 }
 

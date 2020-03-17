@@ -17,6 +17,13 @@ impl AuthError {
     pub fn new(error_type: AuthErrorType, reason: String) -> AuthError {
         AuthError { reason, error_type }
     }
+
+    pub fn unauthorized(reason: &str) -> Self {
+        Self {
+            reason: reason.to_string(),
+            error_type: AuthErrorType::Unauthorized,
+        }
+    }
 }
 
 impl fmt::Display for AuthError {

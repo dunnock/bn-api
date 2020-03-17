@@ -1,11 +1,11 @@
-use actix_web::{HttpResponse, State};
-use auth::user::User as AuthUser;
+use crate::auth::user::User as AuthUser;
+use crate::db::Connection;
+use crate::errors::BigNeonError;
+use crate::extractors::Json;
+use crate::server::AppState;
+use actix_web::{web::Data, HttpResponse};
 use bigneon_db::prelude::*;
 use chrono::Duration;
-use db::Connection;
-use errors::BigNeonError;
-use extractors::Json;
-use server::AppState;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -19,8 +19,8 @@ pub struct ResendDownloadLinkRequest {
     user_id: Uuid,
 }
 
-pub fn create(
-    (state, connection, auth_user, data): (State<AppState>, Connection, AuthUser, Json<SendDownloadLinkRequest>),
+pub async fn create(
+    (state, connection, auth_user, data): (Data<AppState>, Connection, AuthUser, Json<SendDownloadLinkRequest>),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = connection.get();
     let user = auth_user.user;
@@ -63,8 +63,8 @@ pub fn create(
     Ok(HttpResponse::Created().finish())
 }
 
-pub fn resend(
-    (state, connection, data): (State<AppState>, Connection, Json<ResendDownloadLinkRequest>),
+pub async fn resend(
+    (state, connection, data): (Data<AppState>, Connection, Json<ResendDownloadLinkRequest>),
 ) -> Result<HttpResponse, BigNeonError> {
     let conn = connection.get();
 

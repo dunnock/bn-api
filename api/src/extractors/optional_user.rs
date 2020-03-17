@@ -1,4 +1,5 @@
 use crate::auth::user::User;
+use crate::errors::BigNeonError;
 use actix_web::error::*;
 use actix_web::{dev, FromRequest, HttpRequest};
 use futures::future::{err, ok, Ready};
@@ -9,8 +10,8 @@ pub struct OptionalUser(pub Option<User>);
 
 impl FromRequest for OptionalUser {
     type Config = ();
-    type Error = Error;
-    type Future = Ready<Result<OptionalUser, Error>>;
+    type Error = BigNeonError;
+    type Future = Ready<Result<OptionalUser, Self::Error>>;
 
     fn from_request(req: &HttpRequest, payload: &mut dev::Payload) -> Self::Future {
         // If auth header exists pass authorization errors back to client
