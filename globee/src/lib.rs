@@ -3,27 +3,17 @@
 //#![deny(unused_imports)]
 //// Unused results is more often than not an error
 //#![deny(unused_must_use)]
-#[macro_use]
-extern crate derive_error;
-extern crate reqwest;
-#[macro_use]
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-extern crate url;
-#[macro_use]
-extern crate logging;
-extern crate chrono;
-extern crate log;
-extern crate serde;
 
 use chrono::prelude::*;
 use log::Level::Debug;
 use reqwest::header::HeaderName;
 use reqwest::StatusCode;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use std::error::Error as StdError;
 use std::fmt;
+use serde_json::json;
+use logging::jlog;
+use derive_error::Error;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GlobeeIpnRequest {
@@ -66,22 +56,23 @@ impl GlobeeClient {
         }
     }
 
-    pub fn create_payment_request(&self, request: PaymentRequest) -> Result<PaymentResponse, GlobeeError> {
+    pub async fn create_payment_request(&self, request: PaymentRequest) -> Result<PaymentResponse, GlobeeError> {
         let client = reqwest::Client::new();
         jlog!(Debug, "Sending payment request to Globee", { "request": &request });
 
-        let mut resp = client
+        let resp = client
             .post(&format!("{}payment-request", &self.base_url))
             .header(HeaderName::from_static("x-auth-key"), self.key.as_str())
             .json(&request)
-            .send()?;
+            .send()
+            .await?;
         let status = resp.status();
         if status != StatusCode::UNPROCESSABLE_ENTITY && status != StatusCode::OK {
             return Err(resp.error_for_status().err().map(|e| e.into()).unwrap_or(
                 GlobeeError::UnexpectedResponseError(format!("Unexpected status code from Globee: {}", status)),
             ));
         };
-        let value: serde_json::Value = resp.json()?;
+        let value: serde_json::Value = resp.json().await?;
         jlog!(Debug, "Response from Globee", { "response": &value });
         let value: GlobeeResponse<PaymentResponse> = serde_json::from_value(value)?;
 
@@ -101,21 +92,23 @@ impl GlobeeClient {
             }
         }
     }
-    pub fn get_payment_request(&self, id: &str) -> Result<GlobeeIpnRequest, GlobeeError> {
+
+    pub async fn get_payment_request(&self, id: &str) -> Result<GlobeeIpnRequest, GlobeeError> {
         let client = reqwest::Client::new();
         jlog!(Debug, "Retrieving payment request from Globee", { "id": id });
 
-        let mut resp = client
+        let resp = client
             .get(&format!("{}payment-request/{}", &self.base_url, id))
             .header(HeaderName::from_static("x-auth-key"), self.key.as_str())
-            .send()?;
+            .send()
+            .await?;
         let status = resp.status();
         if status != StatusCode::UNPROCESSABLE_ENTITY && status != StatusCode::OK {
             return Err(resp.error_for_status().err().map(|e| e.into()).unwrap_or(
                 GlobeeError::UnexpectedResponseError(format!("Unexpected status code from Globee: {}", status)),
             ));
         };
-        let value: serde_json::Value = resp.json()?;
+        let value: serde_json::Value = resp.json().await?;
         jlog!(Debug, "Response from Globee", { "response": &value });
         let value: GlobeeResponse<GlobeeIpnRequest> = serde_json::from_value(value)?;
 
@@ -182,6 +175,7 @@ pub struct PaymentRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_store_reference: Option<String>,
 }
+
 impl PaymentRequest {
     pub fn new(
         total: f64,
