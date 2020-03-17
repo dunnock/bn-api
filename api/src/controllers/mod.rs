@@ -1,5 +1,6 @@
 pub mod admin;
 pub mod analytics;
+pub mod announcements;
 pub mod artists;
 pub mod auth;
 pub mod broadcasts;

@@ -1,9 +1,12 @@
 use chrono::NaiveDateTime;
 use diesel;
+use diesel::dsl;
 use diesel::prelude::*;
 use models::enums::Roles;
-use models::{EventUser, Organization, User};
+use models::{EventUser, Organization, Scopes, User};
 use schema::{event_users, events, organization_users};
+use serde_json;
+use serde_json::Value;
 use utils::errors::DatabaseError;
 use utils::errors::ErrorCode;
 use utils::errors::*;
@@ -20,6 +23,38 @@ pub struct OrganizationUser {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub role: Vec<Roles>,
+    pub additional_scopes: Option<serde_json::Value>,
+}
+
+#[derive(Default, Clone, Debug, Serialize, PartialEq)]
+pub struct AdditionalOrgMemberScopes {
+    pub additional: Vec<Scopes>,
+    pub revoked: Vec<Scopes>,
+}
+
+impl From<serde_json::Value> for AdditionalOrgMemberScopes {
+    fn from(json_value: Value) -> Self {
+        let parse = |json_value: &Value| -> Vec<Scopes> {
+            json_value
+                .as_array()
+                .map(|a| {
+                    a.iter()
+                        .map(|s| s.as_str().map(|g| g.parse::<Scopes>()))
+                        .filter(|s| {
+                            if let Some(res) = s {
+                                return res.is_ok();
+                            }
+                            return false;
+                        })
+                        .map(|s| s.unwrap().unwrap())
+                        .collect::<Vec<Scopes>>()
+                })
+                .unwrap_or(vec![])
+        };
+        let additional = parse(&json_value["additional"]);
+        let revoked = parse(&json_value["revoked"]);
+        AdditionalOrgMemberScopes { additional, revoked }
+    }
 }
 
 #[derive(Insertable)]
@@ -38,26 +73,26 @@ impl NewOrganizationUser {
     pub fn commit(self, conn: &PgConnection) -> Result<OrganizationUser, DatabaseError> {
         let existing_user = OrganizationUser::find_by_user_id(self.user_id, self.organization_id, conn).optional()?;
         match existing_user {
-            Some(mut user) => {
+            Some(mut organization_user) => {
                 // If the new role is a promoter role, combine with existing roles
                 if self.is_event_user() {
-                    if user.is_event_user() {
+                    if organization_user.is_event_user() {
                         // Merge roles
-                        user.role.extend(self.role);
-                        user.role.sort();
-                        user.role.dedup();
+                        organization_user.role.extend(self.role);
+                        organization_user.role.sort();
+                        organization_user.role.dedup();
                     } else {
                         // User is getting updated to an event only role, replace existing
-                        user.role = self.role;
+                        organization_user.role = self.role;
                     }
                 } else {
                     // Replace roles, remove existing event user links as other roles are cross all events
                     EventUser::destroy_all(self.user_id, conn)?;
-                    user.role = self.role;
+                    organization_user.role = self.role;
                 }
 
-                diesel::update(organization_users::table.filter(organization_users::id.eq(user.id)))
-                    .set((organization_users::role.eq(user.role),))
+                diesel::update(organization_users::table.filter(organization_users::id.eq(organization_user.id)))
+                    .set((organization_users::role.eq(organization_user.role),))
                     .get_result(conn)
                     .to_db_error(
                         ErrorCode::UpdateError,
@@ -104,6 +139,33 @@ impl OrganizationUser {
             .select(event_users::event_id)
             .load(conn)
             .to_db_error(ErrorCode::QueryError, "Could not load organization user event ids")
+    }
+
+    // This will overwrite the additional_scopes field to whatever you set it to here.
+    // If you want to maintain previous scopes you'll need to pull them in your function and send them back
+    pub fn set_additional_scopes(
+        &self,
+        additional_scopes: AdditionalOrgMemberScopes,
+        conn: &PgConnection,
+    ) -> Result<OrganizationUser, DatabaseError> {
+        //Clean up the additional_scopes
+        let mut additional = additional_scopes.additional.clone();
+        additional.sort();
+        additional.dedup();
+
+        let mut revoked = additional_scopes.revoked.clone();
+        revoked.sort();
+        revoked.dedup();
+
+        let additional_scopes = AdditionalOrgMemberScopes { additional, revoked };
+
+        diesel::update(organization_users::table.filter(organization_users::id.eq(self.id)))
+            .set((
+                organization_users::additional_scopes.eq(json!(additional_scopes)),
+                organization_users::updated_at.eq(dsl::now),
+            ))
+            .get_result(conn)
+            .to_db_error(ErrorCode::UpdateError, "Could not update additional_scopes")
     }
 
     pub fn find_users_by_organization(

@@ -3,6 +3,9 @@ use bigneon_db::prelude::*;
 use bigneon_db::utils::dates;
 use chrono::{Datelike, Duration, TimeZone, Utc};
 use chrono_tz::Tz;
+use diesel;
+use diesel::sql_types;
+use diesel::RunQueryDsl;
 use uuid::Uuid;
 
 #[test]
@@ -757,7 +760,7 @@ fn tracking_keys_for_ids() {
             google_ga_key: Some(google_ga_key),
             facebook_pixel_key: Some(facebook_pixel_key),
             google_ads_conversion_id: Some(google_ads_conversion_id),
-            google_ads_conversion_labels
+            google_ads_conversion_labels,
         }
     );
 }
@@ -1072,18 +1075,655 @@ pub fn get_roles_for_user() {
     user3 = user3.add_role(Roles::Admin, connection).unwrap();
 
     assert_eq!(
-        organization.get_roles_for_user(&user, connection).unwrap(),
+        organization.get_roles_for_user(&user, connection).unwrap().0,
         vec![Roles::OrgOwner]
     );
     assert_eq!(
-        organization.get_roles_for_user(&user2, connection).unwrap(),
+        organization.get_roles_for_user(&user2, connection).unwrap().0,
         vec![Roles::OrgMember]
     );
     assert_eq!(
-        organization.get_roles_for_user(&user3, connection).unwrap(),
+        organization.get_roles_for_user(&user3, connection).unwrap().0,
         vec![Roles::OrgOwner]
     );
-    assert!(organization.get_roles_for_user(&user4, connection).unwrap().is_empty());
+    assert!(organization
+        .get_roles_for_user(&user4, connection)
+        .unwrap()
+        .0
+        .is_empty());
+}
+
+#[test]
+pub fn get_additional_scopes_for_user() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let owner = project.create_user().finish();
+    let organization = project
+        .create_organization()
+        .with_member(&owner, Roles::OrgOwner)
+        .finish();
+
+    //The additional_scopes as null
+    //<editor-fold desc="assert_equiv! default owner scopes">
+    assert_equiv!(
+        organization
+            .get_scopes_for_user(&owner, connection)
+            .unwrap()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event:write",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement:read",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "ticket-type:read",
+            "ticket-type:write",
+            "transfer:cancel",
+            "transfer:cancel-own",
+            "transfer:read",
+            "transfer:read-own",
+            "user:read",
+            "venue:write",
+            "websocket:initiate"
+        ]
+    );
+    //</editor-fold>
+
+    // Happy path with both fields set
+    diesel::sql_query(
+        r#"
+        UPDATE organization_users SET additional_scopes = '{"additional":["settlement-adjustment:delete"], "revoked":["event:write"]}' WHERE user_id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(owner.id)
+    .execute(connection)
+    .unwrap();
+    //<editor-fold desc="assert_equiv! owner scopes + settlement-adjustment:delete - event:write">
+    assert_equiv!(
+        organization
+            .get_scopes_for_user(&owner, connection)
+            .unwrap()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement-adjustment:delete",
+            "settlement:read",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "ticket-type:read",
+            "ticket-type:write",
+            "transfer:cancel",
+            "transfer:cancel-own",
+            "transfer:read",
+            "transfer:read-own",
+            "user:read",
+            "venue:write",
+            "websocket:initiate"
+        ]
+    );
+    //</editor-fold>
+
+    //Happy path with only additional
+    diesel::sql_query(
+        r#"
+        UPDATE organization_users SET additional_scopes = '{"additional":["settlement-adjustment:delete"]}' WHERE user_id = $1;
+        "#,
+    )
+        .bind::<sql_types::Uuid, _>(owner.id)
+        .execute(connection)
+        .unwrap();
+    //<editor-fold desc="assert_equiv! owner scopes + settlement-adjustment:delete ">
+    assert_equiv!(
+        organization
+            .get_scopes_for_user(&owner, connection)
+            .unwrap()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event:write",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement:read",
+            "settlement-adjustment:delete",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "ticket-type:read",
+            "ticket-type:write",
+            "transfer:cancel",
+            "transfer:cancel-own",
+            "transfer:read",
+            "transfer:read-own",
+            "user:read",
+            "venue:write",
+            "websocket:initiate"
+        ]
+    );
+    //</editor-fold>
+
+    //Happy path with only revoked
+    diesel::sql_query(
+        r#"
+        UPDATE organization_users SET additional_scopes = '{"revoked":["event:write"]}' WHERE user_id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(owner.id)
+    .execute(connection)
+    .unwrap();
+    //<editor-fold desc="assert_equiv! owner scopes - event:write">
+    assert_equiv!(
+        organization
+            .get_scopes_for_user(&owner, connection)
+            .unwrap()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement:read",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "ticket-type:read",
+            "ticket-type:write",
+            "transfer:cancel",
+            "transfer:cancel-own",
+            "transfer:read",
+            "transfer:read-own",
+            "user:read",
+            "venue:write",
+            "websocket:initiate"
+        ]
+    );
+    //</editor-fold>
+
+    //Happy path with empty json object
+    diesel::sql_query(
+        r#"
+        UPDATE organization_users SET additional_scopes = '{}' WHERE user_id = $1;
+        "#,
+    )
+    .bind::<sql_types::Uuid, _>(owner.id)
+    .execute(connection)
+    .unwrap();
+    //<editor-fold desc="assert_equiv! default owner scopes">
+    assert_equiv!(
+        organization
+            .get_scopes_for_user(&owner, connection)
+            .unwrap()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event:write",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement:read",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "ticket-type:read",
+            "ticket-type:write",
+            "transfer:cancel",
+            "transfer:cancel-own",
+            "transfer:read",
+            "transfer:read-own",
+            "user:read",
+            "venue:write",
+            "websocket:initiate"
+        ]
+    );
+    //</editor-fold>
+
+    //Less happy path with the same value in add and revoke (it'll revoke)
+    diesel::sql_query(
+        r#"
+        UPDATE organization_users SET additional_scopes = '{"additional": ["event:write"], "revoked": ["event:write"]}' WHERE user_id = $1;
+        "#,
+    )
+        .bind::<sql_types::Uuid, _>(owner.id)
+        .execute(connection)
+        .unwrap();
+    //<editor-fold desc="assert_equiv! owner scopes - event:write">
+    assert_equiv!(
+        organization
+            .get_scopes_for_user(&owner, connection)
+            .unwrap()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement:read",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "ticket-type:read",
+            "ticket-type:write",
+            "transfer:cancel",
+            "transfer:cancel-own",
+            "transfer:read",
+            "transfer:read-own",
+            "user:read",
+            "venue:write",
+            "websocket:initiate"
+        ]
+    );
+    //</editor-fold>
+
+    //Unhappy path with invalid json structure (no array)
+    diesel::sql_query(
+        r#"
+        UPDATE organization_users SET additional_scopes = '{"additional": "settlement-adjustment:delete"}' WHERE user_id = $1;
+        "#,
+    )
+        .bind::<sql_types::Uuid, _>(owner.id)
+        .execute(connection)
+        .unwrap();
+    //<editor-fold desc="assert_equiv! default owner scopes">
+    assert_equiv!(
+        organization
+            .get_scopes_for_user(&owner, connection)
+            .unwrap()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event:write",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement:read",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "ticket-type:read",
+            "ticket-type:write",
+            "transfer:cancel",
+            "transfer:cancel-own",
+            "transfer:read",
+            "transfer:read-own",
+            "user:read",
+            "venue:write",
+            "websocket:initiate"
+        ]
+    );
+    //</editor-fold>
+
+    //Unhappy path with invalid Scopes enum
+    diesel::sql_query(
+        r#"
+        UPDATE organization_users SET additional_scopes = '{"additional": ["invalid:scope"], "revoked": ["another:invalid:scope", "event:write"]}' WHERE user_id = $1;
+        "#,
+    )
+        .bind::<sql_types::Uuid, _>(owner.id)
+        .execute(connection)
+        .unwrap();
+    //<editor-fold desc="assert_equiv! owner scopes - event:write">
+    assert_equiv!(
+        organization
+            .get_scopes_for_user(&owner, connection)
+            .unwrap()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement:read",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "ticket-type:read",
+            "ticket-type:write",
+            "transfer:cancel",
+            "transfer:cancel-own",
+            "transfer:read",
+            "transfer:read-own",
+            "user:read",
+            "venue:write",
+            "websocket:initiate"
+        ]
+    );
+    //</editor-fold>
 }
 
 #[test]
@@ -1112,6 +1752,8 @@ pub fn get_scopes_for_user() {
         .finish();
     let mut admin = project.create_user().finish();
     admin = admin.add_role(Roles::Admin, connection).unwrap();
+    let mut super_user = project.create_user().finish();
+    super_user = super_user.add_role(Roles::Super, connection).unwrap();
 
     assert_equiv!(
         organization
@@ -1121,6 +1763,7 @@ pub fn get_scopes_for_user() {
             .map(|i| i.to_string())
             .collect::<Vec<String>>(),
         vec![
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -1188,6 +1831,7 @@ pub fn get_scopes_for_user() {
             .map(|i| i.to_string())
             .collect::<Vec<String>>(),
         vec![
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -1254,6 +1898,7 @@ pub fn get_scopes_for_user() {
             .map(|i| i.to_string())
             .collect::<Vec<String>>(),
         vec![
+            "announcement-engagement:write",
             "box-office-ticket:read",
             "code:read",
             "event:scan",
@@ -1314,6 +1959,7 @@ pub fn get_scopes_for_user() {
             .map(|i| i.to_string())
             .collect::<Vec<String>>(),
         vec![
+            "announcement-engagement:write",
             "code:read",
             "code:write",
             "comp:read",
@@ -1347,6 +1993,7 @@ pub fn get_scopes_for_user() {
             .map(|i| i.to_string())
             .collect::<Vec<String>>(),
         vec![
+            "announcement-engagement:write",
             "code:read",
             "comp:read",
             "dashboard:read",
@@ -1372,6 +2019,7 @@ pub fn get_scopes_for_user() {
             .map(|i| i.to_string())
             .collect::<Vec<String>>(),
         vec![
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -1427,6 +2075,75 @@ pub fn get_scopes_for_user() {
             .map(|i| i.to_string())
             .collect::<Vec<String>>(),
         vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event:write",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement:read",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "ticket-type:read",
+            "ticket-type:write",
+            "transfer:cancel",
+            "transfer:cancel-own",
+            "transfer:read",
+            "transfer:read-own",
+            "user:read",
+            "venue:write",
+            "websocket:initiate"
+        ]
+    );
+
+    assert_equiv!(
+        organization
+            .get_scopes_for_user(&super_user, connection)
+            .unwrap()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -1513,6 +2230,7 @@ fn add_user() {
     assert!(organization
         .get_roles_for_user(&user2, connection)
         .unwrap()
+        .0
         .contains(&Roles::OrgMember));
 
     let event = project
@@ -1527,6 +2245,7 @@ fn add_user() {
     assert!(organization
         .get_roles_for_user(&user3, connection)
         .unwrap()
+        .0
         .contains(&Roles::PromoterReadOnly));
     assert!(EventUser::find_by_event_id_user_id(event.id, user3.id, connection).is_ok());
 }

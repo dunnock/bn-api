@@ -196,16 +196,16 @@ pub struct DomainTransactionReportRow {
     pub total: i64,
     #[sql_type = "dUuid"]
     pub order_id: Uuid,
-    #[sql_type = "Text"]
-    pub customer_name_first: String,
-    #[sql_type = "Text"]
-    pub customer_name_last: String,
-    #[sql_type = "Text"]
-    pub customer_email_address: String,
+    #[sql_type = "Nullable<Text>"]
+    pub customer_name_first: Option<String>,
+    #[sql_type = "Nullable<Text>"]
+    pub customer_name_last: Option<String>,
+    #[sql_type = "Nullable<Text>"]
+    pub customer_email_address: Option<String>,
     #[sql_type = "Text"]
     pub event_name: String,
-    #[sql_type = "Timestamp"]
-    pub event_date: NaiveDateTime,
+    #[sql_type = "Nullable<Timestamp>"]
+    pub event_date: Option<NaiveDateTime>,
     #[sql_type = "Text"]
     pub ticket_type_name: String,
     #[sql_type = "Timestamp"]
@@ -319,6 +319,10 @@ pub struct TransactionReportRow {
     pub platform: Option<String>,
     #[sql_type = "Nullable<Text>"]
     pub check_in_source: Option<String>,
+    #[sql_type = "Nullable<Text>"]
+    pub headline_artist_alt_genres: Option<String>,
+    #[sql_type = "Nullable<Text>"]
+    pub headline_artist_main_genre: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]

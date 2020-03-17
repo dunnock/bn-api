@@ -80,12 +80,13 @@ impl User {
 
         if let (Some(organization), Some(connection)) = (organization, connection) {
             let organization_scopes = organization.get_scopes_for_user(&self.user, connection)?;
+
             logging_data.insert("organization_scopes", json!(organization_scopes));
             logging_data.insert("organization_id", json!(organization.id));
 
             if let Some(event_id) = event_id {
                 // If the user's roles include an event limited role
-                let user_roles = organization.get_roles_for_user(&self.user, connection)?;
+                let (user_roles, additional_scopes) = organization.get_roles_for_user(&self.user, connection)?;
                 if Roles::get_event_limited_roles()
                     .iter()
                     .find(|r| user_roles.contains(&r))
@@ -93,7 +94,7 @@ impl User {
                 {
                     let event_user = EventUser::find_by_event_id_user_id(event_id, self.id(), connection).optional()?;
                     if let Some(event_user) = event_user {
-                        let scopes = scopes::get_scopes(vec![event_user.role]);
+                        let scopes = scopes::get_scopes(vec![event_user.role], additional_scopes);
 
                         if scopes.contains(&scope) {
                             return Ok(true);

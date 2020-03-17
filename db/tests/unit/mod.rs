@@ -1,4 +1,6 @@
 pub mod activities;
+pub mod announcement_engagements;
+pub mod announcements;
 pub mod artists;
 pub mod assets;
 pub mod broadcasts;

@@ -1,3 +1,4 @@
+pub mod announcements;
 pub mod artists;
 pub mod cart;
 pub mod codes;

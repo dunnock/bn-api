@@ -55,6 +55,14 @@ impl TestProject {
         .unwrap()
     }
 
+    pub fn create_announcement(&self) -> AnnouncementBuilder {
+        AnnouncementBuilder::new(&self.connection)
+    }
+
+    pub fn create_announcement_engagement(&self) -> AnnouncementEngagementBuilder {
+        AnnouncementEngagementBuilder::new(&self.connection)
+    }
+
     pub fn create_artist(&self) -> ArtistBuilder {
         ArtistBuilder::new(&self.connection)
     }

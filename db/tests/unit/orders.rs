@@ -6053,11 +6053,11 @@ pub fn search_by_partial_order_id() {
     let project = TestProject::new();
     let connection = project.get_connection();
     let user = project.create_user().finish();
-    let _order1 = project.create_order().is_paid().finish();
+    let order1 = project.create_order().is_paid().finish();
     let event = project.create_event().with_tickets().finish();
     let order2 = project.create_order().for_event(&event).is_paid().finish();
 
-    let actual = Order::search(
+    let found = Order::search(
         None,
         None,
         None,
@@ -6079,8 +6079,15 @@ pub fn search_by_partial_order_id() {
         connection,
     )
     .unwrap();
-    assert_eq!(1, actual.1);
-    assert_eq!(order2.id, actual.0[0].id);
+
+    if order1.id.to_string()[4..8] == order2.id.to_string()[4..8] {
+        assert_eq!(found.1, 2);
+        assert!(found.0[0].id == order1.id || found.0[1].id == order1.id);
+        assert!(found.0[0].id == order2.id || found.0[1].id == order2.id);
+    } else {
+        assert_eq!(found.1, 1);
+        assert_eq!(order2.id, found.0[0].id);
+    }
 }
 
 #[test]

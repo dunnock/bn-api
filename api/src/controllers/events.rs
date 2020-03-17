@@ -717,7 +717,7 @@ pub async fn show_from_organizations(
     let org = Organization::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::OrgReadEvents, &org, conn)?;
 
-    let user_roles = org.get_roles_for_user(&user.user, conn)?;
+    let (user_roles, _) = org.get_roles_for_user(&user.user, conn)?;
     let mut events = Event::find_all_events_for_organization(
         path.id,
         Some(

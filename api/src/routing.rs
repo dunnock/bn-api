@@ -13,6 +13,18 @@ pub fn routes(app: &mut web::ServiceConfig) {
     .service(web::resource("/admin/orders").route(web::get().to(admin::admin::orders)))
     .service(web::resource("/admin/reports").route(web::get().to(admin::reports::get_report)))
     .service(web::resource("/a/t").route(web::get().to(analytics::track)))
+    .service(web::resource("/announcements/{id}/engage")
+        .route(web::put().to(announcements::engage))
+    )
+    .service(web::resource("/announcements/{id}")
+        .route(web::get().to(announcements::show))
+        .route(web::put().to(announcements::update))
+        .route(web::delete().to(announcements::destroy))
+    )
+    .service(web::resource("/announcements")
+        .route(web::get().to(announcements::index))
+        .route(web::post().to(announcements::create))
+    )
     .service(
         web::resource("/artists/search")
             .wrap(CacheResource::new(CacheUsersBy::AnonymousOnly))
@@ -190,6 +202,9 @@ pub fn routes(app: &mut web::ServiceConfig) {
         web::resource("/organization_venues/{id}")
             .route(web::get().to(organization_venues::show))
             .route(web::delete().to(organization_venues::destroy)),
+    )
+    .service(web::resource("/organizations/{id}/announcements")
+        .route(web::get().to(announcements::show_from_organization))
     )
     .service(
         web::resource("/organizations/{id}/artists")

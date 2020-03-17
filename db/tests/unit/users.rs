@@ -1999,9 +1999,9 @@ fn get_roles_by_organization() {
         .finish();
     let _organization3 = project.create_organization().with_name("Organization3".into()).finish();
 
-    let mut expected_results = HashMap::new();
-    expected_results.insert(organization.id.clone(), vec![Roles::OrgOwner]);
-    expected_results.insert(organization2.id.clone(), vec![Roles::OrgMember]);
+    let mut expected_results: HashMap<Uuid, (Vec<Roles>, Option<AdditionalOrgMemberScopes>)> = HashMap::new();
+    expected_results.insert(organization.id.clone(), (vec![Roles::OrgOwner], None));
+    expected_results.insert(organization2.id.clone(), (vec![Roles::OrgMember], None));
 
     assert_eq!(user.get_roles_by_organization(connection).unwrap(), expected_results);
 }
@@ -2028,6 +2028,7 @@ fn get_scopes_by_organization() {
     expected_results.insert(
         organization.id,
         vec![
+            Scopes::AnnouncementEngagementWrite,
             Scopes::ArtistWrite,
             Scopes::BoxOfficeTicketRead,
             Scopes::BoxOfficeTicketWrite,
@@ -2089,6 +2090,7 @@ fn get_scopes_by_organization() {
     expected_results.insert(
         organization2.id,
         vec![
+            Scopes::AnnouncementEngagementWrite,
             Scopes::ArtistWrite,
             Scopes::BoxOfficeTicketRead,
             Scopes::BoxOfficeTicketWrite,
@@ -2191,6 +2193,10 @@ fn get_global_scopes() {
             .map(|scope| scope.to_string())
             .collect::<Vec<String>>(),
         vec![
+            "announcement:delete",
+            "announcement:read",
+            "announcement:write",
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -2271,6 +2277,10 @@ fn get_global_scopes() {
             .map(|scope| scope.to_string())
             .collect::<Vec<String>>(),
         vec![
+            "announcement:delete",
+            "announcement:read",
+            "announcement:write",
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",

@@ -339,20 +339,28 @@ pub async fn register_and_login(
 fn current_user_from_user(user: &User, connection: &PgConnection) -> Result<CurrentUser, BigNeonError> {
     let roles_by_organization = user.get_roles_by_organization(connection)?;
     let mut scopes_by_organization = HashMap::new();
-    for (organization_id, roles) in &roles_by_organization {
-        scopes_by_organization.insert(organization_id.clone(), scopes::get_scopes(roles.clone()));
+    for (organization_id, (roles, additional_scopes)) in &roles_by_organization {
+        scopes_by_organization.insert(
+            organization_id.clone(),
+            scopes::get_scopes(roles.clone(), additional_scopes.clone()),
+        );
     }
     let (events_by_organization, readonly_events_by_organization) = user.get_event_ids_by_organization(connection)?;
     let mut event_scopes = HashMap::new();
     for event_user in user.event_users(connection)? {
-        event_scopes.insert(event_user.event_id, scopes::get_scopes(vec![event_user.role]));
+        event_scopes.insert(event_user.event_id, scopes::get_scopes(vec![event_user.role], None));
+    }
+
+    let mut organization_roles = HashMap::new();
+    for (key, val) in roles_by_organization.iter() {
+        organization_roles.insert(*key, val.0.clone());
     }
 
     Ok(CurrentUser {
         user: user.clone().for_display()?,
         roles: user.role.clone(),
         scopes: user.get_global_scopes(),
-        organization_roles: roles_by_organization,
+        organization_roles,
         organization_scopes: scopes_by_organization,
         organization_event_ids: events_by_organization,
         organization_readonly_event_ids: readonly_events_by_organization,

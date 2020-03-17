@@ -1,3 +1,4 @@
+mod announcements;
 mod artists;
 mod auth;
 mod base;

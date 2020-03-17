@@ -547,21 +547,33 @@ impl Organization {
     }
 
     pub fn get_scopes_for_user(&self, user: &User, conn: &PgConnection) -> Result<Vec<Scopes>, DatabaseError> {
-        Ok(scopes::get_scopes(self.get_roles_for_user(user, conn)?))
+        let (roles, additional_scopes) = self.get_roles_for_user(user, conn)?;
+        let user_scopes = scopes::get_scopes(roles, additional_scopes);
+
+        Ok(user_scopes)
     }
 
-    pub fn get_roles_for_user(&self, user: &User, conn: &PgConnection) -> Result<Vec<Roles>, DatabaseError> {
+    pub fn get_roles_for_user(
+        &self,
+        user: &User,
+        conn: &PgConnection,
+    ) -> Result<(Vec<Roles>, Option<AdditionalOrgMemberScopes>), DatabaseError> {
         if user.is_admin() {
             let mut roles = Vec::new();
 
             roles.push(Roles::OrgOwner);
 
-            Ok(roles)
+            Ok((roles, None))
         } else {
             let org_member = OrganizationUser::find_by_user_id(user.id, self.id, conn).optional()?;
+
             match org_member {
-                Some(member) => Ok(member.role),
-                None => Ok(vec![]),
+                Some(member) => {
+                    let additional_scopes: Option<AdditionalOrgMemberScopes> =
+                        member.additional_scopes.map(|a| a.into());
+                    Ok((member.role, additional_scopes))
+                }
+                None => Ok((vec![], None)),
             }
         }
     }

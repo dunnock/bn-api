@@ -1582,11 +1582,11 @@ fn domain_transaction_detail_report() {
     let expected_results = vec![DomainTransactionReportRow {
         total: 1,
         order_id: order.id,
-        customer_name_first: user.first_name.clone().unwrap(),
-        customer_name_last: user.last_name.clone().unwrap(),
-        customer_email_address: user.email.clone().unwrap(),
+        customer_name_first: user.first_name.clone(),
+        customer_name_last: user.last_name.clone(),
+        customer_email_address: user.email.clone(),
         event_name: event.name.clone(),
-        event_date: event.event_start.unwrap(),
+        event_date: event.event_start.clone(),
         ticket_type_name: ticket_type.name.clone(),
         transaction_date: order.paid_at.unwrap(),
         point_of_sale: None,
@@ -1849,6 +1849,8 @@ fn build_transaction_report_row(
         content: None,
         platform: None,
         check_in_source: None,
+        headline_artist_alt_genres: None,
+        headline_artist_main_genre: None,
     }
 }
 

@@ -1,4 +1,4 @@
-use models::Roles;
+use models::{AdditionalOrgMemberScopes, Roles};
 use serde::Serialize;
 use serde::Serializer;
 use std::fmt;
@@ -7,6 +7,10 @@ use utils::errors::EnumParseError;
 
 #[derive(PartialEq, Debug, Copy, Clone, Eq, Ord, PartialOrd)]
 pub enum Scopes {
+    AnnouncementDelete,
+    AnnouncementRead,
+    AnnouncementWrite,
+    AnnouncementEngagementWrite,
     ArtistWrite,
     BoxOfficeTicketRead,
     BoxOfficeTicketWrite,
@@ -94,6 +98,10 @@ impl Serialize for Scopes {
 impl fmt::Display for Scopes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
+            Scopes::AnnouncementDelete => "announcement:delete",
+            Scopes::AnnouncementRead => "announcement:read",
+            Scopes::AnnouncementWrite => "announcement:write",
+            Scopes::AnnouncementEngagementWrite => "announcement-engagement:write",
             Scopes::ArtistWrite => "artist:write",
             Scopes::BoxOfficeTicketRead => "box-office-ticket:read",
             Scopes::BoxOfficeTicketWrite => "box-office-ticket:write",
@@ -177,6 +185,10 @@ impl FromStr for Scopes {
 
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
         let s = match s {
+            "announcement:delete" => Scopes::AnnouncementDelete,
+            "announcement:read" => Scopes::AnnouncementRead,
+            "announcement:write" => Scopes::AnnouncementWrite,
+            "announcement-engagement:write" => Scopes::AnnouncementEngagementWrite,
             "artist:write" => Scopes::ArtistWrite,
             "box-office-ticket:read" => Scopes::BoxOfficeTicketRead,
             "box-office-ticket:write" => Scopes::BoxOfficeTicketWrite,
@@ -262,8 +274,12 @@ impl FromStr for Scopes {
     }
 }
 
-pub fn get_scopes(roles: Vec<Roles>) -> Vec<Scopes> {
+pub fn get_scopes(roles: Vec<Roles>, additional_scopes: Option<AdditionalOrgMemberScopes>) -> Vec<Scopes> {
     let mut scopes: Vec<Scopes> = roles.into_iter().flat_map(|r| get_scopes_for_role(r)).collect();
+    if let Some(extra_scopes) = additional_scopes {
+        scopes.append(&mut extra_scopes.additional.clone());
+        scopes.retain(|&scope| !extra_scopes.revoked.contains(&scope));
+    }
     scopes.sort();
     scopes.dedup();
     scopes
@@ -306,17 +322,20 @@ fn get_scopes_for_role(role: Roles) -> Vec<Scopes> {
         }
         OrgBoxOffice => {
             let mut roles = vec![
+                Scopes::AnnouncementEngagementWrite,
+                Scopes::BoxOfficeTicketRead,
                 Scopes::EventViewGuests,
                 Scopes::OrderMakeExternalPayment,
                 Scopes::OrderResendConfirmation,
                 Scopes::OrgFans,
-                Scopes::BoxOfficeTicketRead,
             ];
+
             roles.extend(get_scopes_for_role(Roles::DoorPerson));
             roles
         }
         PromoterReadOnly => {
             let roles = vec![
+                Scopes::AnnouncementEngagementWrite,
                 Scopes::CodeRead,
                 Scopes::CompRead,
                 Scopes::DashboardRead,
@@ -356,6 +375,7 @@ fn get_scopes_for_role(role: Roles) -> Vec<Scopes> {
         }
         OrgMember => {
             let mut roles = vec![
+                Scopes::AnnouncementEngagementWrite,
                 Scopes::ArtistWrite,
                 Scopes::BoxOfficeTicketRead,
                 Scopes::BoxOfficeTicketWrite,
@@ -422,6 +442,9 @@ fn get_scopes_for_role(role: Roles) -> Vec<Scopes> {
         }
         Admin => {
             let mut roles = vec![
+                Scopes::AnnouncementDelete,
+                Scopes::AnnouncementRead,
+                Scopes::AnnouncementWrite,
                 Scopes::OrderRefundOverride,
                 Scopes::OrgAdmin,
                 Scopes::OrgFinancialReports,
@@ -458,6 +481,7 @@ fn get_scopes_for_role_test() {
     let res = get_scopes_for_role(Roles::OrgOwner);
     assert_equiv!(
         vec![
+            Scopes::AnnouncementEngagementWrite,
             Scopes::ArtistWrite,
             Scopes::BoxOfficeTicketRead,
             Scopes::BoxOfficeTicketWrite,
@@ -526,13 +550,14 @@ fn scopes_to_string() {
 
 #[test]
 fn get_scopes_test() {
-    let mut res = get_scopes(vec![Roles::OrgOwner])
+    let mut res = get_scopes(vec![Roles::OrgOwner], None)
         .iter()
         .map(|i| i.to_string())
         .collect::<Vec<String>>();
     res.sort();
     assert_equiv!(
         vec![
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -592,13 +617,17 @@ fn get_scopes_test() {
         ],
         res
     );
-    let mut res = get_scopes(vec![Roles::Admin])
+    let mut res = get_scopes(vec![Roles::Admin], None)
         .iter()
         .map(|i| i.to_string())
         .collect::<Vec<String>>();
     res.sort();
     assert_equiv!(
         vec![
+            "announcement:delete",
+            "announcement:read",
+            "announcement:write",
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -674,13 +703,17 @@ fn get_scopes_test() {
         res
     );
 
-    let mut res = get_scopes(vec![Roles::Super])
+    let mut res = get_scopes(vec![Roles::Super], None)
         .iter()
         .map(|i| i.to_string())
         .collect::<Vec<String>>();
     res.sort();
     assert_equiv!(
         vec![
+            "announcement:delete",
+            "announcement:read",
+            "announcement:write",
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -756,12 +789,16 @@ fn get_scopes_test() {
         res
     );
 
-    let res = get_scopes(vec![Roles::OrgOwner, Roles::Admin])
+    let res = get_scopes(vec![Roles::OrgOwner, Roles::Admin], None)
         .iter()
         .map(|i| i.to_string())
         .collect::<Vec<String>>();
     assert_equiv!(
         vec![
+            "announcement:delete",
+            "announcement:read",
+            "announcement:write",
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -830,6 +867,79 @@ fn get_scopes_test() {
             "transfer:read",
             "transfer:read-own",
             "user:delete",
+            "user:read",
+            "venue:write",
+            "websocket:initiate",
+        ],
+        res
+    );
+
+    let res = get_scopes(
+        vec![Roles::OrgOwner],
+        Some(AdditionalOrgMemberScopes {
+            additional: vec![Scopes::SettlementAdjustmentDelete],
+            revoked: vec![Scopes::EventWrite],
+        }),
+    )
+    .iter()
+    .map(|i| i.to_string())
+    .collect::<Vec<String>>();
+    assert_equiv!(
+        vec![
+            "announcement-engagement:write",
+            "artist:write",
+            "box-office-ticket:read",
+            "box-office-ticket:write",
+            "code:read",
+            "code:write",
+            "comp:read",
+            "comp:write",
+            "dashboard:read",
+            "event:broadcast",
+            "event:cancel",
+            "event:clone",
+            "event:data-read",
+            "event:delete",
+            "event:financial-reports",
+            "event:interest",
+            "event:reports",
+            "event:scan",
+            "event:view-guests",
+            "event-report-subscriber:delete",
+            "event-report-subscriber:read",
+            "event-report-subscriber:write",
+            "hold:read",
+            "hold:write",
+            "note:delete",
+            "note:read",
+            "note:write",
+            "order:make-external-payment",
+            "order:read",
+            "order:read-own",
+            "order:refund",
+            "order:resend-confirmation",
+            "org:admin-users",
+            "org:fans",
+            "org:read",
+            "org:read-events",
+            "org:reports",
+            "org:users",
+            "org:write",
+            "redeem:ticket",
+            "scan-report:read",
+            "settlement-adjustment:delete",
+            "settlement:read",
+            "ticket-type:read",
+            "ticket-type:write",
+            "ticket:admin",
+            "ticket:read",
+            "ticket:transfer",
+            "ticket:write",
+            "ticket:write-own",
+            "transfer:cancel-own",
+            "transfer:cancel",
+            "transfer:read-own",
+            "transfer:read",
             "user:read",
             "venue:write",
             "websocket:initiate",

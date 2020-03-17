@@ -538,6 +538,7 @@ async fn current_user_organization_owner() {
     expected_results.insert(
         organization.id,
         vec![
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",
@@ -633,6 +634,7 @@ async fn current_user_organization_member() {
     expected_scopes.insert(
         organization.id,
         vec![
+            "announcement-engagement:write",
             "artist:write",
             "box-office-ticket:read",
             "box-office-ticket:write",

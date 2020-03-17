@@ -93,6 +93,7 @@ macro_rules! string_enum {
 }
 
 define_enum! { ActivityType [Purchase, Transfer, CheckIn, Refund, Note]}
+define_enum! { AnnouncementEngagementAction [Dismiss] }
 define_enum! { AssetStatus [Unsynced] }
 define_enum! { BroadcastAudience [ PeopleAtTheEvent, TicketHolders, OrganizationMembers ]}
 define_enum! { CartItemStatus [CodeExpired, HoldExpired, TicketNullified, TicketNotReserved, Valid] }
@@ -101,6 +102,8 @@ define_enum! { CodeTypes [Access, Discount] }
 define_enum! { CommunicationChannelType [Email, Sms, Push, Webhook]}
 define_enum! { CommunicationType [EmailTemplate, Sms, Push, Webhook]}
 define_enum! { DomainEventTypes [
+    AnnouncementCreated,
+    AnnouncementDeleted,
     CodeCreated,
     CodeDeleted,
     CodeUpdated,
@@ -221,7 +224,7 @@ define_enum! { SlugTypes[ Event, Organization, Venue, City, Genre, CityGenre ] }
 define_enum! { SortingDir[ Asc, Desc ] }
 define_enum! { SourceOrDestination [Destination,Source]}
 define_enum! { Tables [
-    Artists, Broadcasts, Codes, DomainEventPublishers, Events, EventArtists, EventReportSubscribers, ExternalLogins, FeeSchedules,
+    Announcements, Artists, Broadcasts, Codes, DomainEventPublishers, Events, EventArtists, EventReportSubscribers, ExternalLogins, FeeSchedules,
     Holds, Orders, Organizations, Notes, Payments, PaymentMethods, PushNotificationTokens, TemporaryUsers, TicketInstances, TicketTypes,
     TicketPricing, Transfers, Users, Venues, Genres
 ] }

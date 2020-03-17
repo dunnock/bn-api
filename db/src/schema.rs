@@ -23,6 +23,28 @@ table! {
 }
 
 table! {
+    announcement_engagements (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        announcement_id -> Uuid,
+        action -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+table! {
+    announcements (id) {
+        id -> Uuid,
+        message -> Varchar,
+        organization_id -> Nullable<Uuid>,
+        deleted_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+table! {
     artist_genres (id) {
         id -> Uuid,
         artist_id -> Uuid,
@@ -482,6 +504,7 @@ table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         role -> Array<Text>,
+        additional_scopes -> Nullable<Jsonb>,
     }
 }
 
@@ -855,6 +878,9 @@ table! {
     }
 }
 
+joinable!(announcement_engagements -> announcements (announcement_id));
+joinable!(announcement_engagements -> users (user_id));
+joinable!(announcements -> organizations (organization_id));
 joinable!(artist_genres -> artists (artist_id));
 joinable!(artist_genres -> genres (genre_id));
 joinable!(artists -> genres (main_genre_id));
@@ -939,6 +965,8 @@ joinable!(wallets -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
     analytics_page_views,
+    announcement_engagements,
+    announcements,
     artist_genres,
     artists,
     assets,

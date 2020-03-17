@@ -1,4 +1,6 @@
 pub use self::activities::*;
+pub use self::announcement_engagements::*;
+pub use self::announcements::*;
 pub use self::artists::*;
 pub use self::assets::*;
 pub use self::auth::*;
@@ -68,6 +70,8 @@ pub mod concerns;
 
 mod activities;
 pub mod analytics;
+mod announcement_engagements;
+mod announcements;
 mod artists;
 mod assets;
 mod auth;

@@ -29,34 +29,44 @@ pub fn main() {
     let database = Database::from_config(&config);
 
     let matches = clap_app!(myapp =>
-        (name: "Big Neon CLI Utility")
-        (author: "Big Neon")
-        (about:"Command Line Interface for running tasks for the Big Neon API" )
-        (@subcommand sync =>
-          (name: "sync-purchase-metadata")
-          (about: "Syncs purchase metadata"))
-        (@subcommand sync_spotify_genres=>
-          (name: "sync-spotify-genres")
-          (about: "Syncs spotify genres across artist records appending any missing genres"))
-        (@subcommand regenerate_interaction_records =>
-          (name: "regenerate-interaction-records" )
-          (about: "Regenerate interaction records for organization users")
-          (@arg organization: +required  "The organization id to limit this to"))
-        (@subcommand backpopulate_temporary_user_data =>
-          (name: "backpopulate-temporary-user-data")
-          (about: "Backpopulate temporary user data")    )
-        (@subcommand   schedule_missing_domain_actions =>
-          (name: "schedule-missing-domain-actions")
-          (about: "Creates any missing reoccurring domain actions"))
-        (@subcommand generate_genre_slugs =>
-          (name: "generate-genre-slugs")
-          (about: "Creates any missing genre and city genre slugs"))
-        (@subcommand update_customer_io_webhooks =>
-          (name: "update-customer-io-webhooks")
-          (about: "Creates any missing Customer.io webhooks needed for communications")
-          (@arg site_id: +required "The site_id obtained from Customer.io")
-          (@arg api_key: +required "The api key obtained from Customer.io")))
-    .subcommand(SubCommand::with_name("version").about("Get the current version"))
+    (name: "Big Neon CLI Utility")
+    (author: "Big Neon")
+    (about:"Command Line Interface for running tasks for the Big Neon API" )
+    (@subcommand sync =>
+      (name: "sync-purchase-metadata")
+      (about: "Syncs purchase metadata"))
+    (@subcommand sync_spotify_genres=>
+      (name: "sync-spotify-genres")
+      (about: "Syncs spotify genres across artist records appending any missing genres"))
+    (@subcommand regenerate_interaction_records =>
+      (name: "regenerate-interaction-records" )
+      (about: "Regenerate interaction records for organization users")
+      (@arg organization: +required  "The organization id to limit this to"))
+    (@subcommand backpopulate_temporary_user_data =>
+      (name: "backpopulate-temporary-user-data")
+      (about: "Backpopulate temporary user data")    )
+    (@subcommand   schedule_missing_domain_actions =>
+      (name: "schedule-missing-domain-actions")
+      (about: "Creates any missing reoccurring domain actions"))
+    (@subcommand generate_genre_slugs =>
+      (name: "generate-genre-slugs")
+      (about: "Creates any missing genre and city genre slugs"))
+    (@subcommand update_customer_io_webhooks =>
+      (name: "update-customer-io-webhooks")
+      (about: "Creates any missing Customer.io webhooks needed for communications")
+      (@arg site_id: +required "The site_id obtained from Customer.io")
+      (@arg api_key: +required "The api key obtained from Customer.io"))
+     (@subcommand additional_scopes =>
+      (name: "additional_scopes")
+      (about: "Adds additional or revoked scopes to organization users")
+      (@arg organization: +required "The organization_id for these scopes")
+      (@arg USER: -u --user +takes_value "Optional user_id to only apply these scopes to a single user")
+      (@arg ADDITIONAL: -a --additional +takes_value "Additional Scopes comma separated")
+      (@arg REVOKED: -r --revoked +takes_value "Revoked Scopes comma separated")
+      (@arg clear: -c --clear "Clear all scopes"))
+     (@subcommand version =>
+      (name: "version")
+      (about: "Get the current version")))
     .get_matches();
 
     match matches.subcommand() {
@@ -72,6 +82,7 @@ pub fn main() {
         ("update-customer-io-webhooks", Some(args)) => {
             update_customer_io_webhooks(args.value_of("site_id"), args.value_of("api_key"), database)
         }
+        ("additional_scopes", Some(args)) => additional_scopes(database, args),
         _ => {
             eprintln!("Invalid subcommand '{}'", matches.subcommand().0);
         }
@@ -81,6 +92,51 @@ pub fn main() {
 fn version() {
     const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
     println!("{}", APP_VERSION);
+}
+
+fn additional_scopes(database: Database, args: &ArgMatches) {
+    let connection = database.get_connection().expect("Expected connection to establish");
+    let connection = connection.get();
+
+    let organization_id = args
+        .value_of("organization")
+        .map(|u| u.parse::<Uuid>().unwrap())
+        .unwrap();
+    let user_id = args.value_of("USER").map(|u| u.parse::<Uuid>().unwrap());
+    let additional = args
+        .value_of("ADDITIONAL")
+        .map_or(vec![], |s| s.split(",").map(|s| s.parse::<Scopes>().unwrap()).collect());
+    let revoked = args
+        .value_of("REVOKED")
+        .map_or(vec![], |s| s.split(",").map(|s| s.parse::<Scopes>().unwrap()).collect());
+    let clear = args.is_present("clear");
+
+    let mut organization_users = OrganizationUser::find_users_by_organization(organization_id, connection).unwrap();
+
+    //Only keep a single user if it is specified
+    if let Some(user_id) = user_id {
+        organization_users.retain(|u| u.user_id == user_id);
+    }
+
+    for org_user in organization_users {
+        let mut new_additional: Vec<Scopes> = vec![];
+        let mut new_revoked: Vec<Scopes> = vec![];
+        if !clear {
+            new_additional = additional.clone();
+            new_revoked = revoked.clone();
+            if let Some(extra_scopes) = org_user.additional_scopes.clone() {
+                let current_extra_scopes: AdditionalOrgMemberScopes = extra_scopes.into();
+                new_additional.append(&mut current_extra_scopes.additional.clone());
+                new_revoked.append(&mut current_extra_scopes.revoked.clone());
+            }
+        }
+        let additional_scopes = AdditionalOrgMemberScopes {
+            additional: new_additional,
+            revoked: new_revoked,
+        };
+        println!("{:?}", additional_scopes);
+        org_user.set_additional_scopes(additional_scopes, connection).unwrap();
+    }
 }
 
 fn generate_genre_slugs(database: Database) {

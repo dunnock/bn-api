@@ -508,5 +508,7 @@ fn build_transaction_report_row(
         content: None,
         platform: None,
         check_in_source: None,
+        headline_artist_alt_genres: None,
+        headline_artist_main_genre: None,
     }
 }

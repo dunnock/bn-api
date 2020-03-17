@@ -984,7 +984,7 @@ impl User {
     }
 
     pub fn get_global_scopes(&self) -> Vec<Scopes> {
-        scopes::get_scopes(self.role.clone())
+        scopes::get_scopes(self.role.clone(), None)
     }
 
     pub fn event_users(&self, conn: &PgConnection) -> Result<Vec<EventUser>, DatabaseError> {
@@ -1041,7 +1041,10 @@ impl User {
         Ok((events_by_organization, readonly_events_by_organization))
     }
 
-    pub fn get_roles_by_organization(&self, conn: &PgConnection) -> Result<HashMap<Uuid, Vec<Roles>>, DatabaseError> {
+    pub fn get_roles_by_organization(
+        &self,
+        conn: &PgConnection,
+    ) -> Result<HashMap<Uuid, (Vec<Roles>, Option<AdditionalOrgMemberScopes>)>, DatabaseError> {
         let mut roles_by_organization = HashMap::new();
         for organization in self.organizations(conn)? {
             roles_by_organization.insert(organization.id.clone(), organization.get_roles_for_user(self, conn)?);
