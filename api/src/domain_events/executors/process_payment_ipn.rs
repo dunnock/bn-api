@@ -69,7 +69,7 @@ impl ProcessPaymentIPNExecutor {
         let client = GlobeeClient::new(api_key.clone(), self.globee_base_url.clone());
 
         if self.validate_ipn {
-            ipn = client.get_payment_request(&ipn.id)?;
+            ipn = client.get_payment_request_blocking(&ipn.id)?;
         }
 
         if ipn

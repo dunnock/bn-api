@@ -330,7 +330,7 @@ pub async fn checkout(
                 &state.service_locator,
                 &state.config,
                 &request_info,
-            )?
+            ).await?
         }
         PaymentRequest::Provider { provider } => checkout_payment_processor(
             &connection,
@@ -345,7 +345,7 @@ pub async fn checkout(
             &state.service_locator,
             &state.config,
             &request_info,
-        )?,
+        ).await?,
         PaymentRequest::Card {
             token,
             provider,
@@ -364,7 +364,7 @@ pub async fn checkout(
             &state.service_locator,
             &state.config,
             &request_info,
-        )?,
+        ).await?,
     };
     Ok(payment_response)
 }
@@ -461,7 +461,7 @@ fn checkout_external(
     Ok(HttpResponse::Ok().json(json!(order.for_display(None, user.id(), conn)?)))
 }
 
-fn checkout_payment_processor(
+async fn checkout_payment_processor(
     conn: &Connection,
     order: &mut Order,
     token: Option<&str>,
@@ -498,7 +498,7 @@ fn checkout_payment_processor(
     let client = service_locator.create_payment_processor(provider, &event.organization(connection)?)?;
     match client.behavior() {
         PaymentProcessorBehavior::RedirectToPaymentPage(behavior) => {
-            return redirect_to_payment_page(&*behavior, &auth_user.user, order, conn.get(), config);
+            return redirect_to_payment_page(&*behavior, &auth_user.user, order, conn.get(), config).await;
         }
         PaymentProcessorBehavior::AuthThenComplete(behavior) => {
             let token = if use_stored_payment {
@@ -531,7 +531,7 @@ fn checkout_payment_processor(
                                     )
                                 };
                             let client_response =
-                                behavior.update_repeat_token(&payment_method.provider, token, "Big Neon something")?;
+                                behavior.update_repeat_token(&payment_method.provider, token, "Big Neon something").await?;
                             let payment_method_parameters = PaymentMethodEditableAttributes {
                                 provider_data: Some(client_response.to_json()?),
                             };
@@ -546,7 +546,7 @@ fn checkout_payment_processor(
                                         "Could not complete this cart using saved payment methods is not supported for this payment processor",
                                     )
                                 };
-                            let repeat_token = behavior.create_token_for_repeat_charges(token, "Big Neon")?;
+                            let repeat_token = behavior.create_token_for_repeat_charges(token, "Big Neon").await?;
                             let _payment_method = PaymentMethod::create(
                                 auth_user.id(),
                                 provider,
@@ -572,12 +572,12 @@ fn checkout_payment_processor(
                 conn,
                 &*client,
                 request_info,
-            );
+            ).await;
         }
     };
 }
 
-fn auth_then_complete(
+async fn auth_then_complete(
     client: &dyn AuthThenCompletePaymentBehavior,
     token: String,
     currency: &str,
@@ -596,7 +596,7 @@ fn auth_then_complete(
         currency,
         "Big Neon Tickets",
         order.purchase_metadata(connection)?,
-    )?;
+    ).await?;
 
     info!("CART: Saving payment to order");
     let payment = match order.add_credit_card_payment(
@@ -610,7 +610,7 @@ fn auth_then_complete(
     ) {
         Ok(p) => p,
         Err(e) => {
-            payment_processor.refund(&auth_result.id)?;
+            payment_processor.refund(&auth_result.id).await?;
             return Err(e.into());
         }
     };
@@ -619,7 +619,7 @@ fn auth_then_complete(
     conn.begin_transaction()?;
 
     info!("CART: Completing auth with payment provider");
-    let charge_result = client.complete_authed_charge(&auth_result.id)?;
+    let charge_result = client.complete_authed_charge(&auth_result.id).await?;
     info!("CART: Completing payment on order");
     info!("charge_result:{:?}", charge_result);
     match payment.mark_complete(charge_result.to_json()?, Some(auth_user.id()), connection) {
@@ -629,13 +629,13 @@ fn auth_then_complete(
             Ok(HttpResponse::Ok().json(json!(order.for_display(None, auth_user.id(), connection)?)))
         }
         Err(e) => {
-            payment_processor.refund(&auth_result.id)?;
+            payment_processor.refund(&auth_result.id).await?;
             Err(e.into())
         }
     }
 }
 
-fn redirect_to_payment_page(
+async fn redirect_to_payment_page(
     client: &dyn RedirectToPaymentPageBehavior,
     user: &DbUser,
     order: &mut Order,
@@ -666,7 +666,7 @@ fn redirect_to_payment_page(
             "{}/payments/callback/{}/{}?success=false",
             &config.api_base_url, nonce, order.id,
         )),
-    )?;
+    ).await?;
 
     jlog!(Info, &format!("{} payment created", client.payment_provider()), {"order_id": order.id, "payment_provider_id": response.id});
 

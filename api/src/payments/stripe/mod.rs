@@ -48,6 +48,7 @@ pub struct StripePaymentBehavior {
     client: StripeClient,
 }
 
+#[async_trait::async_trait]
 impl PaymentProcessor for StripePaymentProcessor {
     fn behavior(&self) -> PaymentProcessorBehavior {
         PaymentProcessorBehavior::AuthThenComplete(Box::new(StripePaymentBehavior {
@@ -55,7 +56,7 @@ impl PaymentProcessor for StripePaymentProcessor {
         }))
     }
 
-    fn update_metadata(
+    async fn update_metadata(
         &self,
         charge_id: &str,
         metadata: Vec<(String, String)>,
@@ -63,23 +64,35 @@ impl PaymentProcessor for StripePaymentProcessor {
         Ok(self
             .client
             .update_metadata(charge_id, metadata)
+            .await
             .map(|r| UpdateMetadataResult {
                 id: r.id,
                 raw: r.raw_data,
             })?)
     }
 
-    fn refund(&self, auth_token: &str) -> Result<ChargeAuthResult, PaymentProcessorError> {
-        Ok(self.client.refund(auth_token).map(|r| ChargeAuthResult {
+    async fn refund(&self, auth_token: &str) -> Result<ChargeAuthResult, PaymentProcessorError> {
+        Ok(self.client.refund(auth_token).await.map(|r| ChargeAuthResult {
             id: r.id,
             raw: r.raw_data,
         })?)
     }
 
-    fn partial_refund(&self, auth_token: &str, amount: i64) -> Result<ChargeAuthResult, PaymentProcessorError> {
+    async fn partial_refund(&self, auth_token: &str, amount: i64) -> Result<ChargeAuthResult, PaymentProcessorError> {
         Ok(self
             .client
             .partial_refund(auth_token, amount)
+            .await
+            .map(|r| ChargeAuthResult {
+                id: r.id,
+                raw: r.raw_data,
+            })?)
+    }
+
+    fn partial_refund_blocking(&self, auth_token: &str, amount: i64) -> Result<ChargeAuthResult, PaymentProcessorError> {
+        Ok(self
+            .client
+            .partial_refund_blocking(auth_token, amount)
             .map(|r| ChargeAuthResult {
                 id: r.id,
                 raw: r.raw_data,
@@ -87,11 +100,12 @@ impl PaymentProcessor for StripePaymentProcessor {
     }
 }
 
+#[async_trait::async_trait]
 impl<'a> AuthThenCompletePaymentBehavior for StripePaymentBehavior {
     fn payment_provider(&self) -> PaymentProviders {
         PaymentProviders::Stripe
     }
-    fn create_token_for_repeat_charges(
+    async fn create_token_for_repeat_charges(
         &self,
         token: &str,
         description: &str,
@@ -99,13 +113,14 @@ impl<'a> AuthThenCompletePaymentBehavior for StripePaymentBehavior {
         Ok(self
             .client
             .create_customer(description, token, Vec::<(String, String)>::new())
+            .await
             .map(|r| RepeatChargeToken {
                 token: r.id,
                 raw: r.raw_data,
             })?)
     }
 
-    fn update_repeat_token(
+    async fn update_repeat_token(
         &self,
         repeat_token: &str,
         token: &str,
@@ -114,13 +129,14 @@ impl<'a> AuthThenCompletePaymentBehavior for StripePaymentBehavior {
         Ok(self
             .client
             .update_customer(repeat_token, description, token, Vec::<(String, String)>::new())
+            .await
             .map(|r| RepeatChargeToken {
                 token: r.id,
                 raw: r.raw_data,
             })?)
     }
 
-    fn auth(
+    async fn auth(
         &self,
         token: &str,
         amount: i64,
@@ -131,14 +147,15 @@ impl<'a> AuthThenCompletePaymentBehavior for StripePaymentBehavior {
         Ok(self
             .client
             .auth(token, amount, currency, description, metadata)
+            .await
             .map(|r| ChargeAuthResult {
                 id: r.id,
                 raw: r.raw_data,
             })?)
     }
 
-    fn complete_authed_charge(&self, _auth_token: &str) -> Result<ChargeResult, PaymentProcessorError> {
-        Ok(self.client.complete(_auth_token).map(|r| ChargeResult {
+    async fn complete_authed_charge(&self, _auth_token: &str) -> Result<ChargeResult, PaymentProcessorError> {
+        Ok(self.client.complete(_auth_token).await.map(|r| ChargeResult {
             id: r.id,
             raw: r.raw_data,
         })?)

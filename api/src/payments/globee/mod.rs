@@ -14,6 +14,7 @@ impl GlobeePaymentProcessor {
     }
 }
 
+#[async_trait::async_trait]
 impl PaymentProcessor for GlobeePaymentProcessor {
     fn behavior(&self) -> PaymentProcessorBehavior {
         PaymentProcessorBehavior::RedirectToPaymentPage(Box::new(GlobeePaymentProcessorBehavior {
@@ -21,7 +22,7 @@ impl PaymentProcessor for GlobeePaymentProcessor {
         }))
     }
 
-    fn refund(&self, _auth_token: &str) -> Result<ChargeAuthResult, PaymentProcessorError> {
+    async fn refund(&self, _auth_token: &str) -> Result<ChargeAuthResult, PaymentProcessorError> {
         Err(PaymentProcessorError {
             description: "Refunds are not supported by this gateway".to_string(),
             cause: None,
@@ -29,7 +30,7 @@ impl PaymentProcessor for GlobeePaymentProcessor {
         })
     }
 
-    fn update_metadata(
+    async fn update_metadata(
         &self,
         _charge_id: &str,
         _metadata: Vec<(String, String)>,
@@ -41,7 +42,15 @@ impl PaymentProcessor for GlobeePaymentProcessor {
         })
     }
 
-    fn partial_refund(&self, _auth_token: &str, _amount: i64) -> Result<ChargeAuthResult, PaymentProcessorError> {
+    async fn partial_refund(&self, _auth_token: &str, _amount: i64) -> Result<ChargeAuthResult, PaymentProcessorError> {
+        Err(PaymentProcessorError {
+            description: "Refunds are not supported by this gateway".to_string(),
+            cause: None,
+            validation_response: None,
+        })
+    }
+
+    fn partial_refund_blocking(&self, _auth_token: &str, _amount: i64) -> Result<ChargeAuthResult, PaymentProcessorError> {
         Err(PaymentProcessorError {
             description: "Refunds are not supported by this gateway".to_string(),
             cause: None,
@@ -54,12 +63,13 @@ pub struct GlobeePaymentProcessorBehavior {
     client: GlobeeClient,
 }
 
+#[async_trait::async_trait]
 impl RedirectToPaymentPageBehavior for GlobeePaymentProcessorBehavior {
     fn payment_provider(&self) -> PaymentProviders {
         PaymentProviders::Globee
     }
 
-    fn create_payment_request(
+    async fn create_payment_request(
         &self,
         amount: f64,
         email: String,
@@ -76,7 +86,7 @@ impl RedirectToPaymentPageBehavior for GlobeePaymentProcessorBehavior {
             success_url,
             cancel_url,
         );
-        let result = self.client.create_payment_request(payment_request)?;
+        let result = self.client.create_payment_request(payment_request).await?;
         Ok(RedirectInfo {
             id: result.id,
             redirect_url: result.redirect_url,

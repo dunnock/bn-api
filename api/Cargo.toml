@@ -32,7 +32,7 @@ dotenv = "0.13"
 expo-server-sdk = { git = "https://github.com/expo/expo-server-sdk-rust", rev="a4334d2d7243ac5e0ecb77478bb42774bbd9af54" }
 facebook = { version = "0.2.0", path = "../facebook"}
 futures = "0.3"
-globee={path="../globee"}
+globee = { version = "0.2.0", path = "../globee" }
 itertools = "0.7"
 jsonwebtoken = "5"
 lazy_static = "1.2.0"
@@ -59,3 +59,4 @@ url="1.7.2"
 validator = "0.8"
 validator_derive = "0.8"
 sitemap = "0.4"
+async-trait = "0.1"

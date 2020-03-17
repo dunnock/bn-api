@@ -35,7 +35,16 @@ impl StripeError {
     pub async fn from_response(response: reqwest::Response) -> StripeError {
         let status = response.status();
         let response_text = response.text().await.unwrap_or("<Error reading response body>".to_string());
+        Self::response_to_stripe_error(status, &response_text)
+    }
 
+    pub fn from_response_blocking(response: reqwest::blocking::Response) -> StripeError {
+        let status = response.status();
+        let response_text = response.text().unwrap_or("<Error reading response body>".to_string());
+        Self::response_to_stripe_error(status, &response_text)
+    }
+
+    fn response_to_stripe_error(status: reqwest::StatusCode, response_text: &str) -> StripeError {
         #[derive(Deserialize)]
         struct R {
             error: HashMap<String, String>,
@@ -56,6 +65,7 @@ impl StripeError {
             error_code,
         }
     }
+
 }
 
 impl From<reqwest::Error> for StripeError {

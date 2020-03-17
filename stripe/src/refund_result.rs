@@ -11,8 +11,16 @@ impl RefundResult {
     pub fn to_json(&self) -> String {
         self.raw_data.clone()
     }
+
     pub async fn from_response(resp: reqwest::Response) -> Result<RefundResult, StripeError> {
-        let raw_data: String = resp.text().await?;
+        Self::response_to_refund_result(resp.text().await?)
+    }
+
+    pub fn from_response_blocking(resp: reqwest::blocking::Response) -> Result<RefundResult, StripeError> {
+        Self::response_to_refund_result(resp.text()?)
+    }
+
+    fn response_to_refund_result(raw_data: String) ->  Result<RefundResult, StripeError> {
         #[derive(Deserialize)]
         struct R {
             id: String,

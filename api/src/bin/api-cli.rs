@@ -15,6 +15,8 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::{thread, time};
 use uuid::Uuid;
+use log::{info, error};
+use logging::jlog;
 
 pub fn main() {
     logging::setup_logger();
@@ -381,6 +383,8 @@ fn sync_purchase_metadata(database: Database, service_locator: ServiceLocator) {
             break;
         }
 
+        let mut rt = tokio::runtime::Runtime::new().expect("Failed to start async Runtime");
+
         for (payment, order) in payments {
             let organizations = order.organizations(connection.get()).unwrap();
 
@@ -392,7 +396,9 @@ fn sync_purchase_metadata(database: Database, service_locator: ServiceLocator) {
                 let purchase_metadata = order
                     .purchase_metadata(connection.get())
                     .expect("Expected purchase metadata for order");
-                let result = stripe.update_metadata(&external_reference, purchase_metadata);
+                let result = rt.block_on(
+                    stripe.update_metadata(&external_reference, purchase_metadata)
+                );
 
                 match result {
                     // Sleep to avoid hammering Stripe API

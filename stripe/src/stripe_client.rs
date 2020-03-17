@@ -142,6 +142,26 @@ impl StripeClient {
         }
     }
 
+    pub fn partial_refund_blocking(&self, charge_id: &str, amount: i64) -> Result<RefundResult, StripeError> {
+        let params = vec![
+            ("charge".to_string(), charge_id.to_string()),
+            ("amount".to_string(), amount.to_string()),
+        ];
+
+        let client = reqwest::blocking::Client::new();
+        let resp = client
+            .post("https://api.stripe.com/v1/refunds")
+            .basic_auth(&self.api_key, Some(""))
+            .form(&params)
+            .send()?;
+        match resp.status() {
+            reqwest::StatusCode::OK => {
+                return RefundResult::from_response_blocking(resp);
+            }
+            _ => return Err(StripeError::from_response_blocking(resp)),
+        }
+    }
+
     pub async fn complete(&self, charge_id: &str) -> Result<ChargeResult, StripeError> {
         let client = reqwest::Client::new();
 
