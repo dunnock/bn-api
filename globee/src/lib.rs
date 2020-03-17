@@ -93,21 +93,22 @@ impl GlobeeClient {
         }
     }
 
-    pub fn get_payment_request_blocking(&self, id: &str) -> Result<GlobeeIpnRequest, GlobeeError> {
-        let client = reqwest::blocking::Client::new();
+    pub async fn get_payment_request(&self, id: &str) -> Result<GlobeeIpnRequest, GlobeeError> {
+        let client = reqwest::Client::new();
         jlog!(Debug, "Retrieving payment request from Globee", { "id": id });
 
         let resp = client
             .get(&format!("{}payment-request/{}", &self.base_url, id))
             .header(HeaderName::from_static("x-auth-key"), self.key.as_str())
-            .send()?;
+            .send()
+            .await?;
         let status = resp.status();
         if status != StatusCode::UNPROCESSABLE_ENTITY && status != StatusCode::OK {
             return Err(resp.error_for_status().err().map(|e| e.into()).unwrap_or(
                 GlobeeError::UnexpectedResponseError(format!("Unexpected status code from Globee: {}", status)),
             ));
         };
-        let value: serde_json::Value = resp.json()?;
+        let value: serde_json::Value = resp.json().await?;
         jlog!(Debug, "Response from Globee", { "response": &value });
         let value: GlobeeResponse<GlobeeIpnRequest> = serde_json::from_value(value)?;
 

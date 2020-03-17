@@ -1,7 +1,3 @@
-use futures::future;
-use log::Level::{Debug, Error};
-use uuid::Uuid;
-
 use crate::config::Config;
 use crate::db::Connection;
 use crate::domain_events::executor_future::ExecutorFuture;
@@ -9,9 +5,13 @@ use crate::domain_events::routing::DomainActionExecutor;
 use crate::errors::ApplicationError;
 use crate::errors::BigNeonError;
 use bigneon_db::prelude::*;
+use futures::future::TryFutureExt;
 use globee::GlobeeClient;
 use globee::GlobeeIpnRequest;
+use log::Level::{Debug, Error};
+use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct ProcessPaymentIPNExecutor {
     globee_api_key: String,
     globee_base_url: String,
@@ -21,13 +21,12 @@ pub struct ProcessPaymentIPNExecutor {
 
 impl DomainActionExecutor for ProcessPaymentIPNExecutor {
     fn execute(&self, action: DomainAction, conn: Connection) -> ExecutorFuture {
-        match self.perform_job(&action, &conn) {
-            Ok(_) => ExecutorFuture::new(action, conn, Box::pin(future::ok(()))),
-            Err(e) => {
-                jlog!(Error, "Payment IPN processor failed", {"action_id": action.id, "main_table_id":action.main_table_id,  "error": e.to_string()});
-                ExecutorFuture::new(action, conn, Box::pin(future::err(e)))
-            }
-        }
+        let fut = self.clone().perform_job(action.clone(), conn.clone())
+            .inspect_err({
+                let action = action.clone();
+                move |e| jlog!(Error, "Payment IPN processor failed", {"action_id": action.id, "main_table_id":action.main_table_id,  "error": e.to_string()})
+            });
+        ExecutorFuture::new(action, conn, Box::pin(fut))
     }
 }
 
@@ -41,7 +40,7 @@ impl ProcessPaymentIPNExecutor {
         }
     }
 
-    pub fn perform_job(&self, action: &DomainAction, conn: &Connection) -> Result<(), BigNeonError> {
+    pub async fn perform_job(self, action: DomainAction, conn: Connection) -> Result<(), BigNeonError> {
         let mut ipn: GlobeeIpnRequest = serde_json::from_value(action.payload.clone())?;
         if ipn.custom_payment_id.is_none() {
             return Err(
@@ -69,7 +68,7 @@ impl ProcessPaymentIPNExecutor {
         let client = GlobeeClient::new(api_key.clone(), self.globee_base_url.clone());
 
         if self.validate_ipn {
-            ipn = client.get_payment_request_blocking(&ipn.id)?;
+            ipn = client.get_payment_request(&ipn.id).await?;
         }
 
         if ipn
