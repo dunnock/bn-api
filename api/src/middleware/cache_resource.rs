@@ -11,11 +11,11 @@ use bigneon_db::models::*;
 use bigneon_http::caching::*;
 use futures::future::{ok, Ready};
 use itertools::Itertools;
+use log::Level;
+use logging::jlog;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use uuid::Uuid;
-use log::Level;
-use logging::jlog;
 
 const CACHED_RESPONSE_HEADER: &'static str = "X-Cached-Response";
 
@@ -321,10 +321,8 @@ where
             Cache::Hit(response, status) => {
                 jlog!(Level::Debug, "bigneon_api::cache_resource", "Cache hit", {"cache_user_key": status.user_key, "cache_response": status.cache_response});
                 let response = dev::ServiceResponse::new(http_req, response);
-                Box::pin(async move {
-                    Ok(CacheResource::update(status, response))
-                })
-            },
+                Box::pin(async move { Ok(CacheResource::update(status, response)) })
+            }
             Cache::Miss(status) => {
                 jlog!(Level::Debug, "bigneon_api::cache_resource", "Cache miss", {"cache_user_key": status.user_key, "cache_response": status.cache_response});
                 let request = dev::ServiceRequest::from_parts(http_req, payload)
