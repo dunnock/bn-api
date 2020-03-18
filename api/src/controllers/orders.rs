@@ -331,9 +331,11 @@ pub async fn refund(
                     .create_payment_processor(payment.provider, &organization)?;
 
                 refund_data = match payment.external_reference {
-                    Some(ref external_reference) => {
-                        Some(client.partial_refund_blocking(external_reference, amount_to_refund)?.to_json()?)
-                    }
+                    Some(ref external_reference) => Some(
+                        client
+                            .partial_refund_blocking(external_reference, amount_to_refund)?
+                            .to_json()?,
+                    ),
                     None => {
                         return Err(application::internal_server_error::<HttpResponse>(&format!(
                             "Unable to refund amount owed payment {} lacks external reference",

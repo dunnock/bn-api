@@ -394,9 +394,7 @@ fn sync_purchase_metadata(database: Database, service_locator: ServiceLocator) {
                 let purchase_metadata = order
                     .purchase_metadata(connection.get())
                     .expect("Expected purchase metadata for order");
-                let result = rt.block_on(
-                    stripe.update_metadata(&external_reference, purchase_metadata)
-                );
+                let result = rt.block_on(stripe.update_metadata(&external_reference, purchase_metadata));
 
                 match result {
                     // Sleep to avoid hammering Stripe API

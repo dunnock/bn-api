@@ -59,7 +59,8 @@ pub trait PaymentProcessor {
 
     async fn partial_refund(&self, auth_token: &str, amount: i64) -> Result<ChargeAuthResult, PaymentProcessorError>;
 
-    fn partial_refund_blocking(&self, auth_token: &str, amount: i64) -> Result<ChargeAuthResult, PaymentProcessorError>;
+    fn partial_refund_blocking(&self, auth_token: &str, amount: i64)
+        -> Result<ChargeAuthResult, PaymentProcessorError>;
 
     async fn update_metadata(
         &self,

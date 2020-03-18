@@ -89,7 +89,11 @@ impl PaymentProcessor for StripePaymentProcessor {
             })?)
     }
 
-    fn partial_refund_blocking(&self, auth_token: &str, amount: i64) -> Result<ChargeAuthResult, PaymentProcessorError> {
+    fn partial_refund_blocking(
+        &self,
+        auth_token: &str,
+        amount: i64,
+    ) -> Result<ChargeAuthResult, PaymentProcessorError> {
         Ok(self
             .client
             .partial_refund_blocking(auth_token, amount)
