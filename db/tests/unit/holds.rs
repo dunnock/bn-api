@@ -1,9 +1,101 @@
 use bigneon_db::dev::TestProject;
 use bigneon_db::models::*;
+use bigneon_db::utils::dates;
 use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::prelude::*;
 use chrono::Duration;
 use uuid::Uuid;
+
+#[test]
+fn all() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let hold = project.create_hold().with_name("Hold1".to_string()).finish();
+    let hold2 = project.create_hold().with_name("Hold2".to_string()).finish();
+    let hold3 = project.create_hold().with_name("Hold3".to_string()).finish();
+    assert_eq!(vec![hold, hold2, hold3], Hold::all(connection).unwrap());
+}
+
+#[test]
+fn update_automatic_clear_domain_action() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let hold = project.create_hold().finish();
+    let hold2 = project
+        .create_hold()
+        .with_end_at(dates::now().add_hours(2).finish())
+        .finish();
+    let hold3 = project
+        .create_hold()
+        .with_end_at(dates::now().add_hours(-2).finish())
+        .finish();
+
+    // Domain event should not be present as hold created has no end date
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Holds),
+        Some(hold.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        connection,
+    )
+    .unwrap();
+    assert!(domain_action.is_none());
+
+    // Domain event should be present as hold created has end date
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Holds),
+        Some(hold2.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        connection,
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(domain_action.scheduled_at, hold2.end_at.unwrap());
+
+    // Domain event should be present as hold created has end date but scheduled immediately
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Holds),
+        Some(hold3.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        connection,
+    )
+    .unwrap()
+    .unwrap();
+    assert_ne!(domain_action.scheduled_at, hold3.end_at.unwrap());
+    let now = Utc::now().naive_utc();
+    assert_eq!(now.signed_duration_since(domain_action.scheduled_at).num_minutes(), 0);
+
+    // Running the update logic does not create additional domain events (none for first hold as well)
+    hold.update_automatic_clear_domain_action(connection).unwrap();
+    hold2.update_automatic_clear_domain_action(connection).unwrap();
+    hold3.update_automatic_clear_domain_action(connection).unwrap();
+    let domain_actions = DomainAction::find_by_resource(
+        Some(Tables::Holds),
+        Some(hold.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        DomainActionStatus::Pending,
+        connection,
+    )
+    .unwrap();
+    assert_eq!(0, domain_actions.len());
+    let domain_actions = DomainAction::find_by_resource(
+        Some(Tables::Holds),
+        Some(hold2.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        DomainActionStatus::Pending,
+        connection,
+    )
+    .unwrap();
+    assert_eq!(1, domain_actions.len());
+    let domain_actions = DomainAction::find_by_resource(
+        Some(Tables::Holds),
+        Some(hold3.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        DomainActionStatus::Pending,
+        connection,
+    )
+    .unwrap();
+    assert_eq!(1, domain_actions.len());
+}
 
 #[test]
 fn purchased_ticket_count() {
@@ -142,26 +234,43 @@ fn quantity_and_children_quantity() {
 
 #[test]
 fn create() {
-    let db = TestProject::new();
-    let event = db.create_event().with_tickets().finish();
-    Hold::create_hold(
-        "test".to_string(),
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project.create_event().with_tickets().finish();
+    let name = "test".to_string();
+    let code = "IHAVEACODE".to_string();
+    let hold = Hold::create_hold(
+        name.clone(),
         event.id,
-        Some("IHAVEACODE".to_string()),
+        Some(code.clone()),
         Some(0),
-        None,
+        Some(dates::now().add_hours(1).finish()),
         Some(4),
         HoldTypes::Discount,
-        event.ticket_types(true, None, db.get_connection()).unwrap()[0].id,
+        event.ticket_types(true, None, connection).unwrap()[0].id,
     )
-    .commit(None, db.get_connection())
+    .commit(None, connection)
     .unwrap();
+    assert_eq!(name, hold.name);
+    assert_eq!(code, hold.redemption_code.unwrap());
+    assert_eq!(event.id, hold.event_id);
+
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Holds),
+        Some(hold.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        connection,
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(domain_action.scheduled_at, hold.end_at.unwrap());
 }
 
 #[test]
 fn create_with_validation_errors() {
-    let db = TestProject::new();
-    let event = db.create_event().with_tickets().finish();
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project.create_event().with_tickets().finish();
     let result = Hold::create_hold(
         "test".to_string(),
         event.id,
@@ -170,9 +279,9 @@ fn create_with_validation_errors() {
         None,
         Some(4),
         HoldTypes::Discount,
-        event.ticket_types(true, None, db.get_connection()).unwrap()[0].id,
+        event.ticket_types(true, None, connection).unwrap()[0].id,
     )
-    .commit(None, db.get_connection());
+    .commit(None, connection);
 
     match result {
         Ok(_) => {
@@ -189,7 +298,7 @@ fn create_with_validation_errors() {
     }
 
     // Dupe redemption code
-    let hold = db.create_hold().with_event(&event).finish();
+    let hold = project.create_hold().with_event(&event).finish();
     let result = Hold::create_hold(
         "test".to_string(),
         event.id,
@@ -198,9 +307,9 @@ fn create_with_validation_errors() {
         None,
         Some(4),
         HoldTypes::Discount,
-        event.ticket_types(true, None, db.get_connection()).unwrap()[0].id,
+        event.ticket_types(true, None, connection).unwrap()[0].id,
     )
-    .commit(None, db.get_connection());
+    .commit(None, connection);
     match result {
         Ok(_) => {
             panic!("Expected validation error");
@@ -216,7 +325,7 @@ fn create_with_validation_errors() {
     }
 
     // Redemption code used by a code
-    let code = db.create_code().with_event(&event).finish();
+    let code = project.create_code().with_event(&event).finish();
     let result = Hold::create_hold(
         "test".to_string(),
         event.id,
@@ -225,9 +334,9 @@ fn create_with_validation_errors() {
         None,
         Some(4),
         HoldTypes::Discount,
-        event.ticket_types(true, None, db.get_connection()).unwrap()[0].id,
+        event.ticket_types(true, None, connection).unwrap()[0].id,
     )
-    .commit(None, db.get_connection());
+    .commit(None, connection);
     match result {
         Ok(_) => {
             panic!("Expected validation error");
@@ -274,8 +383,9 @@ pub fn confirm_hold_valid() {
 
 #[test]
 fn update() {
-    let db = TestProject::new();
-    let hold = db.create_hold().finish();
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let hold = project.create_hold().finish();
 
     let update_patch = UpdateHoldAttributes {
         discount_in_cents: Some(Some(10)),
@@ -284,22 +394,66 @@ fn update() {
         name: Some("New name".to_string()),
         ..Default::default()
     };
-    let hold = hold.update(update_patch, db.get_connection()).unwrap();
+    // No release inventory event
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Holds),
+        Some(hold.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        connection,
+    )
+    .unwrap();
+    assert!(domain_action.is_none());
+
+    let hold = hold.update(update_patch, connection).unwrap();
     assert_eq!(hold.name, "New name".to_string());
     assert_eq!(hold.max_per_user, None);
     assert_eq!(hold.end_at, None);
     assert_eq!(hold.discount_in_cents, Some(10));
 
-    let db = TestProject::new();
-    let hold = db.create_hold().finish();
+    // No release inventory event
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Holds),
+        Some(hold.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        connection,
+    )
+    .unwrap();
+    assert!(domain_action.is_none());
+
+    // With end at set, release inventory action created
     let update_patch = UpdateHoldAttributes {
         discount_in_cents: Some(Some(10)),
         hold_type: Some(HoldTypes::Comp),
+        end_at: Some(Some(dates::now().add_hours(2).finish())),
         ..Default::default()
     };
-    let hold = hold.update(update_patch, db.get_connection()).unwrap();
+    let hold = hold.update(update_patch, connection).unwrap();
     assert_eq!(hold.discount_in_cents, None);
     assert_eq!(hold.hold_type, HoldTypes::Comp);
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Holds),
+        Some(hold.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        connection,
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(domain_action.scheduled_at, hold.end_at.unwrap());
+
+    // With end at removed, domain action is also removed
+    let update_patch = UpdateHoldAttributes {
+        end_at: Some(None),
+        ..Default::default()
+    };
+    let hold = hold.update(update_patch, connection).unwrap();
+    let domain_action = DomainAction::upcoming_domain_action(
+        Some(Tables::Holds),
+        Some(hold.id),
+        DomainActionTypes::ReleaseHoldInventory,
+        connection,
+    )
+    .unwrap();
+    assert!(domain_action.is_none());
 }
 
 #[test]

@@ -47,7 +47,8 @@ pub fn main() {
       (about: "Backpopulate temporary user data")    )
     (@subcommand   schedule_missing_domain_actions =>
       (name: "schedule-missing-domain-actions")
-      (about: "Creates any missing reoccurring domain actions"))
+      (about: "Creates any missing reoccurring domain actions")
+      (@arg holds: -h --holds "If the logic should sync hold domain actions"))
     (@subcommand generate_genre_slugs =>
       (name: "generate-genre-slugs")
       (about: "Creates any missing genre and city genre slugs"))
@@ -76,7 +77,9 @@ pub fn main() {
             regenerate_interaction_records(args.value_of("organization"), database)
         }
         ("backpopulate-temporary-user-data", Some(_)) => backpopulate_temporary_user_data(database),
-        ("schedule-missing-domain-actions", Some(_)) => schedule_missing_domain_actions(config, database),
+        ("schedule-missing-domain-actions", Some(args)) => {
+            schedule_missing_domain_actions(args.is_present("holds"), config, database)
+        }
         ("generate-genre-slugs", Some(_)) => generate_genre_slugs(database),
         ("version", Some(_)) => version(),
         ("update-customer-io-webhooks", Some(args)) => {
@@ -262,7 +265,7 @@ fn update_customer_io_webhooks(site_id: Option<&str>, api_key: Option<&str>, dat
     .unwrap();
 }
 
-fn schedule_missing_domain_actions(config: Config, database: Database) {
+fn schedule_missing_domain_actions(sync_holds: bool, config: Config, database: Database) {
     info!("Scheduling missing domain actions");
     let connection = database.get_connection().expect("Expected connection to establish");
     let connection = connection.get();
@@ -273,6 +276,15 @@ fn schedule_missing_domain_actions(config: Config, database: Database) {
         organization
             .schedule_domain_actions(config.settlement_period_in_days, connection)
             .expect("Expected to schedule any missing domain actions");
+    }
+
+    if sync_holds {
+        info!("Syncing hold domain actions");
+        let holds = Hold::all(connection).expect("Expected to find holds");
+        for hold in holds {
+            hold.update_automatic_clear_domain_action(connection)
+                .expect("Expected to update hold automatic clear domain action");
+        }
     }
 
     // Report specific domain actions

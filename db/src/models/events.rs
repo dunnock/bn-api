@@ -1713,21 +1713,13 @@ impl Event {
         }
         if let Some(query_string) = query_string {
             let fuzzy_query_string: String = str::replace(&query_string.trim(), ",", "");
-            let fuzzy_query_string = fuzzy_query_string
-                .split_whitespace()
-                .map(|w| w.split("").collect::<Vec<&str>>().join("%"))
-                .collect::<Vec<String>>()
-                .join("%");
-            let id_query_string = format!("%{}%", query_string.to_lowercase());
+            let fuzzy_query_string = format!("%{}%", fuzzy_query_string.split_whitespace().join("%"));
 
             query = query
-
-                .filter(sql("users.email ILIKE ").bind::<Text, _>(fuzzy_query_string.clone())
-                    .or(sql("users.phone ILIKE ").bind::<Text, _>(fuzzy_query_string.clone()))
-                    .or(sql("CONCAT(COALESCE(ticket_instances.first_name_override, users.first_name), ' ', COALESCE(ticket_instances.last_name_override, users.last_name)) ILIKE ").bind::<Text, _>(fuzzy_query_string.clone()))
-                    .or(sql("CONCAT(COALESCE(ticket_instances.last_name_override, users.last_name), ' ', COALESCE(ticket_instances.first_name_override, users.first_name)) ILIKE ").bind::<Text, _>(fuzzy_query_string.clone()))
-                    .or(sql("ticket_instances.id::TEXT LIKE ").bind::<Text, _>(id_query_string.clone()))
-                    .or(sql("order_items.order_id::TEXT LIKE ").bind::<Text, _>(id_query_string.clone())));
+                .filter(sql("CONCAT(COALESCE(ticket_instances.first_name_override, users.first_name), ' ', COALESCE(ticket_instances.last_name_override, users.last_name)) ILIKE ")
+                    .bind::<Text, _>(fuzzy_query_string.clone())
+                    .or(sql("CONCAT(COALESCE(ticket_instances.last_name_override, users.last_name), ' ', COALESCE(ticket_instances.first_name_override, users.first_name)) ILIKE ")
+                    .bind::<Text, _>(fuzzy_query_string.clone())));
         }
 
         if let Some(changes_since) = changes_since {

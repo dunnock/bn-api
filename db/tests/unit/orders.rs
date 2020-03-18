@@ -6130,7 +6130,7 @@ pub fn search_by_partial_ticket_id() {
 pub fn search_by_email() {
     let project = TestProject::new();
     let connection = project.get_connection();
-    let user = project.create_user().finish();
+    let user = project.create_user().with_email("email@tari.com".to_string()).finish();
     let _order1 = project.create_order().is_paid().finish();
     let event = project.create_event().with_tickets().finish();
     let order2 = project

@@ -1637,7 +1637,7 @@ fn guest_list() {
     let user6 = project.create_user().finish();
 
     // 1 normal order, 2 orders made on behalf of users by box office user 2
-    let normal_order = project
+    project
         .create_order()
         .for_event(&event)
         .for_user(&user)
@@ -1677,25 +1677,9 @@ fn guest_list() {
     assert_eq!(1, guest_list.len());
     assert_eq!(guest_list.first().unwrap().ticket.user_id, Some(user.id));
 
-    // Partial match last name, first name
-    let guest_list = event
-        .guest_list(Some("tes al".to_string()), &None, None, connection)
-        .unwrap()
-        .0;
-    assert_eq!(1, guest_list.len());
-    assert_eq!(guest_list.first().unwrap().ticket.user_id, Some(user.id));
-
     // With commas that are ignored
     let guest_list = event
         .guest_list(Some("test, al".to_string()), &None, None, connection)
-        .unwrap()
-        .0;
-    assert_eq!(1, guest_list.len());
-    assert_eq!(guest_list.first().unwrap().ticket.user_id, Some(user.id));
-
-    // Partial match first name, full last name
-    let guest_list = event
-        .guest_list(Some("Al Test".to_string()), &None, None, connection)
         .unwrap()
         .0;
     assert_eq!(1, guest_list.len());
@@ -1751,13 +1735,6 @@ fn guest_list() {
 
     let guest_list = event
         .guest_list(Some("Last".to_string()), &None, None, connection)
-        .unwrap()
-        .0;
-    assert_eq!(1, guest_list.len());
-    assert_eq!(guest_list.first().unwrap().ticket.user_id, Some(user.id));
-
-    let guest_list = event
-        .guest_list(Some("st la".to_string()), &None, None, connection)
         .unwrap()
         .0;
     assert_eq!(1, guest_list.len());
@@ -1865,49 +1842,6 @@ fn guest_list() {
     let guest_list = event.guest_list(None, &None, Some(&paging), connection).unwrap();
     assert_eq!(4, guest_list.1);
     assert_eq!(1, guest_list.0.len());
-
-    //Search by an order id
-    let order_id = normal_order.id.to_string();
-    let order_id = order_id[&order_id.len() - 8..].to_string();
-    let guest_list = event
-        .guest_list(Some(order_id.clone()), &None, None, connection)
-        .unwrap();
-    // Occasionally multiple orders have the same first few characters of their GUID leading to errors in test processing
-    assert!(guest_list.1 >= 1);
-
-    let mut found_guest_list_item = None;
-    for guest_list_item in guest_list.0 {
-        assert_eq!(
-            order_id,
-            guest_list_item.ticket.order_id.to_string()[&guest_list_item.ticket.order_id.to_string().len() - 8..]
-                .to_string()
-        );
-
-        if guest_list_item.ticket.order_id == normal_order.id {
-            found_guest_list_item = Some(guest_list_item);
-        }
-    }
-    assert!(found_guest_list_item.is_some());
-
-    //Search by ticket_instance id
-    let ticket_id = first_ticket.id.to_string();
-    let ticket_id = ticket_id[&ticket_id.len() - 8..].to_string();
-    let guest_list = event
-        .guest_list(Some(ticket_id.clone()), &None, None, connection)
-        .unwrap();
-    assert!(guest_list.1 >= 1);
-
-    let mut found_guest_list_item = None;
-    for guest_list_item in guest_list.0 {
-        if guest_list_item.ticket.id == first_ticket.id {
-            assert_eq!(
-                ticket_id,
-                guest_list_item.ticket.id.to_string()[&guest_list_item.ticket.id.to_string().len() - 8..].to_string()
-            );
-            found_guest_list_item = Some(guest_list_item);
-        }
-    }
-    assert!(found_guest_list_item.is_some());
 }
 
 #[test]

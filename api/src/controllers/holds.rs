@@ -130,8 +130,12 @@ pub async fn update(
     user.requires_scope_for_organization_event(Scopes::HoldWrite, &hold.organization(conn)?, &hold.event(conn)?, conn)?;
     let quantity = req.quantity;
     let hold = hold.update(req.into_inner().into(), conn)?;
+
     if let Some(quantity) = quantity {
-        hold.set_quantity(Some(user.id()), quantity, conn)?;
+        // Only set quantity if the hold does not end or if it ends in the future
+        if hold.end_at.is_none() || hold.end_at.unwrap() > Utc::now().naive_utc() {
+            hold.set_quantity(Some(user.id()), quantity, conn)?;
+        }
     }
 
     Ok(HttpResponse::Ok().json(hold))

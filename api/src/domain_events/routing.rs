@@ -51,6 +51,7 @@ impl DomainActionRouter {
                 FinalizeSettlements => Box::new(FinalizeSettlementsExecutor::new()),
                 PaymentProviderIPN => Box::new(ProcessPaymentIPNExecutor::new(&conf)),
                 RegenerateDripActions => Box::new(RegenerateDripActionsExecutor::new(conf)),
+                ReleaseHoldInventory => Box::new(ReleaseHoldInventoryExecutor::new()),
                 SendPurchaseCompletedCommunication => Box::new(SendOrderCompleteExecutor::new(conf)),
                 UpdateGenres => Box::new(UpdateGenresExecutor::new()),
                 ProcessSettlementReport => Box::new(ProcessSettlementReportExecutor::new(conf)),
@@ -85,6 +86,9 @@ impl DomainActionRouter {
             .expect("Configuration error");
 
         self.add_executor(RegenerateDripActions, find_executor(RegenerateDripActions))
+            .expect("Configuration error");
+
+        self.add_executor(ReleaseHoldInventory, find_executor(ReleaseHoldInventory))
             .expect("Configuration error");
 
         self.add_executor(RetargetAbandonedOrders, find_executor(RetargetAbandonedOrders))

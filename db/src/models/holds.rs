@@ -122,14 +122,62 @@ impl Hold {
 
         self.validate_record(&update_attrs, conn)?;
 
-        diesel::update(
+        let updated_hold: Hold = diesel::update(
             holds::table
                 .filter(holds::id.eq(self.id))
                 .filter(holds::updated_at.eq(self.updated_at)),
         )
         .set((update_attrs, holds::updated_at.eq(dsl::now)))
         .get_result(conn)
-        .to_db_error(ErrorCode::UpdateError, "Could not update hold")
+        .to_db_error(ErrorCode::UpdateError, "Could not update hold")?;
+
+        if updated_hold.end_at != self.end_at {
+            updated_hold.update_automatic_clear_domain_action(conn)?;
+        }
+
+        Ok(updated_hold)
+    }
+
+    pub fn update_automatic_clear_domain_action(&self, conn: &PgConnection) -> Result<(), DatabaseError> {
+        match self.end_at {
+            Some(end_at) => {
+                let now = Utc::now().naive_utc();
+                let run_time = if end_at < now { now } else { end_at };
+
+                match DomainAction::upcoming_domain_action(
+                    Some(Tables::Holds),
+                    Some(self.id),
+                    DomainActionTypes::ReleaseHoldInventory,
+                    conn,
+                )? {
+                    Some(action) => {
+                        action.set_scheduled_at(run_time, conn)?;
+                    }
+                    None => {
+                        let mut action = DomainAction::create(
+                            None,
+                            DomainActionTypes::ReleaseHoldInventory,
+                            None,
+                            json!({}),
+                            Some(Tables::Holds),
+                            Some(self.id),
+                        );
+                        action.schedule_at(run_time);
+                        action.commit(conn)?;
+                    }
+                }
+            }
+            None => {
+                // Does not end, check for a domain action and cancel it, else do nothing
+                if let Some(action) =
+                    DomainAction::upcoming_domain_action(None, None, DomainActionTypes::ReleaseHoldInventory, conn)?
+                {
+                    action.set_cancelled(conn)?;
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub fn find(id: Uuid, conn: &PgConnection) -> Result<Hold, DatabaseError> {
@@ -207,6 +255,13 @@ impl Hold {
         payload.paging.page = page;
         payload.paging.limit = limit;
         Ok(payload)
+    }
+
+    pub fn all(conn: &PgConnection) -> Result<Vec<Hold>, DatabaseError> {
+        holds::table
+            .order_by(holds::name.asc())
+            .load(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not retrieve holds")
     }
 
     pub fn find_for_event(
@@ -525,7 +580,7 @@ impl NewHold {
             self.discount_in_cents = None
         }
         self.validate_record(conn)?;
-        let result: Hold = diesel::insert_into(holds::table)
+        let hold: Hold = diesel::insert_into(holds::table)
             .values(&self)
             .get_result(conn)
             .to_db_error(ErrorCode::InsertError, "Could not create hold")?;
@@ -533,12 +588,15 @@ impl NewHold {
             DomainEventTypes::HoldCreated,
             format!("Hold {} created", self.name),
             Tables::Holds,
-            Some(result.id),
+            Some(hold.id),
             current_user_id,
-            Some(json!(&self)),
+            Some(json!(&hold)),
         )
         .commit(conn)?;
-        Ok(result)
+
+        hold.update_automatic_clear_domain_action(conn)?;
+
+        Ok(hold)
     }
 
     fn validate_record(&self, conn: &PgConnection) -> Result<(), DatabaseError> {
