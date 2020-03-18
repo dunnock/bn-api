@@ -20,7 +20,7 @@ impl RefundResult {
         Self::response_to_refund_result(resp.text()?)
     }
 
-    fn response_to_refund_result(raw_data: String) ->  Result<RefundResult, StripeError> {
+    fn response_to_refund_result(raw_data: String) -> Result<RefundResult, StripeError> {
         #[derive(Deserialize)]
         struct R {
             id: String,

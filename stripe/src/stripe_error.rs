@@ -34,7 +34,10 @@ impl fmt::Display for StripeError {
 impl StripeError {
     pub async fn from_response(response: reqwest::Response) -> StripeError {
         let status = response.status();
-        let response_text = response.text().await.unwrap_or("<Error reading response body>".to_string());
+        let response_text = response
+            .text()
+            .await
+            .unwrap_or("<Error reading response body>".to_string());
         Self::response_to_stripe_error(status, &response_text)
     }
 
@@ -56,16 +59,11 @@ impl StripeError {
             None
         };
         StripeError {
-            description: format!(
-                "Error calling Stripe: HTTP Code {}: Body:{}",
-                status,
-                response_text
-            ),
+            description: format!("Error calling Stripe: HTTP Code {}: Body:{}", status, response_text),
             cause: None,
             error_code,
         }
     }
-
 }
 
 impl From<reqwest::Error> for StripeError {

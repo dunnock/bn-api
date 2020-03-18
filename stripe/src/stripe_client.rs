@@ -22,7 +22,8 @@ impl StripeClient {
         description: &str,
         metadata: Vec<(String, String)>,
     ) -> Result<ChargeResult, StripeError> {
-        self.create_charge(token, amount, currency, description, true, metadata).await
+        self.create_charge(token, amount, currency, description, true, metadata)
+            .await
     }
 
     pub async fn auth(
@@ -33,7 +34,8 @@ impl StripeClient {
         description: &str,
         metadata: Vec<(String, String)>,
     ) -> Result<ChargeResult, StripeError> {
-        self.create_charge(token, amount, currency, description, false, metadata).await
+        self.create_charge(token, amount, currency, description, false, metadata)
+            .await
     }
 
     pub async fn update_metadata(
