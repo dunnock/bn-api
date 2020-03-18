@@ -319,14 +319,14 @@ where
 
         match cache {
             Cache::Hit(response, status) => {
-                jlog!(Level::Debug, "bigneon_api::cache_resource", "Cache hit", {});
+                jlog!(Level::Debug, "bigneon_api::cache_resource", "Cache hit", {"cache_user_key": status.user_key, "cache_response": status.cache_response});
                 let response = dev::ServiceResponse::new(http_req, response);
                 Box::pin(async move {
                     Ok(CacheResource::update(status, response))
                 })
             },
             Cache::Miss(status) => {
-                jlog!(Level::Debug, "bigneon_api::cache_resource", "Cache miss", {});
+                jlog!(Level::Debug, "bigneon_api::cache_resource", "Cache miss", {"cache_user_key": status.user_key, "cache_response": status.cache_response});
                 let request = dev::ServiceRequest::from_parts(http_req, payload)
                     .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
                 let fut = service.borrow_mut().call(request);
