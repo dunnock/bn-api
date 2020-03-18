@@ -16,7 +16,7 @@ impl FromRequest for OptionalUser {
     fn from_request(req: &HttpRequest, payload: &mut dev::Payload) -> Self::Future {
         // If auth header exists pass authorization errors back to client
         if let Some(_auth_header) = req.headers().get("Authorization") {
-            let user = match User::from_request(req, payload).into_inner() {
+            let user: User = match User::from_request(req, payload).into_inner() {
                 Ok(user) => user,
                 Err(e) => return err(e),
             };
