@@ -141,7 +141,7 @@ impl Server {
                                 .max_age(3600)
                                 .finish()
                         })
-                        .wrap(Logger::new(LOGGER_FORMAT))
+                        .wrap(Logger::new(LOGGER_FORMAT).exclude("/status"))
                         .wrap(BigNeonLogger::new())
                         .wrap(DatabaseTransaction::new())
                         .wrap(AppVersionHeader::new())
