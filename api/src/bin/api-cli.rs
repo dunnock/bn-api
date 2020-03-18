@@ -15,8 +15,6 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::{thread, time};
 use uuid::Uuid;
-use log::{info, error};
-use logging::jlog;
 
 pub fn main() {
     logging::setup_logger();

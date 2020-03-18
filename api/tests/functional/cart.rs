@@ -1377,7 +1377,8 @@ async fn checkout_provider_globee() {
 
     let processor = ProcessPaymentIPNExecutor::new(&request.config);
     processor
-        .perform_job(&domain_action, &database.connection.clone())
+        .perform_job(domain_action, database.connection.clone())
+        .await
         .unwrap();
 
     let order = Order::find(order.id, conn).unwrap();
