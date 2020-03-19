@@ -1,7 +1,7 @@
 use crate::errors::{ApplicationError, ApplicationErrorType, BigNeonError};
 use crate::models::CreateArtistRequest;
 use log::Level::*;
-use reqwest::blocking::Client;
+use reqwest::Client;
 use serde_json;
 use serde_json::Value;
 use std::default::Default;
@@ -42,14 +42,14 @@ impl Spotify {
         *auth_token = Some(token.to_owned());
     }
 
-    pub fn connect(&self) -> Result<(), BigNeonError> {
+    pub async fn connect(&self) -> Result<(), BigNeonError> {
         match *self.auth_token.read().unwrap() {
             Some(ref token) => {
                 let mut access_token = self.access_token.write().unwrap();
                 // This code must have no panics as that will poison the RwLock
                 // which is a case we don't expect/handle when read locking (`read().unwrap()`)
                 if (*access_token).is_expired() {
-                    *access_token = self.authenticate(token)?;
+                    *access_token = self.authenticate(token).await?;
                     jlog!(Info, LOG_TARGET, "Fetching new Spotify access token", {
                         "expires_at": (*access_token).expires_at
                     });
@@ -68,15 +68,17 @@ impl Spotify {
         }
     }
 
-    fn authenticate(&self, auth_token: &str) -> Result<SpotifyAccessToken, reqwest::Error> {
+    async fn authenticate(&self, auth_token: &str) -> Result<SpotifyAccessToken, reqwest::Error> {
         let reqwest_client = Client::new();
         let params = [("grant_type", "client_credentials")];
         let res: AuthResponse = reqwest_client
             .post(SPOTIFY_URL_AUTH)
             .header("Authorization", format!("Basic {}", auth_token))
             .form(&params)
-            .send()?
-            .json()?;
+            .send()
+            .await?
+            .json()
+            .await?;
 
         let start = SystemTime::now();
         let since_the_epoch = start.duration_since(UNIX_EPOCH).expect("Time went backwards");
@@ -88,7 +90,7 @@ impl Spotify {
         })
     }
 
-    pub fn search(&self, q: String) -> Result<Vec<CreateArtistRequest>, BigNeonError> {
+    pub async fn search(&self, q: String) -> Result<Vec<CreateArtistRequest>, BigNeonError> {
         {
             // For search we ignore not having an auth token
             if self.auth_token.read().unwrap().is_none() {
@@ -96,7 +98,7 @@ impl Spotify {
             }
         }
 
-        self.connect()?;
+        self.connect().await?;
 
         // Lock access token for reading
         let access_token = self.access_token.read().unwrap();
@@ -108,7 +110,7 @@ impl Spotify {
             "https://api.spotify.com/v1/search?q={}&type=artist&access_token={}",
             encoded_q, access_token
         );
-        let res = reqwest_client.get(&url).send()?.text()?;
+        let res = reqwest_client.get(&url).send().await?.text().await?;
         let result: Value = serde_json::from_str(&res)?;
         if result.get("error").is_some() {
             return Err(ApplicationError::new(
@@ -152,8 +154,8 @@ impl Spotify {
         Ok(spotify_artists)
     }
 
-    pub fn read_artist(&self, artist_id: &str) -> Result<Option<CreateArtistRequest>, BigNeonError> {
-        self.connect()?;
+    pub async fn read_artist(&self, artist_id: &str) -> Result<Option<CreateArtistRequest>, BigNeonError> {
+        self.connect().await?;
 
         // Lock access token for reading
         let access_token = self.access_token.read().unwrap();
@@ -165,8 +167,10 @@ impl Spotify {
         let res = reqwest_client
             .get(&url)
             .header("Authorization", format!("Bearer {}", &*access_token.token))
-            .send()?
-            .text()?;
+            .send()
+            .await?
+            .text()
+            .await?;
 
         let artist: Value = serde_json::from_str(&res)?;
         if artist.get("error").is_some() {
