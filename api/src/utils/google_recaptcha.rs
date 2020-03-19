@@ -1,4 +1,4 @@
-use crate::errors::BigNeonError;
+use crate::errors::ApiError;
 use std::collections::HashMap;
 
 const GOOGLE_RECAPTCHA_SITE_VERIFY_URL: &str = "https://www.google.com/recaptcha/api/siteverify";
@@ -14,7 +14,7 @@ pub async fn verify_response(
     google_recaptcha_secret_key: &str,
     captcha_response: String,
     remote_ip: Option<&str>,
-) -> Result<Response, BigNeonError> {
+) -> Result<Response, ApiError> {
     let client = reqwest::Client::new();
     let mut params = HashMap::new();
     params.insert("secret", google_recaptcha_secret_key);

@@ -4,7 +4,6 @@ use crate::domain_events::executor_future::ExecutorFuture;
 use crate::domain_events::routing::DomainActionExecutor;
 use crate::errors::ApiError;
 use crate::errors::ApplicationError;
-use crate::errors::BigNeonError;
 use db::prelude::*;
 use futures::future::TryFutureExt;
 use globee::GlobeeClient;

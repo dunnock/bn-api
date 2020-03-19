@@ -372,7 +372,7 @@ async fn verify_recaptcha(
     google_recaptcha_secret_key: &str,
     captcha_response: &Option<String>,
     remote_ip: Option<&str>,
-) -> Result<google_recaptcha::Response, BigNeonError> {
+) -> Result<google_recaptcha::Response, ApiError> {
     match captcha_response {
         Some(ref captcha_response) => {
             let captcha_response =
