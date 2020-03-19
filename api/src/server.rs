@@ -21,7 +21,7 @@ use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 // Must be valid JSON
-const LOGGER_FORMAT: &'static str = r#"{"level": "INFO", "target":"bigneon::request", "remote_ip":"%a", "user_agent": "%{User-Agent}i", "request": "%r", "status_code": %s, "response_time": %D, "api_version":"%{x-app-version}o", "client_version": "%{X-API-Client-Version}i" }"#;
+const LOGGER_FORMAT: &'static str = r#"{"level": "INFO", "target":"bigneon::request", "remote_ip":"%a", "user_agent": "%{User-Agent}i", "request": "%r", "uri": "%U", "status_code": %s, "response_time": %D, "api_version":"%{x-app-version}o", "client_version": "%{X-API-Client-Version}i" }"#;
 
 pub struct AppState {
     pub clients: Arc<Mutex<HashMap<Uuid, Vec<Addr<EventWebSocket>>>>>,
@@ -141,7 +141,7 @@ impl Server {
                                 .max_age(3600)
                                 .finish()
                         })
-                        .wrap(Logger::new(LOGGER_FORMAT))
+                        .wrap(Logger::new(LOGGER_FORMAT).exclude("/status"))
                         .wrap(BigNeonLogger::new())
                         .wrap(DatabaseTransaction::new())
                         .wrap(AppVersionHeader::new())
