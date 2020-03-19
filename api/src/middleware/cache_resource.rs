@@ -1,4 +1,4 @@
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::extractors::*;
 use crate::helpers::*;
 use crate::server::GetAppState;
@@ -7,9 +7,9 @@ use actix_web::error;
 use actix_web::http::header::*;
 use actix_web::http::{Method, StatusCode};
 use actix_web::{dev, FromRequest, HttpRequest, HttpResponse};
-use bigneon_db::models::*;
-use bigneon_http::caching::*;
+use db::models::*;
 use futures::future::{ok, Ready};
+use http::caching::*;
 use itertools::Itertools;
 use log::Level;
 use logging::jlog;

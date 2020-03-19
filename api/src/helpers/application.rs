@@ -13,7 +13,7 @@ const DEFAULT_BUF_SIZE: usize = 64 * 1024;
 pub fn unauthorized<T: Responder>(
     user: Option<AuthUser>,
     additional_data: Option<HashMap<&'static str, Value>>,
-) -> Result<T, BigNeonError> {
+) -> Result<T, ApiError> {
     unauthorized_with_message("User does not have the required permissions", user, additional_data)
 }
 
@@ -21,7 +21,7 @@ pub fn unauthorized_with_message<T: Responder>(
     message: &str,
     auth_user: Option<AuthUser>,
     additional_data: Option<HashMap<&'static str, Value>>,
-) -> Result<T, BigNeonError> {
+) -> Result<T, ApiError> {
     if let Some(auth_user) = auth_user {
         auth_user.log_unauthorized_access_attempt(additional_data.unwrap_or(HashMap::new()));
     }
@@ -29,36 +29,36 @@ pub fn unauthorized_with_message<T: Responder>(
     Err(AuthError::new(AuthErrorType::Unauthorized, message.into()).into())
 }
 
-pub fn forbidden<T: Responder>(message: &str) -> Result<T, BigNeonError> {
+pub fn forbidden<T: Responder>(message: &str) -> Result<T, ApiError> {
     Err(AuthError::new(AuthErrorType::Forbidden, message.into()).into())
 }
 
-pub fn unprocessable<T: Responder>(message: &str) -> Result<T, BigNeonError> {
+pub fn unprocessable<T: Responder>(message: &str) -> Result<T, ApiError> {
     Err(ApplicationError::new_with_type(ApplicationErrorType::Unprocessable, message.to_string()).into())
 }
-pub fn bad_request<T: Responder>(message: &str) -> Result<T, BigNeonError> {
+pub fn bad_request<T: Responder>(message: &str) -> Result<T, ApiError> {
     Err(ApplicationError::new_with_type(ApplicationErrorType::BadRequest, message.to_string()).into())
 }
 
-pub fn internal_server_error<T: Responder>(message: &str) -> Result<T, BigNeonError> {
+pub fn internal_server_error<T: Responder>(message: &str) -> Result<T, ApiError> {
     error!("Internal Server Error: {}", message);
     Err(ApplicationError::new(message.to_string()).into())
 }
 
-pub fn no_content() -> Result<HttpResponse, BigNeonError> {
+pub fn no_content() -> Result<HttpResponse, ApiError> {
     Ok(HttpResponse::new(StatusCode::NO_CONTENT))
 }
 
-pub fn not_found() -> Result<HttpResponse, BigNeonError> {
+pub fn not_found() -> Result<HttpResponse, ApiError> {
     warn!("Not found");
     Ok(HttpResponse::new(StatusCode::NOT_FOUND))
 }
 
-pub fn created(json: serde_json::Value) -> Result<HttpResponse, BigNeonError> {
+pub fn created(json: serde_json::Value) -> Result<HttpResponse, ApiError> {
     Ok(HttpResponse::Created().json(json))
 }
 
-pub fn redirect(url: &str) -> Result<HttpResponse, BigNeonError> {
+pub fn redirect(url: &str) -> Result<HttpResponse, ApiError> {
     Ok(HttpResponse::Found().header(http::header::LOCATION, url).finish())
 }
 

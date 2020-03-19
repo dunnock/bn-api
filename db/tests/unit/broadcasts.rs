@@ -1,6 +1,6 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
 use chrono::Utc;
+use db::dev::TestProject;
+use db::prelude::*;
 
 #[test]
 fn new_broadcast_commit() {

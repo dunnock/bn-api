@@ -1,6 +1,6 @@
 use crate::auth::user::User;
-use crate::db::Connection;
-use crate::errors::{ApplicationError, BigNeonError};
+use crate::database::Connection;
+use crate::errors::{ApiError, ApplicationError};
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::PathParameters;
@@ -9,9 +9,9 @@ use actix_web::{
     web::{Data, Path},
     HttpResponse,
 };
-use bigneon_db::dev::times;
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::dev::times;
+use db::models::*;
 use serde_with::rust::double_option;
 use uuid::Uuid;
 
@@ -84,7 +84,7 @@ impl From<UpdateCodeRequest> for UpdateCodeAttributes {
     }
 }
 
-pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let code = Code::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::CodeRead, &code.organization(conn)?, &code.event(conn)?, conn)?;
@@ -94,7 +94,7 @@ pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) 
 
 pub async fn link(
     (conn, path, user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let code = Code::find(path.id, conn)?;
     let event = code.event(conn)?;
@@ -118,7 +118,7 @@ pub async fn link(
 
 pub async fn create(
     (conn, req, path, user): (Connection, Json<CreateCodeRequest>, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let event = Event::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::CodeWrite, &event.organization(conn)?, &event, conn)?;
@@ -152,7 +152,7 @@ pub async fn create(
 
 pub async fn update(
     (conn, req, path, user): (Connection, Json<UpdateCodeRequest>, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
 
     let code = Code::find(path.id, conn)?;
@@ -167,9 +167,7 @@ pub async fn update(
     Ok(HttpResponse::Ok().json(code.for_display(conn)?))
 }
 
-pub async fn destroy(
-    (conn, path, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let code = Code::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::CodeWrite, &code.organization(conn)?, &code.event(conn)?, conn)?;

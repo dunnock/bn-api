@@ -1,6 +1,6 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
 use chrono::{Duration, Utc};
+use db::dev::TestProject;
+use db::prelude::*;
 use uuid::Uuid;
 
 #[test]

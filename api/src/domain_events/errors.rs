@@ -1,5 +1,5 @@
-use crate::errors::BigNeonError;
-use bigneon_db::prelude::*;
+use crate::errors::ApiError;
+use db::prelude::*;
 use diesel;
 use diesel::prelude::ConnectionError;
 use r2d2;
@@ -58,8 +58,8 @@ impl fmt::Display for DomainActionError {
     }
 }
 
-impl From<BigNeonError> for DomainActionError {
-    fn from(source: BigNeonError) -> Self {
+impl From<ApiError> for DomainActionError {
+    fn from(source: ApiError) -> Self {
         DomainActionError::CausedBy(Box::new(source))
     }
 }

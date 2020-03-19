@@ -1,5 +1,5 @@
-use bigneon_db::prelude::*;
 use chrono::{NaiveDateTime, Utc};
+use db::prelude::*;
 use diesel::PgConnection;
 use std::cmp;
 use uuid::Uuid;

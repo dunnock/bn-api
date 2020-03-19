@@ -7,11 +7,11 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::transfers::{self, *};
-use bigneon_api::errors::BigNeonError;
-use bigneon_api::models::*;
-use bigneon_db::prelude::*;
+use api::controllers::transfers::{self, *};
+use api::errors::ApiError;
+use api::models::*;
 use chrono::prelude::*;
+use db::prelude::*;
 use serde_json::Value;
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -251,7 +251,7 @@ pub async fn activity() {
     let filter_parameters = Query::<PastOrUpcomingParameters>::extract(&test_request.request)
         .await
         .unwrap();
-    let response: Result<WebPayload<UserTransferActivitySummary>, BigNeonError> = transfers::activity((
+    let response: Result<WebPayload<UserTransferActivitySummary>, ApiError> = transfers::activity((
         database.connection.clone().into(),
         paging_parameters,
         filter_parameters,
@@ -397,7 +397,7 @@ async fn index() {
         .await
         .unwrap();
     path.id = None;
-    let response: Result<WebPayload<DisplayTransfer>, BigNeonError> = transfers::index((
+    let response: Result<WebPayload<DisplayTransfer>, ApiError> = transfers::index((
         database.connection.clone().into(),
         paging_parameters,
         filter_parameters,
@@ -450,7 +450,7 @@ async fn index() {
         .await
         .unwrap();
     path.id = None;
-    let response: Result<WebPayload<DisplayTransfer>, BigNeonError> = transfers::index((
+    let response: Result<WebPayload<DisplayTransfer>, ApiError> = transfers::index((
         database.connection.clone().into(),
         paging_parameters,
         filter_parameters,

@@ -1,15 +1,15 @@
 use crate::auth::user::User as AuthUser;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::PathParameters;
 use actix_web::{web::Path, HttpResponse};
-use bigneon_db::models::*;
+use db::models::*;
 
 pub async fn index(
     (connection, path, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let settlement = Settlement::find(path.id, connection)?;
     let organization = Organization::find(settlement.organization_id, connection)?;
@@ -31,7 +31,7 @@ pub async fn create(
         Json<NewSettlementAdjustmentRequest>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::SettlementAdjustmentWrite)?;
     let connection = connection.get();
 
@@ -52,7 +52,7 @@ pub async fn create(
 
 pub async fn destroy(
     (connection, path, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     user.requires_scope(Scopes::SettlementAdjustmentDelete)?;
     let settlement_adjustment = SettlementAdjustment::find(path.id, connection)?;

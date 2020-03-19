@@ -6,11 +6,11 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::organization_invites::{self, *};
-use bigneon_api::extractors::*;
-use bigneon_api::models::*;
-use bigneon_db::models::*;
+use api::controllers::organization_invites::{self, *};
+use api::extractors::*;
+use api::models::*;
 use chrono::Duration;
+use db::models::*;
 use serde_json;
 use std::collections::HashMap;
 

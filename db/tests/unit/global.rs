@@ -1,5 +1,5 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
+use db::dev::TestProject;
+use db::models::*;
 use diesel::prelude::*;
 
 #[test]

@@ -1,4 +1,4 @@
-use crate::errors::{ApplicationError, ApplicationErrorType, BigNeonError};
+use crate::errors::{ApiError, ApplicationError, ApplicationErrorType};
 use crate::models::CreateArtistRequest;
 use log::Level::*;
 use reqwest::blocking::Client;
@@ -42,7 +42,7 @@ impl Spotify {
         *auth_token = Some(token.to_owned());
     }
 
-    pub fn connect(&self) -> Result<(), BigNeonError> {
+    pub fn connect(&self) -> Result<(), ApiError> {
         match *self.auth_token.read().unwrap() {
             Some(ref token) => {
                 let mut access_token = self.access_token.write().unwrap();
@@ -88,7 +88,7 @@ impl Spotify {
         })
     }
 
-    pub fn search(&self, q: String) -> Result<Vec<CreateArtistRequest>, BigNeonError> {
+    pub fn search(&self, q: String) -> Result<Vec<CreateArtistRequest>, ApiError> {
         {
             // For search we ignore not having an auth token
             if self.auth_token.read().unwrap().is_none() {
@@ -152,7 +152,7 @@ impl Spotify {
         Ok(spotify_artists)
     }
 
-    pub fn read_artist(&self, artist_id: &str) -> Result<Option<CreateArtistRequest>, BigNeonError> {
+    pub fn read_artist(&self, artist_id: &str) -> Result<Option<CreateArtistRequest>, ApiError> {
         self.connect()?;
 
         // Lock access token for reading

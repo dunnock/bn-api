@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::errors::*;
-use bigneon_db::models::*;
+use db::models::*;
 use diesel::pg::PgConnection;
 use phonenumber::{Mode, PhoneNumber};
 use uuid::Uuid;
@@ -10,7 +10,7 @@ pub fn checkin_instructions(
     phone: PhoneNumber,
     order_id: Uuid,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let source = CommAddress::from(config.communication_default_source_phone.clone());
     let destinations = CommAddress::from(phone.format().mode(Mode::E164).to_string());
     let body = format!(

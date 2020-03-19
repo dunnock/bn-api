@@ -18,7 +18,7 @@ impl BigNeonLogger {
         if data.uri != "/status" {
             jlog!(
                 Level::Info,
-                "bigneon_api::big_neon_logger",
+                "api::big_neon_logger",
                 format!("{} {} starting", data.method, data.uri).as_str(),
                 {
                     "user_id": data.user,
@@ -49,7 +49,7 @@ impl BigNeonLogger {
             };
             jlog!(
                 level,
-                "bigneon_api::big_neon_logger",
+                "api::big_neon_logger",
                 &error.to_string(),
                 {
                     "user_id": data.user,

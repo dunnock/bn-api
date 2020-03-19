@@ -1,10 +1,10 @@
-use crate::errors::BigNeonError;
+use crate::errors::ApiError;
 use actix_web::Error;
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use actix_web::Responder;
-use bigneon_db::models::{Scopes, TokenIssuer, User};
 use chrono::Duration;
+use db::models::{Scopes, TokenIssuer, User};
 use futures::future::{err, ok, Ready};
 use serde_json;
 use uuid::Uuid;
@@ -35,11 +35,7 @@ impl TokenResponse {
         }
     }
 
-    pub fn create_from_user(
-        token_issuer: &dyn TokenIssuer,
-        expires: Duration,
-        user: &User,
-    ) -> Result<Self, BigNeonError> {
+    pub fn create_from_user(token_issuer: &dyn TokenIssuer, expires: Duration, user: &User) -> Result<Self, ApiError> {
         Ok(TokenResponse {
             access_token: token_issuer.issue(user.id, expires)?,
             refresh_token: token_issuer.issue_with_limited_scopes(user.id, vec![Scopes::TokenRefresh], expires * 60)?,
@@ -50,7 +46,7 @@ impl TokenResponse {
         token_issuer: &dyn TokenIssuer,
         expires: Duration,
         user_id: Uuid,
-    ) -> Result<Self, BigNeonError> {
+    ) -> Result<Self, ApiError> {
         Ok(TokenResponse {
             access_token: token_issuer.issue(user_id, expires)?,
             refresh_token: token_issuer.issue_with_limited_scopes(user_id, vec![Scopes::TokenRefresh], expires * 60)?,

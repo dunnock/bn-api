@@ -6,11 +6,11 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::users::{self, *};
-use bigneon_api::errors::*;
-use bigneon_api::extractors::*;
-use bigneon_api::models::*;
-use bigneon_db::models::*;
+use api::controllers::users::{self, *};
+use api::errors::*;
+use api::extractors::*;
+use api::models::*;
+use db::models::*;
 use serde_json;
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -141,7 +141,7 @@ pub async fn activity(role: Roles, should_test_true: bool) {
     let activity_parameters = Query::<ActivityParameters>::extract(&test_request.request)
         .await
         .unwrap();
-    let response: Result<WebPayload<ActivitySummary>, BigNeonError> = users::activity((
+    let response: Result<WebPayload<ActivitySummary>, ApiError> = users::activity((
         database.connection.clone().into(),
         path,
         query_parameters,
@@ -227,7 +227,7 @@ pub async fn history(role: Roles, should_test_true: bool) {
     path.id = organization.id;
     path.user_id = user2.id;
     let query_parameters = Query::<PagingParameters>::extract(&test_request.request).await.unwrap();
-    let response: Result<WebPayload<HistoryItem>, BigNeonError> = users::history((
+    let response: Result<WebPayload<HistoryItem>, ApiError> = users::history((
         database.connection.clone().into(),
         path,
         query_parameters,

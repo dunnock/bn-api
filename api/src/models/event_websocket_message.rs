@@ -20,11 +20,11 @@ impl EventWebSocketMessage {
 }
 
 impl Message for EventWebSocketMessage {
-    type Result = Result<(), BigNeonError>;
+    type Result = Result<(), ApiError>;
 }
 
 impl Handler<EventWebSocketMessage> for EventWebSocket {
-    type Result = Result<(), BigNeonError>;
+    type Result = Result<(), ApiError>;
 
     fn handle(&mut self, message: EventWebSocketMessage, context: &mut Self::Context) -> Self::Result {
         context.text(serde_json::to_string(&message.payload)?);

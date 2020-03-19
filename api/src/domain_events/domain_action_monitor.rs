@@ -1,10 +1,10 @@
 use crate::config::Config;
-use crate::db::*;
+use crate::database::*;
 use crate::domain_events::errors::DomainActionError;
 use crate::domain_events::routing::{DomainActionExecutor, DomainActionRouter};
 use crate::domain_events::webhook_publisher::WebhookPublisher;
 use crate::utils::ServiceLocator;
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use log::Level::*;
 use logging::*;
 use std::sync::mpsc;

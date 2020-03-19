@@ -6,10 +6,10 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::redemption_codes::{self, *};
-use bigneon_api::extractors::*;
-use bigneon_api::models::UserDisplayTicketType;
-use bigneon_db::prelude::*;
+use api::controllers::redemption_codes::{self, *};
+use api::extractors::*;
+use api::models::UserDisplayTicketType;
+use db::prelude::*;
 use serde_json;
 
 #[actix_rt::test]

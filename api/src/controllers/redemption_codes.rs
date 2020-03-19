@@ -1,5 +1,5 @@
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::*;
@@ -7,8 +7,8 @@ use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::prelude::*;
 use chrono::NaiveDateTime;
+use db::prelude::*;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -52,7 +52,7 @@ pub async fn show(
     query: Query<EventParameter>,
     path: Path<PathParameters>,
     auth_user: OptionalUser,
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
     let query = query.into_inner();
     let user = auth_user.into_inner().and_then(|auth_user| Some(auth_user.user));

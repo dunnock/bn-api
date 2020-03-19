@@ -7,7 +7,7 @@
 #![deny(unused_must_use)]
 #![cfg_attr(not(debug_assertions), deny(unused_extern_crates))]
 #[macro_use]
-extern crate bigneon_db;
+extern crate db;
 extern crate expo_server_sdk as expo;
 extern crate jsonwebtoken as jwt;
 #[macro_use]
@@ -29,7 +29,7 @@ pub mod auth;
 pub mod communications;
 pub mod config;
 pub mod controllers;
-pub mod db;
+pub mod database;
 pub mod domain_events;
 pub mod errors;
 pub mod extractors;

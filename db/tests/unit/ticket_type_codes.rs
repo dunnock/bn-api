@@ -1,6 +1,6 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
-use bigneon_db::utils::errors::ErrorCode::ValidationError;
+use db::dev::TestProject;
+use db::prelude::*;
+use db::utils::errors::ErrorCode::ValidationError;
 
 #[test]
 fn create() {

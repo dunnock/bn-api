@@ -1,5 +1,5 @@
 use crate::errors::*;
-use bigneon_db::models::*;
+use db::models::*;
 use reqwest::blocking::Client;
 use serde_json;
 use std::collections::HashMap;
@@ -14,7 +14,7 @@ pub fn send_email(
     body: Option<String>,
     categories: Option<Vec<String>>,
     unique_args: Option<HashMap<String, String>>,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let mut sg_message = SGMailMessage::new();
     sg_message.subject = Some(title);
     sg_message.from = SGEmail::from(source_email_address);
@@ -46,7 +46,7 @@ pub async fn send_email_async(
     body: Option<String>,
     categories: Option<Vec<String>>,
     unique_args: Option<HashMap<String, String>>,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let mut sg_message = SGMailMessage::new();
     sg_message.subject = Some(title);
     sg_message.from = SGEmail::from(source_email_address);
@@ -76,7 +76,7 @@ pub fn send_email_template(
     template_data: &[&TemplateData],
     categories: Option<Vec<String>>,
     unique_args: Option<HashMap<String, String>>,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     if dest_email_addresses.len() != template_data.len() {
         return Err(ApplicationError::new("Destination addresses mismatched with template data".to_string()).into());
     }
@@ -112,7 +112,7 @@ pub async fn send_email_template_async(
     template_data: &[TemplateData],
     categories: Option<Vec<String>>,
     unique_args: Option<HashMap<String, String>>,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     if dest_email_addresses.len() != template_data.len() {
         return Err(ApplicationError::new("Destination addresses mismatched with template data".to_string()).into());
     } else {
@@ -243,7 +243,7 @@ impl SGMailMessage {
         }
     }
 
-    fn send(&self, sq_api_key: &str) -> Result<(), BigNeonError> {
+    fn send(&self, sq_api_key: &str) -> Result<(), ApiError> {
         let reqwest_client = Client::new();
         let msg_body = self.to_json();
         match reqwest_client
@@ -260,7 +260,7 @@ impl SGMailMessage {
         }
     }
 
-    async fn send_async(&self, sq_api_key: &str) -> Result<(), BigNeonError> {
+    async fn send_async(&self, sq_api_key: &str) -> Result<(), ApiError> {
         let msg_body = self.to_json();
         reqwest::Client::new()
             .post(SENDGRID_API_URL)

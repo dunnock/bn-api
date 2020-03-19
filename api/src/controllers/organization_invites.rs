@@ -1,6 +1,6 @@
 use crate::auth::user::User as AuthUser;
 use crate::communications::mailers;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
@@ -11,9 +11,9 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
-use bigneon_db::utils::errors::DatabaseError;
-use bigneon_db::utils::errors::Optional;
+use db::models::*;
+use db::utils::errors::DatabaseError;
+use db::utils::errors::Optional;
 use diesel::pg::PgConnection;
 use uuid::Uuid;
 
@@ -42,7 +42,7 @@ pub async fn create_for_event(
         Path<PathParameters>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Event::find(path.id, connection)?.organization(connection)?;
     let mut invite = new_org_invite.into_inner();
@@ -58,7 +58,7 @@ pub async fn create(
         Path<PathParameters>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(path.id, connection)?;
     create_invite(state, connection, new_org_invite.into_inner(), &organization, auth_user)
@@ -70,7 +70,7 @@ fn create_invite(
     new_org_invite: NewOrgInviteRequest,
     organization: &Organization,
     auth_user: AuthUser,
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     for role in &new_org_invite.roles {
         match role {
             &Roles::OrgOwner => {
@@ -181,7 +181,7 @@ pub async fn index(
         Query<PagingParameters>,
         AuthUser,
     ),
-) -> Result<WebPayload<DisplayInvite>, BigNeonError> {
+) -> Result<WebPayload<DisplayInvite>, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(path.id, connection)?;
     auth_user.requires_scope_for_organization(Scopes::OrgUsers, &organization, connection)?;
@@ -198,7 +198,7 @@ pub async fn index(
 
 pub async fn destroy(
     (connection, path, auth_user): (Connection, Path<OrganizationInvitePathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let invite = OrganizationInvite::find(path.invite_id, connection)?;
     let organization = invite.organization(connection)?;
@@ -239,7 +239,7 @@ pub async fn destroy(
     Ok(HttpResponse::Ok().json(json!({})))
 }
 
-pub async fn view((connection, path): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
+pub async fn view((connection, path): (Connection, Path<PathParameters>)) -> Result<HttpResponse, ApiError> {
     // TODO: Change /{id} to /?token={} in routing and client apps.
     // Until then, just remember that the id passed in is actually the token
     let connection = connection.get();
@@ -249,7 +249,7 @@ pub async fn view((connection, path): (Connection, Path<PathParameters>)) -> Res
 
 pub async fn accept_request(
     (connection, query, user): (Connection, Query<InviteResponseQuery>, OptionalUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let query_struct = query.into_inner();
     let connection = connection.get();
     let mut invite_details = OrganizationInvite::find_by_token(query_struct.security_token, connection)?;
@@ -273,11 +273,7 @@ pub async fn accept_request(
     Ok(HttpResponse::Ok().finish())
 }
 
-fn accept_invite(
-    user_id: Uuid,
-    invite: &mut OrganizationInvite,
-    connection: &PgConnection,
-) -> Result<(), BigNeonError> {
+fn accept_invite(user_id: Uuid, invite: &mut OrganizationInvite, connection: &PgConnection) -> Result<(), ApiError> {
     invite.change_invite_status(1, connection)?;
     let organization = Organization::find(invite.organization_id, connection)?;
     let organization_user =

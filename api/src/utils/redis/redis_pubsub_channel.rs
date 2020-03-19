@@ -1,4 +1,4 @@
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use std::cmp::Ordering;
 use std::fmt;
 use std::str::FromStr;

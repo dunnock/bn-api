@@ -1,11 +1,11 @@
 use crate::auth::user::User as AuthUser;
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use crate::extractors::Json;
 use crate::server::AppState;
 use actix_web::{web::Data, HttpResponse};
-use bigneon_db::prelude::*;
 use chrono::Duration;
+use db::prelude::*;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -21,7 +21,7 @@ pub struct ResendDownloadLinkRequest {
 
 pub async fn create(
     (state, connection, auth_user, data): (Data<AppState>, Connection, AuthUser, Json<SendDownloadLinkRequest>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
     let user = auth_user.user;
     let token = user.create_magic_link_token(
@@ -65,7 +65,7 @@ pub async fn create(
 
 pub async fn resend(
     (state, connection, data): (Data<AppState>, Connection, Json<ResendDownloadLinkRequest>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
 
     let user = User::find(data.user_id, conn)?;

@@ -5,4 +5,4 @@ cd $(git rev-parse --show-toplevel)
 cd db
 cargo run --release create -c $DATABASE_URL -f -e superuser@test.com -p password -m 8883
 cd ..
-cargo test --release --exclude bigneon_api --all
+cargo test --release --exclude api --all

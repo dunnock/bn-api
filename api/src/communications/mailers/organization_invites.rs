@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::errors::*;
-use bigneon_db::models::*;
+use db::models::*;
 use diesel::pg::PgConnection;
 
 pub fn invite_user_to_organization_email(
@@ -9,7 +9,7 @@ pub fn invite_user_to_organization_email(
     org: &Organization,
     recipient_name: &str,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let invite_link_accept = format!(
         "{}/invites/accept?token={}",
         config.front_end_url.clone(),

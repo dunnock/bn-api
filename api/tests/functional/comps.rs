@@ -4,11 +4,11 @@ use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::error::ResponseError;
 use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
-use bigneon_api::controllers::comps::{self, NewCompRequest};
-use bigneon_api::controllers::holds::UpdateHoldRequest;
-use bigneon_api::extractors::*;
-use bigneon_api::models::PathParameters;
-use bigneon_db::models::*;
+use api::controllers::comps::{self, NewCompRequest};
+use api::controllers::holds::UpdateHoldRequest;
+use api::extractors::*;
+use api::models::PathParameters;
+use db::models::*;
 
 #[cfg(test)]
 mod index_tests {

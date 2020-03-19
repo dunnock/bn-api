@@ -1,11 +1,11 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
-use bigneon_db::utils::dates;
-use bigneon_db::utils::errors::DatabaseError;
-use bigneon_db::utils::errors::ErrorCode::*;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono_tz::Tz;
+use db::dev::TestProject;
+use db::models::*;
+use db::utils::dates;
+use db::utils::errors::DatabaseError;
+use db::utils::errors::ErrorCode::*;
 use diesel;
 use diesel::sql_types;
 use diesel::RunQueryDsl;

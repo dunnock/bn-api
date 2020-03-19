@@ -1,9 +1,9 @@
 use crate::support::database::TestDatabase;
-use bigneon_api::models::{DisplayTicketPricing, UserDisplayTicketType};
-use bigneon_db::dev::times;
-use bigneon_db::prelude::*;
+use api::models::{DisplayTicketPricing, UserDisplayTicketType};
 use chrono::prelude::*;
 use chrono::Duration;
+use db::dev::times;
+use db::prelude::*;
 
 #[test]
 fn from_ticket_type() {

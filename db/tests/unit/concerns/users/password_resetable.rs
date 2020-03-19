@@ -1,7 +1,7 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::concerns::users::password_resetable::{PasswordReset, PasswordResetable};
-use bigneon_db::models::User;
 use chrono::{Duration, Utc};
+use db::dev::TestProject;
+use db::models::concerns::users::password_resetable::{PasswordReset, PasswordResetable};
+use db::models::User;
 use diesel;
 use diesel::prelude::*;
 use uuid::Uuid;
@@ -33,7 +33,7 @@ fn find_by_password_reset_token() {
 
 #[test]
 fn consume_password_reset_token() {
-    use bigneon_db::schema::users::dsl::*;
+    use db::schema::users::dsl::*;
     let project = TestProject::new();
     let user = project.create_user().finish();
     let pw_modified_at = user.password_modified_at;

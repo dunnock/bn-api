@@ -1,7 +1,7 @@
-use bigneon_api::config::Config;
-use bigneon_api::db::Connection as DbConnection;
-use bigneon_db::dev::*;
-use bigneon_db::prelude::*;
+use api::config::Config;
+use api::database::Connection as DbConnection;
+use db::dev::*;
+use db::prelude::*;
 
 use diesel::Connection;
 use diesel::PgConnection;

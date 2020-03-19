@@ -1,8 +1,8 @@
 use crate::support::database::TestDatabase;
-use bigneon_api::models::DisplayTicketPricing;
-use bigneon_db::prelude::*;
+use api::models::DisplayTicketPricing;
 use chrono::prelude::*;
 use chrono::Duration;
+use db::prelude::*;
 
 #[test]
 fn from_ticket_pricing() {

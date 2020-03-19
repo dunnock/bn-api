@@ -1,11 +1,11 @@
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::OptionalUser;
 use crate::helpers::application;
 use crate::server::AppState;
 use actix_web::web::{Data, Path, Query};
 use actix_web::HttpResponse;
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use log::Level::Debug;
 use uuid::Uuid;
 
@@ -29,7 +29,7 @@ pub async fn callback(
         Data<AppState>,
         OptionalUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
     let mut order = Order::find(path.id, conn)?;
     // Try to get a lock. IPNs might come in quickly, so try a few times

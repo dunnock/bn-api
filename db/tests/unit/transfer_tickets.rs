@@ -1,6 +1,6 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
-use bigneon_db::utils::errors::ErrorCode::ValidationError;
+use db::dev::TestProject;
+use db::models::*;
+use db::utils::errors::ErrorCode::ValidationError;
 use uuid::Uuid;
 
 #[test]

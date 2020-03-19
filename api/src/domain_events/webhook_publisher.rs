@@ -1,9 +1,9 @@
 use crate::auth::default_token_issuer::DefaultTokenIssuer;
 use crate::domain_events::errors::DomainActionError;
-use crate::errors::BigNeonError;
+use crate::errors::ApiError;
 use crate::utils::deep_linker::DeepLinker;
-use bigneon_db::prelude::*;
 use chrono::Duration;
+use db::prelude::*;
 use diesel::PgConnection;
 use log::Level::Error;
 use serde_json::Value;
@@ -52,7 +52,7 @@ impl WebhookPublisher {
         &self,
         domain_event: &DomainEvent,
         conn: &PgConnection,
-    ) -> Result<Vec<HashMap<String, serde_json::Value>>, BigNeonError> {
+    ) -> Result<Vec<HashMap<String, serde_json::Value>>, ApiError> {
         let mut result: Vec<HashMap<String, serde_json::Value>> = Vec::new();
         let main_id = domain_event.main_id.ok_or_else(|| {
             DatabaseError::new(
@@ -384,7 +384,7 @@ impl WebhookPublisher {
         event_type: DomainEventTypes,
         data: &mut HashMap<String, serde_json::Value>,
         conn: &PgConnection,
-    ) -> Result<(), BigNeonError> {
+    ) -> Result<(), ApiError> {
         let transferer = User::find(transfer.source_user_id, conn)?;
         let receive_tickets_url = transfer.receive_url(&self.front_end_url, conn)?;
         let mut new_receive_tickets_url = None;

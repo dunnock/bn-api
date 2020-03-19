@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::errors::*;
 use crate::utils::webhook_adapters::{CustomerIoWebhookAdapter, NullAdapter, WebhookAdapter};
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use diesel::PgConnection;
 use serde_json;
 use std::collections::HashMap;
@@ -14,7 +14,7 @@ pub async fn send_webhook_async(
     domain_event_publisher_id: Option<Uuid>,
     conn: &PgConnection,
     config: &Config,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     send_webhook(tokens, body, domain_event_publisher_id, conn, config)
 }
 
@@ -24,7 +24,7 @@ pub fn send_webhook(
     domain_event_publisher_id: Option<Uuid>,
     conn: &PgConnection,
     config: &Config,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let adapter = match domain_event_publisher_id {
         None => Box::new(NullAdapter::new()) as Box<dyn WebhookAdapter>,
         Some(id) => {

@@ -1,5 +1,5 @@
 use crate::auth::user::User;
-use crate::db::{Connection, ReadonlyConnection};
+use crate::database::{Connection, ReadonlyConnection};
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
@@ -11,8 +11,8 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
 use chrono::NaiveDateTime;
+use db::models::*;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -72,7 +72,7 @@ pub struct NewFeeScheduleRequest {
 
 pub async fn index(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     if user.has_scope(Scopes::OrgAdmin)? {
         return index_for_all_orgs((connection, query_parameters, user)).await;
     }
@@ -90,7 +90,7 @@ pub async fn index(
 
 pub async fn index_for_all_orgs(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::OrgAdmin)?;
     let connection = connection.get();
     let organizations = Organization::all(connection)?;
@@ -105,7 +105,7 @@ pub async fn index_for_all_orgs(
 
 pub async fn show(
     (state, connection, parameters, user): (Data<AppState>, Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let mut organization = Organization::find(parameters.id, connection)?;
     user.requires_scope_for_organization(Scopes::OrgRead, &organization, connection)?;
@@ -117,7 +117,7 @@ pub async fn show(
 
 pub async fn create(
     (state, connection, new_organization, user): (Data<AppState>, Connection, Json<NewOrganizationRequest>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::OrgAdmin)?;
     let connection = connection.get();
 
@@ -179,7 +179,7 @@ pub async fn update(
         Json<OrganizationEditableAttributes>,
         User,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
     let mut organization = Organization::find(parameters.id, conn)?;
     let organization_update = organization_parameters.into_inner();
@@ -207,7 +207,7 @@ pub async fn update(
 
 pub async fn add_artist(
     (connection, parameters, new_artist, user): (Connection, Path<PathParameters>, Json<NewArtist>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(parameters.id, connection)?;
     user.requires_scope_for_organization(Scopes::OrgWrite, &organization, connection)?;
@@ -221,7 +221,7 @@ pub async fn add_artist(
 
 pub async fn add_or_replace_user(
     (connection, path, json, user): (Connection, Path<PathParameters>, Json<AddUserRequest>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(path.id, connection)?;
 
@@ -254,7 +254,7 @@ pub async fn add_or_replace_user(
 
 pub async fn remove_user(
     (connection, parameters, user): (Connection, Path<OrganizationUserPathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(parameters.id, connection)?;
     user.requires_scope_for_organization(Scopes::OrgUsers, &organization, connection)?;
@@ -270,7 +270,7 @@ pub async fn list_organization_members(
         Query<PagingParameters>,
         User,
     ),
-) -> Result<WebPayload<DisplayOrganizationUser>, BigNeonError> {
+) -> Result<WebPayload<DisplayOrganizationUser>, ApiError> {
     let connection = connection.get();
     //TODO refactor Organization::find to use limits as in PagingParameters
     let organization = Organization::find(path_parameters.id, connection)?;
@@ -319,7 +319,7 @@ pub struct DisplayOrganizationUser {
 
 pub async fn show_fee_schedule(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(parameters.id, connection)?;
     user.requires_scope_for_organization(Scopes::OrgWrite, &organization, connection)?;
@@ -339,7 +339,7 @@ pub async fn show_fee_schedule(
 
 pub async fn add_fee_schedule(
     (connection, parameters, json, user): (Connection, Path<PathParameters>, Json<NewFeeScheduleRequest>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::OrgAdmin)?;
     let connection = connection.get();
 
@@ -364,7 +364,7 @@ pub async fn add_fee_schedule(
 
 pub async fn search_fans(
     (connection, path, query, user): (ReadonlyConnection, Path<PathParameters>, Query<PagingParameters>, User),
-) -> Result<WebPayload<DisplayFan>, BigNeonError> {
+) -> Result<WebPayload<DisplayFan>, ApiError> {
     let connection = connection.get();
     let org = Organization::find(path.id, connection)?;
     user.requires_scope_for_organization(Scopes::OrgFans, &org, &connection)?;

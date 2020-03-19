@@ -3,14 +3,14 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::{http::StatusCode, HttpResponse};
-use bigneon_api::auth::TokenResponse;
-use bigneon_api::controllers::password_resets::{self, CreatePasswordResetParameters, UpdatePasswordResetParameters};
-use bigneon_api::db::Connection as BigNeonConnection;
-use bigneon_api::extractors::*;
-use bigneon_db::models::concerns::users::password_resetable::*;
-use bigneon_db::models::TokenIssuer;
-use bigneon_db::models::User;
+use api::auth::TokenResponse;
+use api::controllers::password_resets::{self, CreatePasswordResetParameters, UpdatePasswordResetParameters};
+use api::database::Connection as BigNeonConnection;
+use api::extractors::*;
 use chrono::{Duration, Utc};
+use db::models::concerns::users::password_resetable::*;
+use db::models::TokenIssuer;
+use db::models::User;
 use diesel;
 use diesel::prelude::*;
 use serde_json;
@@ -104,7 +104,7 @@ async fn update() {
 
 #[actix_rt::test]
 async fn update_expired_token() {
-    use bigneon_db::schema::users::dsl::*;
+    use db::schema::users::dsl::*;
     let database = TestDatabase::new();
     let connection_object: BigNeonConnection = database.connection.clone().into();
     let user = database.create_user().finish();

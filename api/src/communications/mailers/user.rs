@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::errors::*;
-use bigneon_db::models::*;
+use db::models::*;
 use diesel::PgConnection;
 
 pub fn user_registered(
@@ -8,7 +8,7 @@ pub fn user_registered(
     user_email: String,
     config: &Config,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(user_email);
     let title = "BigNeon Registration".to_string();
@@ -58,7 +58,7 @@ pub fn password_reset_email(config: &Config, user: &User) -> Communication {
     )
 }
 
-pub fn invite_user_email(config: &Config, user: &User, conn: &PgConnection) -> Result<(), BigNeonError> {
+pub fn invite_user_email(config: &Config, user: &User, conn: &PgConnection) -> Result<(), ApiError> {
     let invite_link = format!(
         "{}/password-reset?token={}&invite=true",
         config.front_end_url.clone(),

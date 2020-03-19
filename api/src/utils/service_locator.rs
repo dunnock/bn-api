@@ -5,9 +5,9 @@ use crate::payments::stripe::StripePaymentProcessor;
 use crate::payments::PaymentProcessor;
 use crate::utils::deep_linker::BranchDeepLinker;
 use crate::utils::deep_linker::DeepLinker;
-use bigneon_db::prelude::*;
-use bigneon_db::services::CountryLookup;
-use bigneon_db::utils::errors::DatabaseError;
+use db::prelude::*;
+use db::services::CountryLookup;
+use db::utils::errors::DatabaseError;
 
 pub struct ServiceLocator {
     stripe_secret_key: String,
@@ -55,7 +55,7 @@ impl ServiceLocator {
         &self,
         provider: PaymentProviders,
         organization: &Organization,
-    ) -> Result<Box<dyn PaymentProcessor>, BigNeonError> {
+    ) -> Result<Box<dyn PaymentProcessor>, ApiError> {
         match provider {
             PaymentProviders::Stripe => Ok(Box::new(StripePaymentProcessor::new(self.stripe_secret_key.clone()))),
             PaymentProviders::Globee => {
@@ -75,7 +75,7 @@ impl ServiceLocator {
         }
     }
 
-    pub fn create_deep_linker(&self) -> Result<Box<dyn DeepLinker>, BigNeonError> {
+    pub fn create_deep_linker(&self) -> Result<Box<dyn DeepLinker>, ApiError> {
         Ok(Box::new(BranchDeepLinker::new(
             self.branch_io_base_url.clone(),
             self.branch_io_branch_key.clone(),

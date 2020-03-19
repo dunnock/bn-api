@@ -1,5 +1,5 @@
 use crate::auth::user::User as AuthUser;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::helpers::application;
 use crate::models::{PathParameters, WebPayload};
@@ -8,8 +8,8 @@ use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::models::*;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::str;
@@ -57,7 +57,7 @@ impl From<ReportQueryParameters> for Paging {
 
 pub async fn get_report(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     match query.report.trim() {
         "box_office_sales_summary" => box_office_sales_summary((connection, query, path, user)),
         "transaction_details" => Ok(transaction_detail_report((connection, query, path, user))?.into_http_response()?),
@@ -75,7 +75,7 @@ pub async fn get_report(
 
 pub fn box_office_sales_summary(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
 
     let organization = Organization::find(path.id, connection)?;
@@ -87,7 +87,7 @@ pub fn box_office_sales_summary(
 
 pub fn transaction_detail_report(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<WebPayload<TransactionReportRow>, BigNeonError> {
+) -> Result<WebPayload<TransactionReportRow>, ApiError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     let organization = Organization::find(path.id, connection)?;
@@ -113,7 +113,7 @@ pub fn transaction_detail_report(
 
 pub fn event_summary_report(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     let organization = Organization::find(path.id, connection)?;
@@ -136,7 +136,7 @@ pub fn event_summary_report(
 
 pub fn audit_report(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     let organization = Organization::find(path.id, connection)?;
@@ -177,7 +177,7 @@ pub fn audit_report(
 
 pub fn weekly_settlement_report(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     let organization = Organization::find(path.id, connection)?;
@@ -190,7 +190,7 @@ pub fn weekly_settlement_report(
 
 pub fn scan_counts(
     (connection, query, user): (Connection, Query<ReportQueryParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     if let Some(event_id) = query.event_id {
         let event = Event::find(event_id, connection)?;
@@ -211,7 +211,7 @@ pub fn scan_counts(
 
 pub fn ticket_counts(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     let organization = Organization::find(path.id, connection)?;
@@ -228,7 +228,7 @@ pub fn ticket_counts(
 
 pub fn promo_code_report(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     let organization = Organization::find(path.id, connection)?;
@@ -245,7 +245,7 @@ pub fn promo_code_report(
 
 pub fn reconciliation_summary_report(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     let organization = Organization::find(path.id, connection)?;
@@ -258,7 +258,7 @@ pub fn reconciliation_summary_report(
 
 pub fn reconciliation_detail_report(
     (connection, query, path, user): (Connection, Query<ReportQueryParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     //Check if they have org admin permissions
     let organization = Organization::find(path.id, connection)?;

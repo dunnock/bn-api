@@ -6,11 +6,11 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::notes::{self, *};
-use bigneon_api::extractors::*;
-use bigneon_api::models::*;
-use bigneon_db::models::*;
-use bigneon_db::utils::dates;
+use api::controllers::notes::{self, *};
+use api::extractors::*;
+use api::models::*;
+use db::models::*;
+use db::utils::dates;
 use diesel;
 use diesel::sql_types;
 use diesel::RunQueryDsl;

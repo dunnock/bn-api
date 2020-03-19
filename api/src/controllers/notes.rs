@@ -1,5 +1,5 @@
 use crate::auth::user::User;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::Json;
 use crate::helpers::application;
@@ -8,7 +8,7 @@ use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use reqwest::StatusCode;
 
 #[derive(Deserialize, Serialize)]
@@ -23,7 +23,7 @@ pub struct NoteFilterParameters {
 
 pub async fn create(
     (conn, path, json, auth_user): (Connection, Path<MainTablePathParameters>, Json<NewNoteRequest>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     let main_table: Tables = path.main_table.parse().map_err(|_| NotFoundError {})?;
     let note = match main_table {
@@ -46,7 +46,7 @@ pub async fn index(
         Query<NoteFilterParameters>,
         User,
     ),
-) -> Result<WebPayload<Note>, BigNeonError> {
+) -> Result<WebPayload<Note>, ApiError> {
     let connection = conn.get();
     let mut filter_deleted = true;
     let main_table: Tables = path.main_table.parse().map_err(|_| NotFoundError {})?;
@@ -81,7 +81,7 @@ pub async fn index(
 
 pub async fn destroy(
     (conn, path, auth_user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     let note = Note::find(path.id, connection)?;
 

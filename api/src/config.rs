@@ -1,8 +1,8 @@
 use crate::auth::default_token_issuer::DefaultTokenIssuer;
-use crate::errors::{ApplicationError, BigNeonError};
-use bigneon_db::models::{EmailProvider, Environment};
-use bigneon_db::utils::errors::EnumParseError;
+use crate::errors::{ApiError, ApplicationError};
 use chrono::Duration;
+use db::models::{EmailProvider, Environment};
+use db::utils::errors::EnumParseError;
 use dotenv::dotenv;
 use itertools::Itertools;
 use std::env;
@@ -106,7 +106,7 @@ pub struct EmailTemplate {
 }
 
 impl FromStr for EmailTemplate {
-    type Err = BigNeonError;
+    type Err = ApiError;
 
     fn from_str(val: &str) -> Result<Self, Self::Err> {
         let split: Vec<&str> = val.split(':').collect_vec();

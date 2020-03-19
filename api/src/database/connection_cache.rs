@@ -1,4 +1,4 @@
-use crate::errors::BigNeonError;
+use crate::errors::ApiError;
 use crate::server::GetAppState;
 use actix_web::{dev::Payload, FromRequest, HttpRequest, Result};
 use cache::RedisCacheConnection;
@@ -11,7 +11,7 @@ pub struct CacheDatabase {
 
 impl FromRequest for CacheDatabase {
     type Config = ();
-    type Error = BigNeonError;
+    type Error = ApiError;
     type Future = Ready<Result<CacheDatabase, Self::Error>>;
 
     fn from_request(request: &HttpRequest, _: &mut Payload) -> Self::Future {

@@ -1,9 +1,9 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
-use bigneon_db::utils::dates;
-use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::prelude::*;
 use chrono::Duration;
+use db::dev::TestProject;
+use db::models::*;
+use db::utils::dates;
+use db::utils::errors::ErrorCode::ValidationError;
 use uuid::Uuid;
 
 #[test]

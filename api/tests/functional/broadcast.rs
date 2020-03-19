@@ -2,11 +2,11 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::RequestBuilder;
 use actix_web::{http::StatusCode, web::Path, HttpResponse};
-use bigneon_api::controllers::broadcasts;
-use bigneon_api::models::PathParameters;
-use bigneon_db::models::enums::{BroadcastAudience, BroadcastChannel, BroadcastType};
-use bigneon_db::models::*;
-use bigneon_db::prelude::Broadcast;
+use api::controllers::broadcasts;
+use api::models::PathParameters;
+use db::models::enums::{BroadcastAudience, BroadcastChannel, BroadcastType};
+use db::models::*;
+use db::prelude::Broadcast;
 use serde_json::Value;
 use std::string::ToString;
 

@@ -6,10 +6,10 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::venues::{self, NewVenueData};
-use bigneon_api::extractors::*;
-use bigneon_api::models::PathParameters;
-use bigneon_db::models::*;
+use api::controllers::venues::{self, NewVenueData};
+use api::extractors::*;
+use api::models::PathParameters;
+use db::models::*;
 use serde_json;
 use std::collections::HashMap;
 use uuid::Uuid;

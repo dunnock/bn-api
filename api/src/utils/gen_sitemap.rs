@@ -1,6 +1,6 @@
-use crate::errors::{ApplicationError, ApplicationErrorType, BigNeonError};
-use bigneon_db::prelude::*;
+use crate::errors::{ApiError, ApplicationError, ApplicationErrorType};
 use chrono::Utc;
+use db::prelude::*;
 use diesel::PgConnection;
 use itertools::Itertools;
 use sitemap::structs::UrlEntry;
@@ -8,7 +8,7 @@ use sitemap::writer::SiteMapWriter;
 use std::io::{Cursor, Read};
 use uuid::Uuid;
 
-pub fn create_sitemap(urls: &[String]) -> Result<String, BigNeonError> {
+pub fn create_sitemap(urls: &[String]) -> Result<String, ApiError> {
     let mut output = Cursor::new(Vec::new());
     {
         let sitemap_writer = SiteMapWriter::new(&mut output);
@@ -41,7 +41,7 @@ pub fn create_sitemap(urls: &[String]) -> Result<String, BigNeonError> {
     Ok(buffer)
 }
 
-pub fn create_sitemap_conn(conn: &PgConnection, front_end_url: &String) -> Result<String, BigNeonError> {
+pub fn create_sitemap_conn(conn: &PgConnection, front_end_url: &String) -> Result<String, ApiError> {
     //find all active events
     let events_slug_ids = Event::find_all_active_events(conn)?
         .iter()

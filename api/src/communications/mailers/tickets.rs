@@ -1,8 +1,8 @@
 use crate::communications::mailers::insert_event_template_data;
 use crate::config::Config;
 use crate::errors::*;
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::models::*;
 use diesel::pg::PgConnection;
 use itertools::Itertools;
 
@@ -12,7 +12,7 @@ pub fn send_tickets(
     transfer: &Transfer,
     from_user: &User,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let receive_tickets_link = transfer.receive_url(&config.front_end_url, conn)?;
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(email);
@@ -58,7 +58,7 @@ pub fn transfer_drip_reminder(
     source_or_destination: SourceOrDestination,
     config: &Config,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let receive_tickets_link = transfer.receive_url(&config.front_end_url, conn)?;
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(email.clone());
@@ -108,7 +108,7 @@ pub fn transfer_sent_receipt(
     event: &Event,
     config: &Config,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let source = CommAddress::from(config.communication_default_source_email.clone());
     if let Some(email) = user.email.clone() {
         let destinations = CommAddress::from(email);
@@ -147,7 +147,7 @@ pub fn transfer_cancelled_receipt(
     from_user: &User,
     transfer: &Transfer,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(email);
     let title = "BigNeon: Cancelled ticket transfer".to_string();
@@ -181,7 +181,7 @@ pub fn transfer_cancelled(
     from_user: &User,
     transfer: &Transfer,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(email);
     let title = "{sender_name} has cancelled their transfer of tickets".to_string();

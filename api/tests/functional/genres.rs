@@ -1,8 +1,8 @@
 use crate::support;
 use crate::support::database::TestDatabase;
-use bigneon_api::controllers::genres;
-use bigneon_api::controllers::genres::GenreListItem;
-use bigneon_db::models::Genre;
+use api::controllers::genres;
+use api::controllers::genres::GenreListItem;
+use db::models::Genre;
 use serde_json;
 
 #[actix_rt::test]

@@ -1,4 +1,4 @@
-use bigneon_db::models::PastOrUpcoming;
+use db::models::PastOrUpcoming;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub struct PastOrUpcomingParameters {

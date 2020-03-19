@@ -8,13 +8,13 @@ use diesel::RunQueryDsl;
 use uuid::Uuid;
 use validator::Validate;
 
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
-use bigneon_db::schema::{orders, user_genres};
-use bigneon_db::utils::dates;
-use bigneon_db::utils::errors;
-use bigneon_db::utils::errors::ErrorCode;
-use bigneon_db::utils::errors::ErrorCode::ValidationError;
+use db::dev::TestProject;
+use db::prelude::*;
+use db::schema::{orders, user_genres};
+use db::utils::dates;
+use db::utils::errors;
+use db::utils::errors::ErrorCode;
+use db::utils::errors::ErrorCode::ValidationError;
 
 #[test]
 fn is_attending_event() {

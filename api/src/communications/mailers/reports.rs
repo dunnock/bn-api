@@ -1,8 +1,8 @@
 use crate::config::Config;
 use crate::errors::*;
 use crate::models::*;
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::models::*;
 use diesel::PgConnection;
 use serde_json;
 use std::collections::HashMap;
@@ -13,7 +13,7 @@ pub fn ticket_counts(
     ticket_count_report: &TicketCountReport,
     config: &Config,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(email);
     let title = "BigNeon Ticket Counts".to_string();

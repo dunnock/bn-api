@@ -1,10 +1,10 @@
 use crate::support::database::TestDatabase;
-use bigneon_api::auth::default_token_issuer::DefaultTokenIssuer;
-use bigneon_api::config::Config;
-use bigneon_api::domain_events::webhook_publisher::WebhookPublisher;
-use bigneon_api::utils::deep_linker::BranchDeepLinker;
-use bigneon_db::prelude::*;
+use api::auth::default_token_issuer::DefaultTokenIssuer;
+use api::config::Config;
+use api::domain_events::webhook_publisher::WebhookPublisher;
+use api::utils::deep_linker::BranchDeepLinker;
 use chrono::prelude::*;
+use db::prelude::*;
 use std::collections::HashMap;
 use uuid::Uuid;
 

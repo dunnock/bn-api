@@ -1,5 +1,5 @@
 use crate::auth::TokenResponse;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
@@ -8,7 +8,7 @@ use crate::models::*;
 use crate::server::{AppState, GetAppState};
 use crate::utils::google_recaptcha;
 use actix_web::{web::Data, HttpRequest, HttpResponse};
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use diesel::PgConnection;
 use log::Level::Info;
 use std::collections::HashMap;
@@ -48,7 +48,7 @@ impl RefreshRequest {
 
 pub async fn token(
     (http_request, connection, login_request, request_info): (HttpRequest, Connection, Json<LoginRequest>, RequestInfo),
-) -> Result<TokenResponse, BigNeonError> {
+) -> Result<TokenResponse, ApiError> {
     let state = http_request.state();
     let connection_info = http_request.connection_info();
     let remote_ip = connection_info.remote();
@@ -98,7 +98,7 @@ pub async fn token(
 
 pub async fn token_refresh(
     (state, connection, refresh_request): (Data<AppState>, Connection, Json<RefreshRequest>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let mut validation = Validation::default();
     validation.validate_exp = false;
     let token = decode::<AccessToken>(
@@ -137,7 +137,7 @@ pub async fn token_refresh(
     Ok(HttpResponse::Ok().json(response))
 }
 
-fn promote_temp_to_user(user_id: Uuid, conn: &PgConnection) -> Result<User, BigNeonError> {
+fn promote_temp_to_user(user_id: Uuid, conn: &PgConnection) -> Result<User, ApiError> {
     let temp_user = TemporaryUser::find(user_id, &conn)?;
     let user = temp_user.users(&conn)?.into_iter().next();
     if let Some(user) = user {

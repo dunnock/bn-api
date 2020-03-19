@@ -1,4 +1,4 @@
-use crate::errors::{ApplicationError, BigNeonError};
+use crate::errors::{ApiError, ApplicationError};
 use crate::utils::webhook_adapters::WebhookAdapter;
 use log::Level::Debug;
 use serde_json::Value;
@@ -16,7 +16,7 @@ impl NullAdapter {
 impl WebhookAdapter for NullAdapter {
     fn initialize(&mut self, _config: Value) {}
 
-    fn send(&self, webhook_urls: &[String], payload: HashMap<String, Value, RandomState>) -> Result<(), BigNeonError> {
+    fn send(&self, webhook_urls: &[String], payload: HashMap<String, Value, RandomState>) -> Result<(), ApiError> {
         let client = reqwest::blocking::Client::new();
         for webhook_url in webhook_urls {
             let resp = client

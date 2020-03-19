@@ -1,5 +1,5 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::{OrganizationUser, Roles};
+use db::dev::TestProject;
+use db::models::{OrganizationUser, Roles};
 
 #[test]
 fn is_event_user() {

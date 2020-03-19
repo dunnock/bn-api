@@ -1,6 +1,6 @@
 use crate::auth::user::User as AuthUser;
 use crate::communications::mailers;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::helpers::application;
 use crate::server::AppState;
@@ -8,9 +8,9 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
-use bigneon_db::models::concerns::users::password_resetable::PasswordResetable;
-use bigneon_db::models::User;
-use bigneon_db::utils::errors::Optional;
+use db::models::concerns::users::password_resetable::PasswordResetable;
+use db::models::User;
+use db::utils::errors::Optional;
 use std::str;
 
 #[derive(Deserialize)]
@@ -22,7 +22,7 @@ pub struct UserInviteRequest {
 
 pub async fn create(
     (state, connection, parameters, auth_user): (Data<AppState>, Connection, Json<UserInviteRequest>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let email = parameters.email.trim().to_lowercase();
     // User already exists, so no need to invite them

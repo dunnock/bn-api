@@ -1,9 +1,9 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
-use bigneon_db::schema::orders;
-use bigneon_db::utils::dates;
 use chrono::{Datelike, Duration, NaiveDate, TimeZone, Utc};
 use chrono_tz::Tz;
+use db::dev::TestProject;
+use db::models::*;
+use db::schema::orders;
+use db::utils::dates;
 use diesel;
 use diesel::prelude::*;
 

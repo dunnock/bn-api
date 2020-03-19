@@ -1,8 +1,8 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
-use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::prelude::*;
 use chrono::Duration;
+use db::dev::TestProject;
+use db::prelude::*;
+use db::utils::errors::ErrorCode::ValidationError;
 use diesel;
 use diesel::prelude::*;
 use uuid::Uuid;

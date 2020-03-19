@@ -1,14 +1,14 @@
 use super::AccessTokenExtractor;
 use crate::auth::user::User;
-use crate::errors::{AuthError, BigNeonError};
+use crate::errors::{ApiError, AuthError};
 use crate::middleware::RequestConnection;
 use actix_web::{dev::Payload, FromRequest, HttpRequest};
-use bigneon_db::models::User as DbUser;
+use db::models::User as DbUser;
 use futures::future::{err, ready, Ready};
 
 impl FromRequest for User {
     type Config = ();
-    type Error = BigNeonError;
+    type Error = ApiError;
     type Future = Ready<Result<User, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {

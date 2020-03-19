@@ -1,5 +1,5 @@
 use crate::auth::user::User;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
@@ -10,9 +10,9 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
-use bigneon_db::dev::times;
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::dev::times;
+use db::models::*;
 use diesel::PgConnection;
 use log::Level::Debug;
 use serde_with::rust::double_option;
@@ -137,7 +137,7 @@ pub async fn create(
         User,
         Data<AppState>,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(path.id, connection)?;
     let organization = event.organization(connection)?;
@@ -162,7 +162,7 @@ pub async fn create_multiple(
         User,
         Data<AppState>,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let data = data.into_inner();
     let event = Event::find(path.id, connection)?;
@@ -181,7 +181,7 @@ pub struct TicketTypesResponse {
 
 pub async fn index(
     (connection, path, query_parameters, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(path.id, connection)?;
     let organization = event.organization(connection)?;
@@ -205,7 +205,7 @@ pub async fn index(
 
 pub async fn cancel(
     (connection, path, user, state): (Connection, Path<EventTicketPathParameters>, User, Data<AppState>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(path.event_id, connection)?;
     let organization = event.organization(connection)?;
@@ -251,7 +251,7 @@ pub async fn update(
         User,
         Data<AppState>,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(path.event_id, connection)?;
     let organization = event.organization(connection)?;
@@ -413,7 +413,7 @@ fn nullify_tickets(
     quantity: u32,
     user_id: Uuid,
     connection: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let asset = Asset::find_by_ticket_type(ticket_type.id, connection)?;
     let org_wallet = Wallet::find_default_for_organization(organization.id, connection)?;
     //Nullify tickets locally
@@ -453,7 +453,7 @@ pub(crate) fn create_ticket_type_blockchain_assets(
     ticket_types: &[TicketType],
     state: &Data<AppState>,
     connection: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     //Retrieve default wallet
     let org_wallet = Wallet::find_default_for_organization(event.organization_id, connection)?;
 
@@ -485,7 +485,7 @@ fn create_ticket_types(
     data: Vec<CreateTicketTypeRequest>,
     state: &Data<AppState>,
     connection: &PgConnection,
-) -> Result<Vec<DisplayCreatedTicket>, BigNeonError> {
+) -> Result<Vec<DisplayCreatedTicket>, ApiError> {
     //Check that any requested ticket capacity is less than max_instances_per_ticket_type
     if data
         .iter()

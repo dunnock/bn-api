@@ -1,7 +1,7 @@
-use crate::db::Connection;
-use crate::errors::BigNeonError;
-use bigneon_db::prelude::*;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use chrono::prelude::*;
+use db::prelude::*;
 use log::Level::*;
 use logging::*;
 use std::future::Future;
@@ -12,7 +12,7 @@ pub struct ExecutorFuture {
     started_at: NaiveDateTime,
     action: DomainAction,
     conn: Connection,
-    inner: Pin<Box<dyn Future<Output = Result<(), BigNeonError>>>>,
+    inner: Pin<Box<dyn Future<Output = Result<(), ApiError>>>>,
 }
 
 unsafe impl Send for ExecutorFuture {}
@@ -21,7 +21,7 @@ impl ExecutorFuture {
     pub fn new(
         action: DomainAction,
         conn: Connection,
-        inner: Pin<Box<dyn Future<Output = Result<(), BigNeonError>>>>,
+        inner: Pin<Box<dyn Future<Output = Result<(), ApiError>>>>,
     ) -> ExecutorFuture {
         ExecutorFuture {
             action,
@@ -33,7 +33,7 @@ impl ExecutorFuture {
 }
 
 impl Future for ExecutorFuture {
-    type Output = Result<(), BigNeonError>;
+    type Output = Result<(), ApiError>;
 
     fn poll(mut self: std::pin::Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         match self.inner.as_mut().poll(cx) {

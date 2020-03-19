@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::errors::*;
 use crate::utils::deep_linker::DeepLinker;
-use bigneon_db::models::*;
+use db::models::*;
 use diesel::pg::PgConnection;
 
 pub fn transfer_cancelled(
@@ -9,7 +9,7 @@ pub fn transfer_cancelled(
     phone: String,
     from_user: &User,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let source = CommAddress::from(config.communication_default_source_phone.clone());
     let destinations = CommAddress::from(phone);
     let body = format!("{} has cancelled their transferred tickets.", from_user.full_name());
@@ -36,7 +36,7 @@ pub fn transfer_drip_reminder(
     config: &Config,
     conn: &PgConnection,
     deep_linker: &dyn DeepLinker,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let receive_tickets_link = transfer.receive_url(&config.front_end_url, conn)?;
     let link = deep_linker.create_deep_link_with_fallback(&receive_tickets_link);
     let source = CommAddress::from(config.communication_default_source_phone.clone());
@@ -69,7 +69,7 @@ pub fn send_tickets(
     from_user: &User,
     conn: &PgConnection,
     deep_linker: &dyn DeepLinker,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let receive_tickets_link = transfer.receive_url(&config.front_end_url, conn)?;
     let link = deep_linker.create_deep_link_with_fallback(&receive_tickets_link);
 

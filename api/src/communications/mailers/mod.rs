@@ -1,5 +1,5 @@
-use crate::errors::BigNeonError;
-use bigneon_db::models::*;
+use crate::errors::ApiError;
+use db::models::*;
 use diesel::PgConnection;
 use url::form_urlencoded::byte_serialize;
 
@@ -13,7 +13,7 @@ pub fn insert_event_template_data(
     template_data: &mut TemplateData,
     event: &Event,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let organization = event.organization(conn)?;
     let venue = event.venue(conn)?;
     let localized_times = event.get_all_localized_times(venue.as_ref());

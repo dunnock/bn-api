@@ -11,11 +11,11 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use bigneon_api::controllers::tickets::SendTicketsRequest;
-use bigneon_api::controllers::tickets::{self, SearchParameters, ShowTicketResponse, TransferTicketRequest};
-use bigneon_api::extractors::*;
-use bigneon_api::models::{OptionalPathParameters, PathParameters};
-use bigneon_db::prelude::*;
+use api::controllers::tickets::SendTicketsRequest;
+use api::controllers::tickets::{self, SearchParameters, ShowTicketResponse, TransferTicketRequest};
+use api::extractors::*;
+use api::models::{OptionalPathParameters, PathParameters};
+use db::prelude::*;
 
 #[actix_rt::test]
 pub async fn index() {

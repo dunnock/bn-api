@@ -3,12 +3,12 @@ use actix_web::{
     web::{Data, Path, Query},
     FromRequest, HttpRequest,
 };
-use bigneon_api::auth::default_token_issuer::DefaultTokenIssuer;
-use bigneon_api::config::Config;
-use bigneon_api::db::Database;
-use bigneon_api::server::AppState;
-use bigneon_api::utils::spotify;
-use bigneon_db::models::Environment;
+use api::auth::default_token_issuer::DefaultTokenIssuer;
+use api::config::Config;
+use api::database::Database;
+use api::server::AppState;
+use api::utils::spotify;
+use db::models::Environment;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

@@ -1,6 +1,6 @@
 use crate::auth::user::User;
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::{PathParameters, WebPayload};
@@ -10,8 +10,8 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::models::*;
 use log::Level::Warn;
 use serde_with::rust::double_option;
 use std::error::Error;
@@ -68,7 +68,7 @@ impl From<UpdateHoldRequest> for UpdateHoldAttributes {
 
 pub async fn create(
     (conn, req, path, user): (Connection, Json<CreateHoldRequest>, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let event = Event::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::HoldWrite, &event.organization(conn)?, &event, conn)?;
@@ -123,7 +123,7 @@ pub async fn create(
 
 pub async fn update(
     (conn, req, path, user): (Connection, Json<UpdateHoldRequest>, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
 
     let hold = Hold::find(path.id, conn)?;
@@ -141,7 +141,7 @@ pub async fn update(
     Ok(HttpResponse::Ok().json(hold))
 }
 
-pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::HoldRead, &hold.organization(conn)?, &hold.event(conn)?, conn)?;
@@ -182,7 +182,7 @@ pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) 
 
 pub async fn link(
     (conn, path, user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     let event = hold.event(conn)?;
@@ -231,7 +231,7 @@ pub struct SplitHoldRequest {
 
 pub async fn children(
     (conn, path, query_parameters, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),
-) -> Result<WebPayload<DisplayHold>, BigNeonError> {
+) -> Result<WebPayload<DisplayHold>, ApiError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::HoldRead, &hold.organization(conn)?, conn)?;
@@ -252,7 +252,7 @@ pub async fn children(
 
 pub async fn split(
     (conn, req, path, user): (Connection, Json<SplitHoldRequest>, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::HoldWrite, &hold.organization(conn)?, &hold.event(conn)?, conn)?;
@@ -274,9 +274,7 @@ pub async fn split(
     Ok(HttpResponse::Created().json(new_hold))
 }
 
-pub async fn destroy(
-    (conn, path, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::HoldWrite, &hold.organization(conn)?, &hold.event(conn)?, conn)?;

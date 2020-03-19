@@ -1,6 +1,6 @@
 use crate::auth::user::User;
 use crate::config::Config;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
@@ -15,11 +15,11 @@ use actix_web::{
     web::{Data, Path},
     HttpResponse,
 };
-use bigneon_db::models::TicketType as Dbticket_types;
-use bigneon_db::models::User as DbUser;
-use bigneon_db::models::*;
-use bigneon_db::utils::errors::Optional;
-use bigneon_db::utils::rand::random_alpha_string;
+use db::models::TicketType as Dbticket_types;
+use db::models::User as DbUser;
+use db::models::*;
+use db::utils::errors::Optional;
+use db::utils::rand::random_alpha_string;
 use diesel::pg::PgConnection;
 use itertools::Itertools;
 use log::Level::Debug;
@@ -46,7 +46,7 @@ pub struct UpdateCartRequest {
 
 pub async fn update_cart(
     (connection, json, user, request_info): (Connection, Json<UpdateCartRequest>, User, RequestInfo),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let json = json.into_inner();
     jlog!(Debug, "Update Cart", {"cart": json, "user_id": user.id()});
     let connection = connection.get();
@@ -91,7 +91,7 @@ pub async fn update_cart(
 
 pub async fn duplicate(
     (connection, path, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let order = Order::find(path.id, connection)?;
     let user_id = order.on_behalf_of_user_id.unwrap_or(order.user_id);
@@ -104,7 +104,7 @@ pub async fn duplicate(
     Ok(HttpResponse::Ok().json(duplicate_order.for_display(None, user.id(), connection)?))
 }
 
-pub async fn destroy((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy((connection, user): (Connection, User)) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
 
     // Find the current cart of the user, if it exists.
@@ -116,7 +116,7 @@ pub async fn destroy((connection, user): (Connection, User)) -> Result<HttpRespo
 
 pub async fn replace_cart(
     (connection, json, user, request_info): (Connection, Json<UpdateCartRequest>, User, RequestInfo),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let json = json.into_inner();
     jlog!(Debug, "Replace Cart", {"cart": json, "user_id": user.id() });
 
@@ -159,7 +159,7 @@ pub async fn replace_cart(
     Ok(HttpResponse::Ok().json(Order::find(cart.id, connection)?.for_display(None, user.id(), connection)?))
 }
 
-pub async fn show((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((connection, user): (Connection, User)) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let order = match Order::find_cart_for_user(user.id(), connection)? {
         Some(o) => o,
@@ -207,7 +207,7 @@ pub enum PaymentRequest {
     Free,
 }
 
-pub async fn clear_invalid_items((connection, user): (Connection, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn clear_invalid_items((connection, user): (Connection, User)) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let mut order = match Order::find_cart_for_user(user.id(), connection)? {
         Some(o) => o,
@@ -231,7 +231,7 @@ pub async fn checkout(
         Data<AppState>,
         RequestInfo,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     // TODO: Change application::unprocesable's in this method to validation errors.
     let req = json.into_inner();
 
@@ -374,7 +374,7 @@ fn checkout_free(
     order: Order,
     user: &User,
     request_info: &RequestInfo,
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     if order.status != OrderStatus::Draft {
         return application::unprocessable("Could not complete this cart because it is not in the correct status");
@@ -406,7 +406,7 @@ fn checkout_external(
     note: Option<String>,
     user: &User,
     request_info: &RequestInfo,
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
 
     // User must have external checkout permissions for all events in the cart.
@@ -474,7 +474,7 @@ fn checkout_payment_processor(
     service_locator: &ServiceLocator,
     config: &Config,
     request_info: &RequestInfo,
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     info!("CART: Executing provider payment");
     let connection = conn.get();
 
@@ -586,7 +586,7 @@ fn auth_then_complete(
     conn: &Connection,
     payment_processor: &dyn PaymentProcessor,
     request_info: &RequestInfo,
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     info!("CART: Auth'ing to payment provider");
     let amount = order.calculate_total(connection)?;
@@ -641,7 +641,7 @@ fn redirect_to_payment_page(
     order: &mut Order,
     conn: &PgConnection,
     config: &Config,
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     if user.email.is_none() {
         return application::unprocessable("User must have an email to check out");
     }

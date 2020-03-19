@@ -1,6 +1,6 @@
 use crate::auth::user::User as AuthUser;
 use crate::controllers::events::{self, *};
-use crate::db::{Connection, ReadonlyConnection};
+use crate::database::{Connection, ReadonlyConnection};
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
@@ -10,7 +10,7 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use reqwest::StatusCode;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
@@ -57,7 +57,7 @@ pub enum SlugResponse {
 
 pub async fn index(
     (connection, query, user): (ReadonlyConnection, Query<PagingParameters>, AuthUser),
-) -> Result<WebPayload<Slug>, BigNeonError> {
+) -> Result<WebPayload<Slug>, ApiError> {
     let connection = connection.get();
     user.requires_scope(Scopes::OrgAdmin)?;
     let slug_type = query
@@ -78,7 +78,7 @@ pub async fn update(
         Json<SlugEditableAttributes>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     user.requires_scope(Scopes::OrgAdmin)?;
     let slug = Slug::find(parameters.id, connection)?;
@@ -95,7 +95,7 @@ pub async fn show(
         OptionalUser,
         RequestInfo,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let user = auth_user
         .clone()
         .into_inner()
@@ -258,7 +258,7 @@ pub async fn show(
     Ok(HttpResponse::Ok().json(&response))
 }
 
-fn redirection_json(slug: &Slug, state: Data<AppState>) -> Result<HttpResponse, BigNeonError> {
+fn redirection_json(slug: &Slug, state: Data<AppState>) -> Result<HttpResponse, ApiError> {
     let path = match slug.slug_type {
         SlugTypes::Event => "tickets",
         SlugTypes::Venue => "venues",

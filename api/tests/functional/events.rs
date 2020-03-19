@@ -7,14 +7,14 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::events;
-use bigneon_api::controllers::events::*;
-use bigneon_api::extractors::*;
-use bigneon_api::models::*;
-use bigneon_db::models::*;
-use bigneon_db::utils::dates;
+use api::controllers::events;
+use api::controllers::events::*;
+use api::extractors::*;
+use api::models::*;
 use chrono::prelude::*;
 use chrono::Duration;
+use db::models::*;
+use db::utils::dates;
 use diesel::PgConnection;
 use serde_json;
 use serde_json::Value;

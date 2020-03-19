@@ -7,9 +7,9 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::regions;
-use bigneon_api::models::PathParameters;
-use bigneon_db::models::*;
+use api::controllers::regions;
+use api::models::PathParameters;
+use db::models::*;
 use serde_json;
 use uuid::Uuid;
 

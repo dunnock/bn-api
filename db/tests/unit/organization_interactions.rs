@@ -1,6 +1,6 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
-use bigneon_db::utils::dates;
+use db::dev::TestProject;
+use db::prelude::*;
+use db::utils::dates;
 
 #[test]
 fn new_organization_interaction_commit() {

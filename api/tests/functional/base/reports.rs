@@ -6,13 +6,13 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::reports::{self, *};
-use bigneon_api::errors::BigNeonError;
-use bigneon_api::models::{PathParameters, WebPayload};
-use bigneon_db::models::*;
-use bigneon_db::schema::orders;
+use api::controllers::reports::{self, *};
+use api::errors::ApiError;
+use api::models::{PathParameters, WebPayload};
 use chrono::prelude::*;
 use chrono::Duration;
+use db::models::*;
+use db::schema::orders;
 use diesel;
 use diesel::prelude::*;
 use serde_json;
@@ -351,7 +351,7 @@ pub async fn transaction_detail_report(role: Roles, should_succeed: bool, filter
     let query = Query::<ReportQueryParameters>::extract(&test_request.request)
         .await
         .unwrap();
-    let response: Result<WebPayload<TransactionReportRow>, BigNeonError> =
+    let response: Result<WebPayload<TransactionReportRow>, ApiError> =
         reports::transaction_detail_report((database.connection.clone().into(), query, path, auth_user));
 
     if !should_succeed {

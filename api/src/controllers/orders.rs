@@ -1,8 +1,8 @@
 use crate::auth::user::User;
 use crate::communications::mailers;
 use crate::communications::smsers;
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::*;
@@ -13,9 +13,9 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::User as DbUser;
-use bigneon_db::models::*;
 use chrono::Duration;
+use db::models::User as DbUser;
+use db::models::*;
 use diesel::pg::PgConnection;
 use diesel::Connection as DieselConnection;
 use log::Level::Debug;
@@ -26,7 +26,7 @@ use uuid::Uuid;
 
 pub async fn index(
     (conn, query_parameters, user): (Connection, Query<PagingParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     //@TODO Implement proper paging on db
 
     user.requires_scope(Scopes::OrderReadOwn)?;
@@ -37,7 +37,7 @@ pub async fn index(
 
 pub async fn activity(
     (conn, path, user): (Connection, Path<PathParameters>, User),
-) -> Result<WebPayload<ActivityItem>, BigNeonError> {
+) -> Result<WebPayload<ActivityItem>, ApiError> {
     let connection = conn.get();
     let order = Order::find(path.id, connection)?;
     user.requires_scope_for_order(Scopes::OrderRead, &order, connection)?;
@@ -49,7 +49,7 @@ pub async fn activity(
 
 pub async fn show(
     (state, conn, path, auth_user): (Data<AppState>, Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     let order = Order::find(path.id, connection)?;
     let mut organization_ids = Vec::new();
@@ -107,7 +107,7 @@ pub async fn show(
 
 pub async fn resend_confirmation(
     (conn, path, auth_user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     let order = Order::find(path.id, connection)?;
 
@@ -138,9 +138,7 @@ pub struct DetailsResponse {
     pub order_contains_other_tickets: bool,
 }
 
-pub async fn details(
-    (conn, path, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+pub async fn details((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     let order = Order::find(path.id, connection)?;
 
@@ -185,7 +183,7 @@ pub async fn refund(
         User,
         Data<AppState>,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let refund_attributes = json.into_inner();
     jlog!(Debug, "Request to refund received", {"order_id": path.id, "request": refund_attributes.clone()});
     let connection = conn.get();
@@ -240,7 +238,7 @@ pub async fn refund(
     let mut amount_refunded = 0;
 
     // Begin transaction, if it fails at this point all transferred tickets are returned to wallets
-    match connection.transaction::<_, BigNeonError, _>(|| {
+    match connection.transaction::<_, ApiError, _>(|| {
         for (asset_id, token_ids) in &tokens_per_asset {
             let organization_id = Organization::find_by_asset_id(*asset_id, connection)?.id;
             let organization_wallet = Wallet::find_default_for_organization(organization_id, connection)?;
@@ -422,7 +420,7 @@ fn is_authorized_to_refund(
     connection: &PgConnection,
     items: &Vec<RefundItemRequest>,
     manual_override: bool,
-) -> Result<bool, BigNeonError> {
+) -> Result<bool, ApiError> {
     // Find list of organizations related to order item id events for confirming user access
     let order_item_ids: Vec<Uuid> = items.iter().map(|refund_item| refund_item.order_item_id).collect();
     let mut organization_map = HashMap::new();
@@ -454,9 +452,7 @@ fn is_authorized_to_refund(
     Ok(authorized_to_refund_items)
 }
 
-pub async fn tickets(
-    (conn, path, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+pub async fn tickets((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let order = Order::find(path.id, conn)?;
     // TODO: Only show the redeem key for orgs that the user has access to redeem
@@ -493,7 +489,7 @@ pub async fn send_box_office_instructions(
         User,
         Data<AppState>,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let order = Order::find(path.id, conn)?;
     for event in order.events(conn)? {

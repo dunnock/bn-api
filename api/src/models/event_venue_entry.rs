@@ -1,8 +1,8 @@
 use crate::server::AppState;
 use crate::utils::cloudinary::optimize_cloudinary;
 use actix_web::web::Data;
-use bigneon_db::prelude::*;
 use chrono::prelude::*;
+use db::prelude::*;
 use diesel::PgConnection;
 use std::collections::HashMap;
 use uuid::Uuid;

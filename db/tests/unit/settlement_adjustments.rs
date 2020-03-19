@@ -1,6 +1,6 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::dev::TestProject;
+use db::models::*;
 
 #[test]
 fn create() {

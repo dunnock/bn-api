@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::errors::*;
-use bigneon_db::models::*;
-use bigneon_db::prelude::{DisplayOrder, OrderItem, Refund};
+use db::models::*;
+use db::prelude::{DisplayOrder, OrderItem, Refund};
 use diesel::PgConnection;
 use itertools::Itertools;
 
@@ -11,7 +11,7 @@ pub fn confirmation_email(
     display_order: DisplayOrder,
     config: &Config,
     conn: &PgConnection,
-) -> Result<Communication, BigNeonError> {
+) -> Result<Communication, ApiError> {
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(user_email);
     let title = "BigNeon Purchase Completed".to_string();
@@ -165,7 +165,7 @@ pub fn refund_email(
     refund: &Refund,
     config: &Config,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let source = CommAddress::from(config.communication_default_source_email.clone());
     let destinations = CommAddress::from(user_email);
     let title = "BigNeon Refund".to_string();

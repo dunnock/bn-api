@@ -1,14 +1,14 @@
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use crate::server::AppState;
 use actix_web::{
     http::header,
     web::{Data, Query},
     HttpRequest, HttpResponse,
 };
-use bigneon_db::models::analytics::PageView;
-use bigneon_db::prelude::*;
 use chrono::prelude::*;
+use db::models::analytics::PageView;
+use db::prelude::*;
 use itertools::Itertools;
 use url::Url;
 use uuid::Uuid;
@@ -39,7 +39,7 @@ pub struct PageViewTrackingData {
 
 pub async fn track(
     (state, query, request, connection): (Data<AppState>, Query<PageViewTrackingData>, HttpRequest, Connection),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
     let ip_address = request.connection_info().remote().map(|i| i.to_string());
     let user_agent = if let Some(ua) = request.headers().get(header::USER_AGENT) {

@@ -3,15 +3,15 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::{http::StatusCode, HttpResponse};
-use bigneon_api::auth::TokenResponse;
-use bigneon_api::controllers::users;
-use bigneon_api::extractors::*;
-use bigneon_api::models::{RegisterRequest, RequestInfo, UserProfileAttributes};
-use bigneon_db::prelude::*;
+use api::auth::TokenResponse;
+use api::controllers::users;
+use api::extractors::*;
+use api::models::{RegisterRequest, RequestInfo, UserProfileAttributes};
+use db::prelude::*;
 use serde_json;
 use std::collections::HashMap;
 
-use bigneon_api::errors::BigNeonError;
+use api::errors::ApiError;
 
 #[cfg(test)]
 mod history_tests {
@@ -714,7 +714,7 @@ pub async fn update_current_user_with_validation_errors() {
     attributes.email = Some("bad-email".into());
     let json = Json(attributes);
 
-    let result: Result<HttpResponse, BigNeonError> =
+    let result: Result<HttpResponse, ApiError> =
         Err(users::update_current_user((database.connection.into(), json, user))
             .await
             .err()
@@ -738,7 +738,7 @@ async fn update_current_user_address_exists() {
     attributes.email = existing_user.email;
     let json = Json(attributes);
 
-    let result: Result<HttpResponse, BigNeonError> =
+    let result: Result<HttpResponse, ApiError> =
         Err(users::update_current_user((database.connection.into(), json, user))
             .await
             .err()

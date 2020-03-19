@@ -1,7 +1,7 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
-use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::{Duration, NaiveDateTime, Utc};
+use db::dev::TestProject;
+use db::models::*;
+use db::utils::errors::ErrorCode::ValidationError;
 
 #[test]
 fn find_fee_item() {
