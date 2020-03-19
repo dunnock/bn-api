@@ -7,17 +7,17 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers;
-use bigneon_api::controllers::cart;
-use bigneon_api::controllers::cart::*;
-use bigneon_api::domain_events::executors::ProcessPaymentIPNExecutor;
-use bigneon_api::extractors::*;
-use bigneon_api::models::*;
-use bigneon_db::models::*;
-use bigneon_db::schema::{orders, ticket_instances};
-use bigneon_db::utils::dates;
+use api::controllers;
+use api::controllers::cart;
+use api::controllers::cart::*;
+use api::domain_events::executors::ProcessPaymentIPNExecutor;
+use api::extractors::*;
+use api::models::*;
 use chrono::prelude::*;
 use chrono::Duration;
+use db::models::*;
+use db::schema::{orders, ticket_instances};
+use db::utils::dates;
 use diesel;
 use diesel::prelude::*;
 use diesel::sql_types;

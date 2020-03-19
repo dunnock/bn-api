@@ -1,8 +1,8 @@
 use crate::functional::base;
 use crate::support::database::TestDatabase;
-use bigneon_db::dev::HoldBuilder;
-use bigneon_db::prelude::*;
 use chrono::prelude::*;
+use db::dev::HoldBuilder;
+use db::prelude::*;
 
 #[actix_rt::test]
 pub async fn ticket_counts_report() {

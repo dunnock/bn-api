@@ -1,12 +1,12 @@
-use crate::errors::{ApplicationError, AuthError, BigNeonError};
+use crate::errors::{ApiError, ApplicationError, AuthError};
 use crate::jwt::{decode, Validation};
 use crate::server::GetAppState;
 use actix_web::HttpMessage;
-use bigneon_db::models::AccessToken;
+use db::models::AccessToken;
 
 pub(crate) struct AccessTokenExtractor;
 impl AccessTokenExtractor {
-    pub fn from_request<R>(req: &R) -> Result<AccessToken, BigNeonError>
+    pub fn from_request<R>(req: &R) -> Result<AccessToken, ApiError>
     where
         R: HttpMessage + GetAppState,
     {

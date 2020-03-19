@@ -1,5 +1,5 @@
 use crate::auth::user::User;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::models::PathParameters;
@@ -9,7 +9,7 @@ use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
+use db::models::*;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct EngagementData {
@@ -18,7 +18,7 @@ pub struct EngagementData {
 
 pub async fn index(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, User),
-) -> Result<WebPayload<Announcement>, BigNeonError> {
+) -> Result<WebPayload<Announcement>, ApiError> {
     user.requires_scope(Scopes::AnnouncementRead)?;
 
     Ok(WebPayload::new(
@@ -33,7 +33,7 @@ pub async fn index(
 
 pub async fn show(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::AnnouncementRead)?;
 
     let announcement = Announcement::find(parameters.id, false, connection.get())?;
@@ -42,7 +42,7 @@ pub async fn show(
 
 pub async fn create(
     (connection, new_announcement, user): (Connection, Json<NewAnnouncement>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::AnnouncementWrite)?;
     let connection = connection.get();
     let announcement = new_announcement.into_inner().commit(Some(user.id()), connection)?;
@@ -51,7 +51,7 @@ pub async fn create(
 
 pub async fn destroy(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::AnnouncementDelete)?;
     let connection = connection.get();
     let announcement = Announcement::find(parameters.id, false, connection)?;
@@ -62,7 +62,7 @@ pub async fn destroy(
 
 pub async fn show_from_organization(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(parameters.id, connection)?;
     user.requires_scope_for_organization(Scopes::AnnouncementEngagementWrite, &organization, connection)?;
@@ -73,7 +73,7 @@ pub async fn show_from_organization(
 
 pub async fn engage(
     (connection, parameters, engagement_data, user): (Connection, Path<PathParameters>, Json<EngagementData>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let announcement = Announcement::find(parameters.id, false, connection)?;
     if let Some(organization_id) = announcement.organization_id {
@@ -97,7 +97,7 @@ pub async fn update(
         Json<AnnouncementEditableAttributes>,
         User,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::AnnouncementWrite)?;
     let connection = connection.get();
     let announcement = Announcement::find(parameters.id, false, connection)?;

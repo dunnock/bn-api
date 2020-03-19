@@ -1,8 +1,8 @@
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::domain_events::executor_future::ExecutorFuture;
 use crate::domain_events::routing::DomainActionExecutor;
 use crate::errors::*;
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use futures::future;
 use log::Level::Error;
 
@@ -25,7 +25,7 @@ impl FinalizeSettlementsExecutor {
         FinalizeSettlementsExecutor {}
     }
 
-    pub fn perform_job(&self, conn: &Connection) -> Result<(), BigNeonError> {
+    pub fn perform_job(&self, conn: &Connection) -> Result<(), ApiError> {
         let conn = conn.get();
         Settlement::finalize_settlements(conn)?;
         Settlement::create_next_finalize_settlements_domain_action(conn)?;

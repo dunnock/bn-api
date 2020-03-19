@@ -1,6 +1,6 @@
 use crate::config::Config;
-use crate::db::{CacheDatabase, ConnectionType};
-use crate::db::{Connection, ReadonlyConnection};
+use crate::database::{CacheDatabase, ConnectionType};
+use crate::database::{Connection, ReadonlyConnection};
 use ::r2d2::Error as R2D2Error;
 use cache::RedisCacheConnection;
 use diesel::r2d2::{self, ConnectionManager};

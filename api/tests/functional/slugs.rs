@@ -7,12 +7,12 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::events::*;
-use bigneon_api::controllers::slugs;
-use bigneon_api::controllers::slugs::*;
-use bigneon_api::extractors::*;
-use bigneon_api::models::*;
-use bigneon_db::models::*;
+use api::controllers::events::*;
+use api::controllers::slugs;
+use api::controllers::slugs::*;
+use api::extractors::*;
+use api::models::*;
+use db::models::*;
 use serde_json;
 use std::env;
 

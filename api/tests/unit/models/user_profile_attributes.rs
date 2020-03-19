@@ -1,4 +1,4 @@
-use bigneon_api::models::UserProfileAttributes;
+use api::models::UserProfileAttributes;
 use std::borrow::Cow;
 use validator::Validate;
 

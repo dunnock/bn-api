@@ -1,16 +1,16 @@
 use crate::auth::user::User;
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use crate::extractors::Json;
 use crate::models::{PathParameters, WebPayload};
 use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::enums::{BroadcastAudience, BroadcastChannel, BroadcastType};
-use bigneon_db::models::scopes::Scopes;
-use bigneon_db::models::{Broadcast, BroadcastEditableAttributes, Organization, PagingParameters};
 use chrono::NaiveDateTime;
+use db::models::enums::{BroadcastAudience, BroadcastChannel, BroadcastType};
+use db::models::scopes::Scopes;
+use db::models::{Broadcast, BroadcastEditableAttributes, Organization, PagingParameters};
 use reqwest::StatusCode;
 use uuid::Uuid;
 
@@ -29,7 +29,7 @@ pub struct NewBroadcastData {
 
 pub async fn create(
     (conn, path, json, user): (Connection, Path<PathParameters>, Json<NewBroadcastData>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     let organization = Organization::find_for_event(path.id, connection)?;
     let channel = json.channel.unwrap_or(BroadcastChannel::PushNotification);
@@ -54,7 +54,7 @@ pub async fn create(
 
 pub async fn index(
     (conn, path, query, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),
-) -> Result<WebPayload<Broadcast>, BigNeonError> {
+) -> Result<WebPayload<Broadcast>, ApiError> {
     let connection = conn.get();
     let organization = Organization::find_for_event(path.id, connection)?;
 
@@ -78,7 +78,7 @@ pub async fn index(
     Ok(WebPayload::new(StatusCode::OK, push_notifications))
 }
 
-pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     let push_notification = Broadcast::find(path.id, connection)?;
     let organization = Organization::find_for_event(push_notification.event_id, connection)?;
@@ -95,7 +95,7 @@ pub async fn update(
         Json<BroadcastEditableAttributes>,
         User,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     let broadcast = Broadcast::find(path.id, connection)?;
     let organization = Organization::find_for_event(broadcast.event_id, connection)?;
@@ -108,9 +108,7 @@ pub async fn update(
     Ok(HttpResponse::Ok().json(broadcast))
 }
 
-pub async fn delete(
-    (conn, path, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+pub async fn delete((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     let broadcast = Broadcast::find(path.id, connection)?;
     let organization = Organization::find_for_event(broadcast.event_id, connection)?;
@@ -123,7 +121,7 @@ pub async fn delete(
 
 pub async fn tracking_count(
     (conn, path, _user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = conn.get();
     Broadcast::increment_open_count(path.id.clone(), connection)?;
     let broadcast = Broadcast::find(path.id, connection)?;

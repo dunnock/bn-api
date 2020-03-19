@@ -1,5 +1,5 @@
 use crate::auth::user::User;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::domain_events::executors::UpdateGenresPayload;
 use crate::errors::*;
 use crate::extractors::*;
@@ -11,11 +11,11 @@ use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
+use db::models::*;
 
 pub async fn search(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, OptionalUser),
-) -> Result<WebPayload<CreateArtistRequest>, BigNeonError> {
+) -> Result<WebPayload<CreateArtistRequest>, ApiError> {
     let connection = connection.get();
     let db_user = user.into_inner().map(|u| u.user);
     let paging: Paging = query_parameters.clone().into();
@@ -43,7 +43,7 @@ pub async fn search(
 
 pub async fn index(
     (connection, query_parameters, user): (Connection, Query<PagingParameters>, OptionalUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let db_user = user.into_inner().map(|u| u.user);
     let paging: Paging = query_parameters.clone().into();
     let (artists, total) = Artist::search(&db_user, query_parameters.get_tag("q"), &paging, connection.get())?;
@@ -56,7 +56,7 @@ pub async fn index(
     Ok(HttpResponse::Ok().json(&payload))
 }
 
-pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let artist = Artist::find(&parameters.id, connection)?.for_display(connection)?;
     Ok(HttpResponse::Ok().json(&artist))
@@ -64,7 +64,7 @@ pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) 
 
 pub async fn create(
     (connection, json_create_artist, user): (Connection, Json<CreateArtistRequest>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     if let Some(organization_id) = json_create_artist.organization_id {
         let organization = Organization::find(organization_id, connection)?;
@@ -126,7 +126,7 @@ pub async fn show_from_organizations(
         Query<PagingParameters>,
         OptionalUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     //TODO implement proper paging on db
     let artists = match user.into_inner() {
         Some(u) => Artist::find_for_organization(Some(&u.user), organization_id.id, connection.get())?,
@@ -143,7 +143,7 @@ pub async fn update(
         Json<UpdateArtistRequest>,
         User,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let artist_parameters = artist_parameters.into_inner();
     let artist = Artist::find(&parameters.id, connection)?;
@@ -186,7 +186,7 @@ pub async fn update(
 
 pub async fn toggle_privacy(
     (connection, parameters, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::ArtistWrite)?;
 
     let connection = connection.get();

@@ -15,11 +15,11 @@ use crate::functional::base;
 use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
-use bigneon_api::controllers::orders::{self, *};
-use bigneon_api::extractors::Json;
-use bigneon_api::models::PathParameters;
-use bigneon_db::models::*;
-use bigneon_db::schema;
+use api::controllers::orders::{self, *};
+use api::extractors::Json;
+use api::models::PathParameters;
+use db::models::*;
+use db::schema;
 
 #[actix_rt::test]
 pub async fn show() {

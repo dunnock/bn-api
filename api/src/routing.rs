@@ -1,7 +1,7 @@
 use crate::controllers::*;
 use crate::middleware::{CacheResource, CacheUsersBy, OrganizationLoad};
 use actix_web::web;
-use bigneon_db::models::Scopes;
+use db::models::Scopes;
 
 pub fn routes(app: &mut web::ServiceConfig) {
     // Please try to keep in alphabetical order

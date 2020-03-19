@@ -1,7 +1,7 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
-use bigneon_db::utils::dates;
 use chrono::prelude::*;
+use db::dev::TestProject;
+use db::models::*;
+use db::utils::dates;
 
 #[test]
 fn find_for_settlement_by_event() {

@@ -1,6 +1,6 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
 use chrono::prelude::*;
+use db::dev::TestProject;
+use db::prelude::*;
 use diesel;
 use diesel::sql_types;
 use diesel::PgConnection;

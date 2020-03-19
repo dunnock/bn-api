@@ -8,7 +8,7 @@
 // Unused results is more often than not an error
 #![deny(unused_must_use)]
 #![deny(unused_extern_crates)]
-extern crate bigneon_db;
+extern crate bigneon_db as db;
 extern crate chrono;
 extern crate chrono_tz;
 extern crate diesel;

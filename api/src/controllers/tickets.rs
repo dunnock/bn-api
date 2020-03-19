@@ -1,6 +1,6 @@
 use crate::auth::user::User;
 use crate::communications::{mailers, pushers, smsers};
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
@@ -10,9 +10,9 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::User as DbUser;
-use bigneon_db::prelude::*;
 use chrono::prelude::*;
+use db::models::User as DbUser;
+use db::prelude::*;
 use diesel::pg::PgConnection;
 use itertools::Itertools;
 use regex::Regex;
@@ -50,7 +50,7 @@ impl From<SearchParameters> for Paging {
 
 pub async fn index(
     (connection, path, query, auth_user): (Connection, Path<OptionalPathParameters>, Query<SearchParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     //todo convert to use pagingparams
 
     let connection = connection.get();
@@ -78,7 +78,7 @@ pub struct ShowTicketResponse {
 
 pub async fn show(
     (connection, parameters, auth_user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let (event, user, ticket) = TicketInstance::find_for_display(parameters.id, connection)?;
     let db_event = Event::find(event.id, connection)?;
@@ -100,7 +100,7 @@ pub async fn update(
         Json<UpdateTicketInstanceAttributes>,
         User,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let ticket_parameters = ticket_parameters.into_inner();
     let ticket = TicketInstance::find(parameters.id, connection)?;
@@ -119,7 +119,7 @@ pub async fn update(
 
 pub async fn show_redeemable_ticket(
     (connection, parameters, auth_user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let (event, user, _ticket) = TicketInstance::find_for_display(parameters.id, connection)?;
     let db_event = Event::find(event.id, connection)?;
@@ -136,7 +136,7 @@ pub async fn show_redeemable_ticket(
 
 pub async fn send_via_email_or_phone(
     (connection, send_tickets_request, auth_user, state): (Connection, Json<SendTicketsRequest>, User, Data<AppState>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     auth_user.requires_scope(Scopes::TicketTransfer)?;
     let connection = connection.get();
 
@@ -235,7 +235,7 @@ pub struct SendTicketsRequest {
 
 pub async fn transfer_authorization(
     (connection, transfer_tickets_request, auth_user): (Connection, Json<TransferTicketRequest>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     auth_user.requires_scope(Scopes::TicketTransfer)?;
     let connection = connection.get();
 
@@ -259,7 +259,7 @@ pub async fn receive_transfer(
         User,
         Data<AppState>,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     auth_user.requires_scope(Scopes::TicketTransfer)?;
     let connection = connection.get();
 
@@ -291,7 +291,7 @@ pub(crate) fn transfer_tickets_on_blockchain(
     tari_client: &dyn TariClient,
     sender_wallet: &Wallet,
     receiver_wallet: &Wallet,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     //Assemble token ids and ticket instance ids for each asset in the order
     let mut tokens_per_asset: HashMap<Uuid, Vec<u64>> = HashMap::new();
     for ticket in tickets {

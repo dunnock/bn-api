@@ -1,6 +1,6 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::OrganizationVenue;
-use bigneon_db::utils::errors::DatabaseError;
+use db::dev::TestProject;
+use db::models::OrganizationVenue;
+use db::utils::errors::DatabaseError;
 
 #[test]
 fn create() {

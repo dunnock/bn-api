@@ -3,6 +3,7 @@
 #![deny(unused_imports)]
 // Unused results is more often than not an error
 #![deny(unused_must_use)]
+#![deny(unused_parens)]
 extern crate jsonrpc_core;
 extern crate log;
 #[macro_use]

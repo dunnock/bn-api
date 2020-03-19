@@ -1,11 +1,11 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
-use bigneon_db::schema::{orders, refunds};
-use bigneon_db::utils::dates;
-use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::prelude::*;
 use chrono::{Duration, Timelike};
 use chrono_tz::Tz;
+use db::dev::TestProject;
+use db::models::*;
+use db::schema::{orders, refunds};
+use db::utils::dates;
+use db::utils::errors::ErrorCode::ValidationError;
 use diesel;
 use diesel::prelude::*;
 use diesel::sql_types;

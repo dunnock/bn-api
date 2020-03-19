@@ -1,4 +1,4 @@
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::extractors::*;
 use crate::helpers::*;
 use crate::server::GetAppState;
@@ -7,10 +7,12 @@ use actix_web::error;
 use actix_web::http::header::*;
 use actix_web::http::{Method, StatusCode};
 use actix_web::{dev, FromRequest, HttpRequest, HttpResponse};
-use bigneon_db::models::*;
-use bigneon_http::caching::*;
+use db::models::*;
 use futures::future::{ok, Ready};
+use http::caching::*;
 use itertools::Itertools;
+use log::Level;
+use logging::jlog;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use uuid::Uuid;
@@ -77,7 +79,7 @@ impl CacheResource {
 
     // Identify caching action and data based on request
     // When resulting in Cache::Hit route handler will be skipped
-    async fn start(&self, request: &HttpRequest) -> Cache {
+    fn start(&self, request: &HttpRequest) -> Cache {
         let mut cache_configuration = CacheConfiguration::new();
         if request.method() == Method::GET {
             if let Ok(url) = url::Url::parse(&request.uri().to_string()) {
@@ -98,7 +100,7 @@ impl CacheResource {
             let config = state.config.clone();
 
             if self.cache_users_by != CacheUsersBy::None {
-                let user = match OptionalUser::from_request(request, &mut dev::Payload::None).await {
+                let user = match OptionalUser::from_request(request, &mut dev::Payload::None).into_inner() {
                     Ok(user) => user,
                     Err(error) => {
                         cache_configuration.error = true;
@@ -312,25 +314,31 @@ where
     fn call(&mut self, request: Self::Request) -> Self::Future {
         let service = self.service.clone();
         let resource = self.resource.clone();
-        Box::pin(async move {
-            let (http_req, payload) = request.into_parts();
-            let cache = resource.start(&http_req).await;
-            let (response, status) = match cache {
-                Cache::Hit(response, status) => (dev::ServiceResponse::new(http_req, response), status),
-                Cache::Miss(status) => {
-                    let request = dev::ServiceRequest::from_parts(http_req, payload)
-                        .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
-                    let fut = service.borrow_mut().call(request);
-                    (fut.await?, status)
-                }
-                Cache::Skip => {
-                    let request = dev::ServiceRequest::from_parts(http_req, payload)
-                        .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
-                    let fut = service.borrow_mut().call(request);
-                    return fut.await;
-                }
-            };
-            Ok(CacheResource::update(status, response))
-        })
+        let (http_req, payload) = request.into_parts();
+        let cache = resource.start(&http_req);
+
+        match cache {
+            Cache::Hit(response, status) => {
+                jlog!(Level::Debug, "bigneon_api::cache_resource", "Cache hit", {"cache_user_key": status.user_key, "cache_response": status.cache_response});
+                let response = dev::ServiceResponse::new(http_req, response);
+                Box::pin(async move { Ok(CacheResource::update(status, response)) })
+            }
+            Cache::Miss(status) => {
+                jlog!(Level::Debug, "bigneon_api::cache_resource", "Cache miss", {"cache_user_key": status.user_key, "cache_response": status.cache_response});
+                let request = dev::ServiceRequest::from_parts(http_req, payload)
+                    .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
+                let fut = service.borrow_mut().call(request);
+                Box::pin(async move {
+                    let response = fut.await?;
+                    Ok(CacheResource::update(status, response))
+                })
+            }
+            Cache::Skip => {
+                let request = dev::ServiceRequest::from_parts(http_req, payload)
+                    .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
+                let fut = service.borrow_mut().call(request);
+                Box::pin(fut)
+            }
+        }
     }
 }

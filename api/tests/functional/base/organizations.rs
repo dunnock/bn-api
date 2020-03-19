@@ -7,12 +7,12 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::organizations;
-use bigneon_api::controllers::organizations::*;
-use bigneon_api::extractors::*;
-use bigneon_api::models::{OrganizationUserPathParameters, PathParameters};
-use bigneon_db::models::*;
+use api::controllers::organizations;
+use api::controllers::organizations::*;
+use api::extractors::*;
+use api::models::{OrganizationUserPathParameters, PathParameters};
 use chrono::NaiveDateTime;
+use db::models::*;
 use serde_json;
 use std::collections::HashMap;
 use uuid::Uuid;

@@ -1,7 +1,7 @@
 use crate::auth::user::User;
 use crate::communications::{mailers, smsers};
 use crate::controllers::tickets::transfer_tickets_on_blockchain;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::helpers::application;
 use crate::models::*;
@@ -11,8 +11,8 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::{User as DbUser, *};
 use chrono::prelude::*;
+use db::models::{User as DbUser, *};
 use diesel::PgConnection;
 use itertools::Itertools;
 
@@ -25,7 +25,7 @@ pub struct TransferFilters {
 
 pub async fn show_by_transfer_key(
     (connection, path): (Connection, Path<PathParameters>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let transfer = Transfer::find_by_transfer_key(path.id, connection)?;
     // if you have the transfer key, you can view the transfer
@@ -40,7 +40,7 @@ pub async fn index(
         Path<OptionalPathParameters>,
         User,
     ),
-) -> Result<WebPayload<DisplayTransfer>, BigNeonError> {
+) -> Result<WebPayload<DisplayTransfer>, ApiError> {
     let connection = connection.get();
     let mut lookup_user_id = auth_user.id();
 
@@ -103,7 +103,7 @@ pub async fn activity(
         Query<PastOrUpcomingParameters>,
         User,
     ),
-) -> Result<WebPayload<UserTransferActivitySummary>, BigNeonError> {
+) -> Result<WebPayload<UserTransferActivitySummary>, ApiError> {
     let connection = connection.get();
     auth_user.requires_scope(Scopes::TransferReadOwn)?;
 
@@ -122,7 +122,7 @@ pub async fn activity(
 
 pub async fn cancel(
     (connection, path, auth_user, state): (Connection, Path<PathParameters>, User, Data<AppState>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let transfer = Transfer::find(path.id, connection)?;
     check_transfer_cancel_access(&transfer, &auth_user, connection)?;
@@ -184,11 +184,7 @@ pub async fn cancel(
     Ok(HttpResponse::Ok().json(&transfer.for_display(connection)?))
 }
 
-fn check_transfer_cancel_access(
-    transfer: &Transfer,
-    user: &User,
-    connection: &PgConnection,
-) -> Result<(), BigNeonError> {
+fn check_transfer_cancel_access(transfer: &Transfer, user: &User, connection: &PgConnection) -> Result<(), ApiError> {
     if transfer.status == TransferStatus::Completed {
         if !user.has_scope(Scopes::TransferCancelAccepted)? {
             application::forbidden::<HttpResponse>(

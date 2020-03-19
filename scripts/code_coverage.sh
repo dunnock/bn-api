@@ -80,7 +80,7 @@ set -e
 echo "Acquire all build and test files for coverage check.."
 CCOV_FILENAME="ccov.zip"
 CCOV_PATH="${REPORT_DIR}${CCOV_FILENAME}"
-zip -0 ${CCOV_PATH} `find ${BUILD_DIR} \( -name "bigneon_api*.gc*" \) -print`;
+zip -0 ${CCOV_PATH} `find ${BUILD_DIR} \( -name "api*.gc*" \) -print`;
 
 echo "Perform grcov code coverage.."
 LCOV_FILENAME="lcov.info"

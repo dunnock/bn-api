@@ -1,6 +1,6 @@
 [package]
-name = "bigneon_api"
-version = "1.9.47"
+name = "api"
+version = "1.9.50"
 authors = ["CjS77"]
 license = "BSD-3"
 repository = "https://github.com/big-neon/bn-api/"
@@ -17,9 +17,9 @@ actix-web-actors = "2.0"
 actix-service = "1.0"
 actix-files = "0.2"
 actix-http = "1.0.1"
-bigneon_db = { path = "../db" }
-bigneon_http = { path = "../http" }
-bigneon_caching_derive = { path = "../http/caching_derive" }
+db = { path = "../db", package ="bigneon_db" }
+http = { path = "../http", package="bigneon_http" }
+caching_derive = { path = "../http/caching_derive", package="bigneon_caching_derive" }
 branch_rs = {path="../branch_rs"}
 bytes = "0.5"
 chrono = {version = "0.4", features = ["serde"]}

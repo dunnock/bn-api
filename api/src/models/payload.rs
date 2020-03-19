@@ -1,9 +1,9 @@
-use crate::errors::BigNeonError;
+use crate::errors::ApiError;
 use actix_web::http::StatusCode;
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use actix_web::{Error, Responder};
-use bigneon_db::models::Payload;
+use db::models::Payload;
 use futures::future::{err, ok, Ready};
 use serde::Serialize;
 
@@ -26,7 +26,7 @@ where
         &self.1
     }
 
-    pub fn into_http_response(self) -> Result<HttpResponse, BigNeonError> {
+    pub fn into_http_response(self) -> Result<HttpResponse, ApiError> {
         let body = serde_json::to_string(&self.1)?;
         Ok(HttpResponse::build(self.0).content_type("application/json").body(body))
     }

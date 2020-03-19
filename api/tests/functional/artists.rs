@@ -7,10 +7,10 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::artists;
-use bigneon_api::extractors::*;
-use bigneon_api::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest};
-use bigneon_db::prelude::*;
+use api::controllers::artists;
+use api::extractors::*;
+use api::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest};
+use db::prelude::*;
 use serde_json;
 use std::collections::HashMap;
 use uuid::Uuid;

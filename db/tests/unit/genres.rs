@@ -1,5 +1,5 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::Genre;
+use db::dev::TestProject;
+use db::models::Genre;
 
 #[test]
 fn format_name() {

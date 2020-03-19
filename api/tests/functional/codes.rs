@@ -3,13 +3,13 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
-use bigneon_api::controllers::codes::{self, *};
-use bigneon_api::extractors::*;
-use bigneon_api::models::PathParameters;
-use bigneon_db::models::*;
+use api::controllers::codes::{self, *};
+use api::extractors::*;
+use api::models::PathParameters;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono::NaiveDateTime;
+use db::models::*;
 
 #[cfg(test)]
 mod show_tests {

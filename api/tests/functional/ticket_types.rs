@@ -3,12 +3,12 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
-use bigneon_api::controllers::ticket_types;
-use bigneon_api::controllers::ticket_types::*;
-use bigneon_api::extractors::*;
-use bigneon_api::models::{EventTicketPathParameters, PathParameters};
-use bigneon_db::models::*;
+use api::controllers::ticket_types;
+use api::controllers::ticket_types::*;
+use api::extractors::*;
+use api::models::{EventTicketPathParameters, PathParameters};
 use chrono::prelude::*;
+use db::models::*;
 use serde_json;
 use uuid::Uuid;
 

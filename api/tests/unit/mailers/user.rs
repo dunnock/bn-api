@@ -1,8 +1,8 @@
 use crate::support::database::TestDatabase;
-use bigneon_api::communications::mailers;
-use bigneon_api::config::Config;
-use bigneon_db::models::concerns::users::password_resetable::PasswordResetable;
-use bigneon_db::models::{CommAddress, Environment};
+use api::communications::mailers;
+use api::config::Config;
+use db::models::concerns::users::password_resetable::PasswordResetable;
+use db::models::{CommAddress, Environment};
 
 #[test]
 fn password_reset_email() {

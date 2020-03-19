@@ -4,14 +4,14 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 pub trait DeepLinker {
-    fn create_deep_link(&self, raw_link: &str) -> Result<String, BigNeonError>;
+    fn create_deep_link(&self, raw_link: &str) -> Result<String, ApiError>;
     fn create_deep_link_with_fallback(&self, raw_link: &str) -> String;
-    fn create_deep_link_with_alias(&self, raw_link: &str, alias: &str) -> Result<String, BigNeonError>;
+    fn create_deep_link_with_alias(&self, raw_link: &str, alias: &str) -> Result<String, ApiError>;
     fn create_with_custom_data(
         &self,
         fallback_link: &str,
         custom_data: HashMap<String, Value>,
-    ) -> Result<String, BigNeonError>;
+    ) -> Result<String, ApiError>;
 }
 
 pub struct BranchDeepLinker {
@@ -26,7 +26,7 @@ impl BranchDeepLinker {
 }
 
 impl DeepLinker for BranchDeepLinker {
-    fn create_deep_link(&self, raw_link: &str) -> Result<String, BigNeonError> {
+    fn create_deep_link(&self, raw_link: &str) -> Result<String, ApiError> {
         Ok(self.client.links.create(DeepLink {
             data: DeepLinkData {
                 desktop_url: Some(raw_link.to_string()),
@@ -51,7 +51,7 @@ impl DeepLinker for BranchDeepLinker {
         }
     }
 
-    fn create_deep_link_with_alias(&self, raw_link: &str, alias: &str) -> Result<String, BigNeonError> {
+    fn create_deep_link_with_alias(&self, raw_link: &str, alias: &str) -> Result<String, ApiError> {
         Ok(self.client.links.create(DeepLink {
             data: DeepLinkData {
                 desktop_url: Some(raw_link.to_string()),
@@ -72,7 +72,7 @@ impl DeepLinker for BranchDeepLinker {
         &self,
         fallback_link: &str,
         custom_data: HashMap<String, Value>,
-    ) -> Result<String, BigNeonError> {
+    ) -> Result<String, ApiError> {
         Ok(self.client.links.create(DeepLink {
             data: DeepLinkData {
                 desktop_url: Some(fallback_link.to_string()),

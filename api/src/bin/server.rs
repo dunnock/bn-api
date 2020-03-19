@@ -1,5 +1,5 @@
 //#![deny(unused_extern_crates)]
-extern crate bigneon_api;
+extern crate api;
 extern crate dotenv;
 #[macro_use]
 extern crate log;
@@ -9,8 +9,8 @@ extern crate logging;
 extern crate serde_json;
 extern crate clap;
 
-use bigneon_api::config::Config;
-use bigneon_api::server::Server;
+use api::config::Config;
+use api::server::Server;
 use clap::*;
 use dotenv::dotenv;
 use log::Level::*;

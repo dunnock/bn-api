@@ -1,9 +1,9 @@
 use crate::config::Config;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::domain_events::executor_future::ExecutorFuture;
 use crate::domain_events::routing::DomainActionExecutor;
 use crate::utils::communication;
-use bigneon_db::prelude::*;
+use db::prelude::*;
 
 pub struct SendCommunicationExecutor {
     config: Config,

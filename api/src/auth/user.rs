@@ -1,10 +1,10 @@
 use crate::errors::*;
 use crate::extractors::OptionalUser;
 use actix_web::{HttpRequest, Result};
-use bigneon_db::models::User as DbUser;
-use bigneon_db::models::{scopes, Event, EventUser, Order, Organization, Roles, Scopes};
-use bigneon_db::prelude::errors::EnumParseError;
-use bigneon_db::prelude::Optional;
+use db::models::User as DbUser;
+use db::models::{scopes, Event, EventUser, Order, Organization, Roles, Scopes};
+use db::prelude::errors::EnumParseError;
+use db::prelude::Optional;
 use diesel::PgConnection;
 use log::Level::Warn;
 use logging::*;
@@ -63,7 +63,7 @@ impl User {
         event_id: Option<Uuid>,
         connection: Option<&PgConnection>,
         log_on_failure: bool,
-    ) -> Result<bool, BigNeonError> {
+    ) -> Result<bool, ApiError> {
         if self.global_scopes_only {
             if self.global_scopes.contains(&scope.to_string()) {
                 return Ok(true);
@@ -117,7 +117,7 @@ impl User {
         Ok(false)
     }
 
-    pub fn has_scope(&self, scope: Scopes) -> Result<bool, BigNeonError> {
+    pub fn has_scope(&self, scope: Scopes) -> Result<bool, ApiError> {
         self.check_scope_access(scope, None, None, None, false)
     }
 
@@ -127,11 +127,11 @@ impl User {
         organization: &Organization,
         event_id: Uuid,
         conn: &PgConnection,
-    ) -> Result<bool, BigNeonError> {
+    ) -> Result<bool, ApiError> {
         self.check_scope_access(scope, Some(organization), Some(event_id), Some(conn), false)
     }
 
-    pub fn has_scope_for_order(&self, scope: Scopes, order: &Order, conn: &PgConnection) -> Result<bool, BigNeonError> {
+    pub fn has_scope_for_order(&self, scope: Scopes, order: &Order, conn: &PgConnection) -> Result<bool, ApiError> {
         let mut has_scope = false;
         for event in order.events(conn)? {
             if self.check_scope_access(
@@ -152,7 +152,7 @@ impl User {
         scope: Scopes,
         organization: &Organization,
         conn: &PgConnection,
-    ) -> Result<bool, BigNeonError> {
+    ) -> Result<bool, ApiError> {
         self.check_scope_access(scope, Some(organization), None, Some(conn), false)
     }
 
@@ -165,19 +165,14 @@ impl User {
         jlog!(Warn, "Unauthorized access attempt", logging_data);
     }
 
-    pub fn requires_scope(&self, scope: Scopes) -> Result<(), BigNeonError> {
+    pub fn requires_scope(&self, scope: Scopes) -> Result<(), ApiError> {
         if self.check_scope_access(scope, None, None, None, true)? {
             return Ok(());
         }
         Err(AuthError::new(AuthErrorType::Unauthorized, MISSING_PERMISSIONS_MESSAGING.to_string()).into())
     }
 
-    pub fn requires_scope_for_order(
-        &self,
-        scope: Scopes,
-        order: &Order,
-        conn: &PgConnection,
-    ) -> Result<(), BigNeonError> {
+    pub fn requires_scope_for_order(&self, scope: Scopes, order: &Order, conn: &PgConnection) -> Result<(), ApiError> {
         if !self.has_scope_for_order(scope, order, conn)? {
             let mut logging_data = HashMap::new();
             logging_data.insert("accessed_scope", json!(scope.to_string()));
@@ -196,7 +191,7 @@ impl User {
         organization: &Organization,
         event: &Event,
         conn: &PgConnection,
-    ) -> Result<(), BigNeonError> {
+    ) -> Result<(), ApiError> {
         if self.check_scope_access(scope, Some(organization), Some(event.id), Some(conn), true)? {
             return Ok(());
         }
@@ -208,7 +203,7 @@ impl User {
         scope: Scopes,
         organization: &Organization,
         conn: &PgConnection,
-    ) -> Result<(), BigNeonError> {
+    ) -> Result<(), ApiError> {
         if self.check_scope_access(scope, Some(organization), None, Some(conn), true)? {
             return Ok(());
         }

@@ -6,12 +6,12 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::ticket_types;
-use bigneon_api::controllers::ticket_types::*;
-use bigneon_api::extractors::*;
-use bigneon_api::models::{AdminDisplayTicketType, EventTicketPathParameters, PathParameters};
-use bigneon_db::models::*;
+use api::controllers::ticket_types;
+use api::controllers::ticket_types::*;
+use api::extractors::*;
+use api::models::{AdminDisplayTicketType, EventTicketPathParameters, PathParameters};
 use chrono::prelude::*;
+use db::models::*;
 use serde_json;
 
 pub async fn create(role: Roles, should_test_succeed: bool) {

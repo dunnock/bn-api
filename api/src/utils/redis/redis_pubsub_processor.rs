@@ -10,7 +10,7 @@ use std::time::Duration;
 use log::Level::*;
 
 use crate::config::Config;
-use crate::db::*;
+use crate::database::*;
 use crate::errors::*;
 use crate::models::*;
 use crate::utils::redis::*;
@@ -21,7 +21,7 @@ use uuid::Uuid;
 pub struct RedisPubSubProcessor {
     config: Config,
     database: Database,
-    worker_threads: Vec<(Sender<()>, JoinHandle<Result<(), BigNeonError>>)>,
+    worker_threads: Vec<(Sender<()>, JoinHandle<Result<(), ApiError>>)>,
     websocket_clients: Arc<Mutex<HashMap<Uuid, Vec<Addr<EventWebSocket>>>>>,
 }
 
@@ -44,7 +44,7 @@ impl RedisPubSubProcessor {
         database: Database,
         websocket_clients: Arc<Mutex<HashMap<Uuid, Vec<Addr<EventWebSocket>>>>>,
         rx: Receiver<()>,
-    ) -> Result<(), BigNeonError> {
+    ) -> Result<(), ApiError> {
         if let Some(mut connection) = database
             .cache_database
             .clone()

@@ -10,11 +10,11 @@ pub async fn send_push_notification_async(
     tokens: &[String],
     body: &str,
     custom_data: Option<Value>,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     send_push_notification(tokens, body, custom_data)
 }
 
-pub fn send_push_notification(tokens: &[String], body: &str, custom_data: Option<Value>) -> Result<(), BigNeonError> {
+pub fn send_push_notification(tokens: &[String], body: &str, custom_data: Option<Value>) -> Result<(), ApiError> {
     let push_notifier = PushNotifier::new().gzip_policy(GzipPolicy::Always);
 
     let mut msgs = vec![];

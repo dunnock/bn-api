@@ -1,4 +1,4 @@
-use bigneon_db::models::{deserialize_unless_blank, NewUser, User};
+use db::models::{deserialize_unless_blank, NewUser, User};
 
 #[derive(Deserialize)]
 pub struct RegisterRequest {

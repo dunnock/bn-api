@@ -6,11 +6,11 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::settlements::{self, *};
-use bigneon_api::extractors::*;
-use bigneon_api::models::PathParameters;
-use bigneon_db::prelude::*;
-use bigneon_db::utils::dates;
+use api::controllers::settlements::{self, *};
+use api::extractors::*;
+use api::models::PathParameters;
+use db::prelude::*;
+use db::utils::dates;
 use serde_json;
 use uuid::Uuid;
 

@@ -4,20 +4,16 @@ use crate::utils::expo;
 use crate::utils::sendgrid::mail as sendgrid;
 use crate::utils::twilio;
 use crate::utils::webhook;
-use bigneon_db::models::enums::*;
-use bigneon_db::models::*;
-use bigneon_db::services::CountryLookup;
 use customer_io;
+use db::models::enums::*;
+use db::models::*;
+use db::services::CountryLookup;
 use diesel::PgConnection;
 use log::Level::Trace;
 use serde_json::Value;
 use std::collections::HashMap;
 
-pub async fn send_async(
-    domain_action: &DomainAction,
-    config: &Config,
-    conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+pub async fn send_async(domain_action: &DomainAction, config: &Config, conn: &PgConnection) -> Result<(), ApiError> {
     let communication: Communication = match serde_json::from_value(domain_action.payload.clone()) {
         Ok(v) => v,
         Err(e) => return Err(e.into()),
@@ -76,7 +72,7 @@ async fn send_email_template(
     conn: &PgConnection,
     communication: Communication,
     destination_addresses: &Vec<String>,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     if communication.template_id.is_none() {
         return Err(ApplicationError::new(
             "Template ID must be specified when communication type is EmailTemplate".to_string(),
@@ -103,7 +99,7 @@ async fn send_email_template(
     } else {
         match template_id.parse() {
             Ok(t) => t,
-            Err(e) => return Err(BigNeonError::from(e)),
+            Err(e) => return Err(ApiError::from(e)),
         }
     };
 
@@ -168,7 +164,7 @@ pub fn customer_io_send_email(
     mut template_data: HashMap<String, Value>,
     domain_action: &DomainAction,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     // new() try's to parse base url to URL
     let client = customer_io::CustomerIoClient::new(
         config.customer_io.api_key.clone(),

@@ -1,6 +1,6 @@
 use crate::models::UserDisplayTicketType;
-use bigneon_db::prelude::*;
 use chrono::NaiveDateTime;
+use db::prelude::*;
 use serde_json::Value;
 use uuid::Uuid;
 

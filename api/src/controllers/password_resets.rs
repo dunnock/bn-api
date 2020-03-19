@@ -1,14 +1,14 @@
 use crate::auth::TokenResponse;
 use crate::communications::mailers;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::server::AppState;
 use actix_web::{web::Data, HttpResponse};
-use bigneon_db::models::concerns::users::password_resetable::*;
-use bigneon_db::models::User;
-use bigneon_db::utils::errors::Optional;
+use db::models::concerns::users::password_resetable::*;
+use db::models::User;
+use db::utils::errors::Optional;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -24,7 +24,7 @@ pub struct UpdatePasswordResetParameters {
 
 pub async fn create(
     (state, connection, parameters): (Data<AppState>, Connection, Json<CreatePasswordResetParameters>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let request_pending_response = Ok(HttpResponse::Created().json(json!({
         "message": format!("Your request has been received; {} will receive an email shortly with a link to reset your password if it is an account on file.", parameters.email)
     })));
@@ -47,7 +47,7 @@ pub async fn create(
 
 pub async fn update(
     (state, connection, parameters): (Data<AppState>, Connection, Json<UpdatePasswordResetParameters>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let user =
         User::consume_password_reset_token(&parameters.password_reset_token, &parameters.password, connection.get())
             .optional()?;

@@ -7,10 +7,10 @@ use actix_web::{
     web::{Path, Query},
     FromRequest, HttpResponse,
 };
-use bigneon_api::controllers::organization_invites::{self, InviteResponseQuery};
-use bigneon_api::extractors::OptionalUser;
-use bigneon_api::models::OrganizationInvitePathParameters;
-use bigneon_db::models::*;
+use api::controllers::organization_invites::{self, InviteResponseQuery};
+use api::extractors::OptionalUser;
+use api::models::OrganizationInvitePathParameters;
+use db::models::*;
 
 #[cfg(test)]
 mod create_tests {

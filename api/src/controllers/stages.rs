@@ -1,10 +1,10 @@
 use crate::auth::user::User as AuthUser;
-use crate::db::Connection;
+use crate::database::Connection;
 use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
+use db::models::*;
 
 use crate::errors::*;
 use crate::extractors::*;
@@ -13,7 +13,7 @@ use diesel::PgConnection;
 
 pub async fn index(
     (connection, path_parameters, query_parameters): (Connection, Path<PathParameters>, Query<PagingParameters>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let stages = Stage::find_by_venue_id(path_parameters.id, connection.get())?;
 
     Ok(HttpResponse::Ok().json(&Payload::from_data(
@@ -24,7 +24,7 @@ pub async fn index(
     )))
 }
 
-pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let stage = Stage::find(parameters.id, connection)?;
 
@@ -40,7 +40,7 @@ pub struct CreateStage {
 
 pub async fn create(
     (connection, parameters, create_stage, user): (Connection, Path<PathParameters>, Json<CreateStage>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let venue = Venue::find(parameters.id, connection)?;
     check_access(&venue, &user, connection)?;
@@ -63,7 +63,7 @@ pub async fn update(
         Json<StageEditableAttributes>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let stage = Stage::find(parameters.id, connection)?;
     let venue = Venue::find(stage.venue_id, connection)?;
@@ -75,7 +75,7 @@ pub async fn update(
 
 pub async fn delete(
     (connection, parameters, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let stage = Stage::find(parameters.id, connection)?;
     let venue = Venue::find(stage.venue_id, connection)?;
@@ -85,7 +85,7 @@ pub async fn delete(
     Ok(HttpResponse::Ok().json(json!({})))
 }
 
-fn check_access(venue: &Venue, user: &AuthUser, connection: &PgConnection) -> Result<(), BigNeonError> {
+fn check_access(venue: &Venue, user: &AuthUser, connection: &PgConnection) -> Result<(), ApiError> {
     let mut has_create_access = false;
     for organization in venue.organizations(connection)? {
         has_create_access =

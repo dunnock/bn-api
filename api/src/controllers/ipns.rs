@@ -1,14 +1,14 @@
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use crate::extractors::Json;
 use actix_web::HttpResponse;
-use bigneon_db::prelude::*;
-use bigneon_db::utils::dates::IntoDateBuilder;
+use db::prelude::*;
+use db::utils::dates::IntoDateBuilder;
 use globee::GlobeeIpnRequest;
 use log::Level::Debug;
 use uuid::Uuid;
 
-pub async fn globee((data, conn): (Json<GlobeeIpnRequest>, Connection)) -> Result<HttpResponse, BigNeonError> {
+pub async fn globee((data, conn): (Json<GlobeeIpnRequest>, Connection)) -> Result<HttpResponse, ApiError> {
     let data = data.into_inner();
     jlog!(Debug, "Globee IPN received", { "data": &data });
     let order_id = match data.custom_payment_id {

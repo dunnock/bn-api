@@ -13,7 +13,7 @@ pub(crate) fn set_cached_value<T: Serialize>(
     config: &Config,
     http_response: &HttpResponse,
     query: &T,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let body = application::unwrap_body_to_string(http_response).map_err(|e| ApplicationError::new(e.to_string()))?;
     let cache_period = config.redis_cache_period;
     let query_serialized = serde_json::to_string(query)?;
@@ -47,7 +47,7 @@ pub(crate) fn get_cached_value<T: Serialize>(
 pub(crate) fn delete_by_key_fragment(
     mut cache_connection: impl CacheConnection,
     key_fragment: String,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     if let Err(err) = cache_connection.delete_by_key_fragment(&key_fragment) {
         error!("helpers::caching#delete_by_key_fragment: {:?}", err);
     }
@@ -58,7 +58,7 @@ pub(crate) fn publish<T: Serialize>(
     mut cache_connection: impl CacheConnection,
     redis_pubsub_channel: RedisPubSubChannel,
     message: T,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     if let Err(err) = cache_connection.publish(&redis_pubsub_channel.to_string(), &serde_json::to_string(&message)?) {
         error!("helpers::caching#publish: {:?}", err);
     }

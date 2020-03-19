@@ -1,5 +1,5 @@
 use crate::auth::user::User;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::models::PathParameters;
@@ -9,11 +9,11 @@ use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
+use db::models::*;
 
 pub async fn index(
     (connection, query_parameters): (Connection, Query<PagingParameters>),
-) -> Result<WebPayload<Region>, BigNeonError> {
+) -> Result<WebPayload<Region>, ApiError> {
     //TODO refactor query using paging parameters
     let regions = Region::all(connection.get())?;
 
@@ -23,14 +23,14 @@ pub async fn index(
     ))
 }
 
-pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((connection, parameters): (Connection, Path<PathParameters>)) -> Result<HttpResponse, ApiError> {
     let region = Region::find(parameters.id, connection.get())?;
     Ok(HttpResponse::Ok().json(&region))
 }
 
 pub async fn create(
     (connection, new_region, user): (Connection, Json<NewRegion>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::RegionWrite)?;
     let connection = connection.get();
     let region = new_region.into_inner().commit(connection)?;
@@ -44,7 +44,7 @@ pub async fn update(
         Json<RegionEditableAttributes>,
         User,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::RegionWrite)?;
     let connection = connection.get();
     let region = Region::find(parameters.id, connection)?;

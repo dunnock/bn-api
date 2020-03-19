@@ -9,10 +9,8 @@ pub struct CacheError {
 }
 
 impl CacheError {
-    pub fn new(reason: &str) -> CacheError {
-        CacheError {
-            reason: reason.to_string(),
-        }
+    pub fn new(reason: String) -> CacheError {
+        CacheError { reason }
     }
 }
 
@@ -24,18 +22,18 @@ impl Error for CacheError {
 
 impl fmt::Display for CacheError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", self.reason)
+        write!(f, "{}", &self.reason)
     }
 }
 
 impl From<R2D2Error> for CacheError {
     fn from(e: R2D2Error) -> Self {
-        CacheError::new(e.description())
+        CacheError::new(e.to_string())
     }
 }
 
 impl From<RedisError> for CacheError {
     fn from(e: RedisError) -> Self {
-        CacheError::new(e.description())
+        CacheError::new(e.to_string())
     }
 }

@@ -1,7 +1,7 @@
 use crate::auth::user::User;
 use crate::controllers::holds::UpdateHoldRequest;
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use crate::extractors::*;
 use crate::models::{PathParameters, WebPayload, WebResult};
 use actix_web::{
@@ -9,12 +9,12 @@ use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::models::*;
 
 pub async fn index(
     (conn, path, query_parameters, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),
-) -> Result<WebPayload<DisplayHold>, BigNeonError> {
+) -> Result<WebPayload<DisplayHold>, ApiError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::CompRead, &hold.organization(conn)?, conn)?;
@@ -42,7 +42,7 @@ pub async fn index(
     Ok(WebPayload::new(StatusCode::OK, payload))
 }
 
-pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::CompRead, &hold.organization(conn)?, conn)?;
@@ -65,7 +65,7 @@ pub struct NewCompRequest {
 
 pub async fn create(
     (conn, new_comp, path, user): (Connection, Json<NewCompRequest>, Path<PathParameters>, User),
-) -> Result<WebResult<DisplayHold>, BigNeonError> {
+) -> Result<WebResult<DisplayHold>, ApiError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::CompWrite, &hold.organization(conn)?, conn)?;
@@ -88,7 +88,7 @@ pub async fn create(
 
 pub async fn update(
     (conn, req, path, user): (Connection, Json<UpdateHoldRequest>, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
 
     let comp = Hold::find(path.id, conn)?;
@@ -104,9 +104,7 @@ pub async fn update(
     Ok(HttpResponse::Ok().json(comp))
 }
 
-pub async fn destroy(
-    (conn, path, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let hold = Hold::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::CompWrite, &hold.organization(conn)?, conn)?;

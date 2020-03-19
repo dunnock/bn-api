@@ -1,5 +1,5 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
+use db::dev::TestProject;
+use db::prelude::*;
 use std::collections::HashMap;
 use uuid::Uuid;
 use validator::Validate;

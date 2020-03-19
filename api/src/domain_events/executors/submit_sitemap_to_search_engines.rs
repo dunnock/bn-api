@@ -1,8 +1,8 @@
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::domain_events::executor_future::ExecutorFuture;
 use crate::domain_events::routing::DomainActionExecutor;
-use crate::errors::BigNeonError;
-use bigneon_db::prelude::*;
+use crate::errors::ApiError;
+use db::prelude::*;
 use futures::future;
 use log::Level;
 use reqwest::blocking::Client;
@@ -32,7 +32,7 @@ impl SubmitSitemapToSearchEnginesExecutor {
         }
     }
 
-    pub fn perform_job(&self, _action: &DomainAction, _conn: &Connection) -> Result<(), BigNeonError> {
+    pub fn perform_job(&self, _action: &DomainAction, _conn: &Connection) -> Result<(), ApiError> {
         // block this function if environmental variable is set
         if self.block_external_comms {
             return Ok(());
@@ -58,14 +58,14 @@ fn get_search_engine_url(se: SearchEngine, api_url: &String) -> String {
 
 // Ping a search engine to read the sitemap url,
 // do a http get to their giving url with the sitemap address to update
-fn ping_search_engines(api_url: &String) -> Result<(), BigNeonError> {
+fn ping_search_engines(api_url: &String) -> Result<(), ApiError> {
     http_get(&get_search_engine_url(SearchEngine::Google, api_url))?;
     http_get(&get_search_engine_url(SearchEngine::Bing, api_url))?;
     Ok(())
 }
 
 // Http Get to a giving url, returning the body as a String
-fn http_get(url: &String) -> Result<String, BigNeonError> {
+fn http_get(url: &String) -> Result<String, ApiError> {
     let client = Client::new();
     let s = client.get(url).send()?.text()?;
     Ok(s)

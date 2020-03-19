@@ -1,8 +1,8 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
-use bigneon_db::utils::dates;
 use chrono::{Datelike, Duration, TimeZone, Utc};
 use chrono_tz::Tz;
+use db::dev::TestProject;
+use db::prelude::*;
+use db::utils::dates;
 use diesel;
 use diesel::sql_types;
 use diesel::RunQueryDsl;

@@ -1,7 +1,7 @@
 use crate::config::Config;
-use crate::errors::{ApplicationError, BigNeonError};
+use crate::errors::{ApiError, ApplicationError};
 use crate::utils::webhook_adapters::WebhookAdapter;
-use bigneon_db::models::*;
+use db::models::*;
 use log::Level::Debug;
 use serde_json::Value;
 use std::collections::hash_map::RandomState;
@@ -30,7 +30,7 @@ impl WebhookAdapter for CustomerIoWebhookAdapter {
         self.api_key = config["api_key"].as_str().unwrap().to_string();
     }
 
-    fn send(&self, _webhook_urls: &[String], payload: HashMap<String, Value, RandomState>) -> Result<(), BigNeonError> {
+    fn send(&self, _webhook_urls: &[String], payload: HashMap<String, Value, RandomState>) -> Result<(), ApiError> {
         let client = reqwest::blocking::Client::new();
         let mut payload = payload;
         payload.insert("environment".to_string(), json!(self.environment));
@@ -70,7 +70,7 @@ impl CustomerIoWebhookAdapter {
         &self,
         client: reqwest::blocking::RequestBuilder,
         payload: &HashMap<String, Value, RandomState>,
-    ) -> Result<(), BigNeonError> {
+    ) -> Result<(), ApiError> {
         jlog!(
             Debug,
             "bigneon::domain_actions",
@@ -95,7 +95,7 @@ impl CustomerIoWebhookAdapter {
         &self,
         payload: &HashMap<String, Value, RandomState>,
         user_id: &str,
-    ) -> Result<(), BigNeonError> {
+    ) -> Result<(), ApiError> {
         let client = reqwest::blocking::Client::new();
         let client = client
             .put(&format!("https://track.customer.io/api/v1/customers/{}", user_id))

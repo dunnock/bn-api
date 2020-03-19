@@ -1,11 +1,11 @@
 #![deny(unused_extern_crates)]
-use bigneon_api::config::Config;
-use bigneon_api::db::Database;
-use bigneon_api::utils::spotify;
-use bigneon_api::utils::ServiceLocator;
-use bigneon_db::prelude::*;
-use bigneon_db::schema::transfers;
+use api::config::Config;
+use api::database::Database;
+use api::utils::spotify;
+use api::utils::ServiceLocator;
 use clap::*;
+use db::prelude::*;
+use db::schema::transfers;
 use diesel::prelude::*;
 use dotenv::dotenv;
 use log::{error, info, Level::*};
@@ -228,7 +228,7 @@ fn update_customer_io_webhooks(site_id: Option<&str>, api_key: Option<&str>, dat
     let connection = database.get_connection().expect("Could not connect to database");
     let conn = connection.get();
     let publishers = DomainEventPublisher::find_all(conn).unwrap();
-    use bigneon_db::models::DomainEventTypes::*;
+    use db::models::DomainEventTypes::*;
     let event_types: Vec<DomainEventTypes> = vec![
         OrderCompleted,
         OrderRefund,

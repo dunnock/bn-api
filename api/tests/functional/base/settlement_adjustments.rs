@@ -2,10 +2,10 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
-use bigneon_api::controllers::settlement_adjustments::{self, NewSettlementAdjustmentRequest};
-use bigneon_api::extractors::Json;
-use bigneon_api::models::PathParameters;
-use bigneon_db::prelude::*;
+use api::controllers::settlement_adjustments::{self, NewSettlementAdjustmentRequest};
+use api::extractors::Json;
+use api::models::PathParameters;
+use db::prelude::*;
 use serde_json;
 
 pub async fn index(role: Roles, should_succeed: bool) {

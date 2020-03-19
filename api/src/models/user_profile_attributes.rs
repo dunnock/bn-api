@@ -1,4 +1,4 @@
-use bigneon_db::models::{deserialize_unless_blank, double_option_deserialize_unless_blank, UserEditableAttributes};
+use db::models::{deserialize_unless_blank, double_option_deserialize_unless_blank, UserEditableAttributes};
 use validator::Validate;
 
 #[derive(Default, Deserialize, Validate)]

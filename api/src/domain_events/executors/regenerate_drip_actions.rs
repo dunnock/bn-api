@@ -1,9 +1,9 @@
 use crate::config::Config;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::domain_events::executor_future::ExecutorFuture;
 use crate::domain_events::routing::DomainActionExecutor;
 use crate::errors::*;
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use futures::future;
 use log::Level::Error;
 
@@ -28,7 +28,7 @@ impl RegenerateDripActionsExecutor {
         RegenerateDripActionsExecutor { config }
     }
 
-    pub fn perform_job(&self, action: &DomainAction, conn: &Connection) -> Result<(), BigNeonError> {
+    pub fn perform_job(&self, action: &DomainAction, conn: &Connection) -> Result<(), ApiError> {
         let conn = conn.get();
         let id = action
             .main_table_id

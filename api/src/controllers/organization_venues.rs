@@ -1,19 +1,19 @@
 use crate::auth::user::User;
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use crate::extractors::Json;
 use crate::models::{PathParameters, WebPayload};
 use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::scopes::Scopes;
-use bigneon_db::models::*;
+use db::models::scopes::Scopes;
+use db::models::*;
 use reqwest::StatusCode;
 
 pub async fn create(
     (conn, json, user): (Connection, Json<NewOrganizationVenue>, User),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::OrgVenueWrite)?;
     let connection = conn.get();
 
@@ -23,7 +23,7 @@ pub async fn create(
 
 pub async fn organizations_index(
     (conn, path, query, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),
-) -> Result<WebPayload<OrganizationVenue>, BigNeonError> {
+) -> Result<WebPayload<OrganizationVenue>, ApiError> {
     user.requires_scope(Scopes::OrgVenueRead)?;
     let connection = conn.get();
     let organization = Organization::find(path.id, connection)?;
@@ -34,7 +34,7 @@ pub async fn organizations_index(
 
 pub async fn venues_index(
     (conn, path, query, user): (Connection, Path<PathParameters>, Query<PagingParameters>, User),
-) -> Result<WebPayload<OrganizationVenue>, BigNeonError> {
+) -> Result<WebPayload<OrganizationVenue>, ApiError> {
     user.requires_scope(Scopes::OrgVenueRead)?;
     let connection = conn.get();
     let venue = Venue::find(path.id, connection)?;
@@ -43,16 +43,14 @@ pub async fn venues_index(
     Ok(WebPayload::new(StatusCode::OK, organization_venues))
 }
 
-pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, BigNeonError> {
+pub async fn show((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::OrgVenueRead)?;
     let connection = conn.get();
     let organization_venue = OrganizationVenue::find(path.id, connection)?;
     Ok(HttpResponse::Ok().json(organization_venue))
 }
 
-pub async fn destroy(
-    (conn, path, user): (Connection, Path<PathParameters>, User),
-) -> Result<HttpResponse, BigNeonError> {
+pub async fn destroy((conn, path, user): (Connection, Path<PathParameters>, User)) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::OrgVenueDelete)?;
     let connection = conn.get();
     let organization_venue = OrganizationVenue::find(path.id, connection)?;

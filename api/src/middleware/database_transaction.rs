@@ -1,5 +1,5 @@
-use crate::db::Connection;
-use crate::errors::BigNeonError;
+use crate::database::Connection;
+use crate::errors::ApiError;
 use actix_service::Service;
 use actix_web::dev;
 use actix_web::error;
@@ -10,11 +10,11 @@ use futures::future::{ok, Ready};
 use std::error::Error;
 
 pub trait RequestConnection {
-    fn connection(&self) -> Result<Connection, BigNeonError>;
+    fn connection(&self) -> Result<Connection, ApiError>;
 }
 
 impl RequestConnection for HttpRequest {
-    fn connection(&self) -> Result<Connection, BigNeonError> {
+    fn connection(&self) -> Result<Connection, ApiError> {
         Connection::from_request(&self, &mut dev::Payload::None).into_inner()
     }
 }
@@ -46,7 +46,7 @@ impl DatabaseTransaction {
                 Ok(_) => Ok(()),
                 Err(e) => {
                     error!("Diesel Error: {}", e.description());
-                    let error: BigNeonError = e.into();
+                    let error: ApiError = e.into();
                     Err(error)
                 }
             }

@@ -1,6 +1,6 @@
 use crate::payments::*;
 use ::globee::*;
-use bigneon_db::models::PaymentProviders;
+use db::models::PaymentProviders;
 use uuid::Uuid;
 
 pub struct GlobeePaymentProcessor {

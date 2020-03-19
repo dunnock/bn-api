@@ -1,9 +1,9 @@
 use crate::config::Config;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::domain_events::executor_future::ExecutorFuture;
 use crate::domain_events::routing::DomainActionExecutor;
 use crate::errors::*;
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use diesel::PgConnection;
 use futures::future;
 use itertools::Itertools;
@@ -33,7 +33,7 @@ impl BroadcastPushNotificationExecutor {
         }
     }
 
-    fn perform_job(&self, action: &DomainAction, conn: &Connection) -> Result<(), BigNeonError> {
+    fn perform_job(&self, action: &DomainAction, conn: &Connection) -> Result<(), ApiError> {
         let conn = conn.get();
         let broadcast_id = action.main_table_id.ok_or(ApplicationError::new(
             "No broadcast id attached to domain action".to_string(),
@@ -121,7 +121,7 @@ fn queue_push_notification(
     message: String,
     user: &User,
     conn: &PgConnection,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let tokens = user
         .push_notification_tokens(conn)?
         .into_iter()
@@ -165,7 +165,7 @@ fn queue_email_notification(
     message: String,
     email_address: &str,
     preview_email: Option<String>,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let email = match preview_email {
         None => CommAddress::from(email_address.to_string()),
         Some(e) => CommAddress::from(e),

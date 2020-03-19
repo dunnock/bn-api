@@ -1,10 +1,11 @@
 use crate::config::Config;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::domain_events::executor_future::ExecutorFuture;
 use crate::domain_events::routing::DomainActionExecutor;
+use crate::errors::ApiError;
 use crate::errors::ApplicationError;
 use crate::errors::BigNeonError;
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use futures::future::TryFutureExt;
 use globee::GlobeeClient;
 use globee::GlobeeIpnRequest;
@@ -40,7 +41,7 @@ impl ProcessPaymentIPNExecutor {
         }
     }
 
-    pub async fn perform_job(self, action: DomainAction, conn: Connection) -> Result<(), BigNeonError> {
+    pub async fn perform_job(self, action: DomainAction, conn: Connection) -> Result<(), ApiError> {
         let mut ipn: GlobeeIpnRequest = serde_json::from_value(action.payload.clone())?;
         if ipn.custom_payment_id.is_none() {
             return Err(

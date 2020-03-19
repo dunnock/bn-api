@@ -1,8 +1,9 @@
 use crate::auth::default_token_issuer::DefaultTokenIssuer;
-use crate::errors::{ApplicationError, BigNeonError};
-use bigneon_db::models::{EmailProvider, Environment};
-use bigneon_db::utils::errors::EnumParseError;
+use crate::errors::{ApiError, ApplicationError};
+use crate::SITE_NAME;
 use chrono::Duration;
+use db::models::{EmailProvider, Environment};
+use db::utils::errors::EnumParseError;
 use dotenv::dotenv;
 use itertools::Itertools;
 use std::env;
@@ -106,7 +107,7 @@ pub struct EmailTemplate {
 }
 
 impl FromStr for EmailTemplate {
-    type Err = BigNeonError;
+    type Err = ApiError;
 
     fn from_str(val: &str) -> Result<Self, Self::Err> {
         let split: Vec<&str> = val.split(':').collect_vec();
@@ -239,7 +240,7 @@ impl Config {
     pub fn new(environment: Environment) -> Self {
         dotenv().ok();
 
-        let app_name = env::var(&APP_NAME).unwrap_or_else(|_| "Big Neon".to_string());
+        let app_name = env::var(&APP_NAME).unwrap_or_else(|_| SITE_NAME.to_string());
 
         let redis_connection_string = match environment {
             Environment::Test => None,

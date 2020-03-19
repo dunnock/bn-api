@@ -1,5 +1,5 @@
 use crate::auth::user::User as AuthUser;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
@@ -9,8 +9,8 @@ use actix_web::{
     web::{Path, Query},
     HttpResponse,
 };
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::models::*;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct NewSettlementRequest {
@@ -21,7 +21,7 @@ pub struct NewSettlementRequest {
 
 pub async fn index(
     (connection, query, path, user): (Connection, Query<PagingParameters>, Path<PathParameters>, AuthUser),
-) -> Result<WebPayload<Settlement>, BigNeonError> {
+) -> Result<WebPayload<Settlement>, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(path.id, connection)?;
     user.requires_scope_for_organization(Scopes::SettlementRead, &organization, connection)?;
@@ -40,7 +40,7 @@ pub async fn index(
 
 pub async fn create(
     (connection, new_settlement, path, user): (Connection, Json<NewSettlementRequest>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(path.id, connection)?;
     user.requires_scope_for_organization(Scopes::SettlementWrite, &organization, connection)?;
@@ -58,7 +58,7 @@ pub async fn create(
 
 pub async fn show(
     (connection, path, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let settlement = Settlement::find(path.id, connection)?;
     let organization = Organization::find(settlement.organization_id, connection)?;
@@ -77,7 +77,7 @@ pub async fn show(
 
 pub async fn destroy(
     (connection, path, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     user.requires_scope(Scopes::OrgAdmin)?;
     let settlement = Settlement::find(path.id, connection)?;

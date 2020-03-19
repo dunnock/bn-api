@@ -1,7 +1,7 @@
 use crate::config::Config;
-use crate::db::*;
+use crate::database::*;
 use crate::domain_events::DomainActionMonitor;
-use crate::middleware::{AppVersionHeader, BigNeonLogger, DatabaseTransaction, Metatags};
+use crate::middleware::{ApiLogger, AppVersionHeader, DatabaseTransaction, Metatags};
 use crate::models::*;
 use crate::routing;
 use crate::utils::redis::*;
@@ -13,7 +13,7 @@ use actix_files as fs;
 use actix_web::middleware::Logger;
 use actix_web::{dev::ServiceRequest, http, HttpRequest, HttpResponse};
 use actix_web::{web, web::Data, App, HttpServer};
-use bigneon_db::utils::errors::DatabaseError;
+use db::utils::errors::DatabaseError;
 use log::Level::{Debug, Warn};
 use std::collections::HashMap;
 use std::error::Error;
@@ -78,7 +78,7 @@ impl Server {
         process_redis_pubsub: bool,
         process_actions_til_empty: bool,
     ) {
-        jlog!(Debug, "bigneon_api::server", "Server start requested", {"process_actions": process_actions, "process_events": process_events, "process_http":process_http, "process_actions_til_empty": process_actions_til_empty});
+        jlog!(Debug, "api::server", "Server start requested", {"process_actions": process_actions, "process_events": process_events, "process_http":process_http, "process_actions_til_empty": process_actions_til_empty});
         let bind_addr = format!("{}:{}", config.api_host, config.api_port);
 
         let database = Database::from_config(&config);
@@ -142,7 +142,7 @@ impl Server {
                                 .finish()
                         })
                         .wrap(Logger::new(LOGGER_FORMAT).exclude("/status"))
-                        .wrap(BigNeonLogger::new())
+                        .wrap(ApiLogger::new())
                         .wrap(DatabaseTransaction::new())
                         .wrap(AppVersionHeader::new())
                         .wrap(Metatags::new(&conf))
@@ -166,7 +166,7 @@ impl Server {
             }
             match server.run().await {
                 Ok(_) => {}
-                Err(e) => jlog!(Warn, "bigneon_api::server", "Server exit with error", {"error": e.description()}),
+                Err(e) => jlog!(Warn, "api::server", "Server exit with error", {"error": e.description()}),
             };
 
             if process_actions || process_events {

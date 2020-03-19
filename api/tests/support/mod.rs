@@ -8,8 +8,8 @@ use actix_web::{
     http::StatusCode,
     HttpResponse,
 };
-use bigneon_api::auth::user::User as AuthUser;
-use bigneon_db::models::{Organization, Roles, User};
+use api::auth::user::User as AuthUser;
+use db::models::{Organization, Roles, User};
 use serde::Deserialize;
 use serde_json;
 use std::collections::HashMap;

@@ -2,10 +2,10 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
-use bigneon_api::controllers::event_report_subscribers::{self, NewEventReportSubscriberRequest};
-use bigneon_api::extractors::*;
-use bigneon_api::models::PathParameters;
-use bigneon_db::models::*;
+use api::controllers::event_report_subscribers::{self, NewEventReportSubscriberRequest};
+use api::extractors::*;
+use api::models::PathParameters;
+use db::models::*;
 use std::collections::HashMap;
 
 pub async fn index(role: Roles, should_test_succeed: bool) {

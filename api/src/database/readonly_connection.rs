@@ -1,5 +1,5 @@
-use crate::db::*;
-use crate::errors::BigNeonError;
+use crate::database::*;
+use crate::errors::ApiError;
 use crate::server::GetAppState;
 use actix_web::{dev::Payload, FromRequest, HttpRequest, Result};
 use diesel;
@@ -74,7 +74,7 @@ impl Clone for ReadonlyConnection {
 
 impl FromRequest for ReadonlyConnection {
     type Config = ();
-    type Error = BigNeonError;
+    type Error = ApiError;
     type Future = Ready<Result<ReadonlyConnection, Self::Error>>;
 
     fn from_request(request: &HttpRequest, _: &mut Payload) -> Self::Future {

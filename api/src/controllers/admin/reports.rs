@@ -1,11 +1,11 @@
 use crate::auth::user::User as AuthUser;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::helpers::application;
 use crate::models::WebPayload;
 use actix_web::{http::StatusCode, web::Query, HttpResponse};
-use bigneon_db::models::*;
 use chrono::prelude::*;
+use db::models::*;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::str;
@@ -56,7 +56,7 @@ impl From<ReportQueryParameters> for Paging {
 
 pub async fn get_report(
     (connection, query, user): (Connection, Query<ReportQueryParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     match query.name.trim() {
         "domain_transaction_detail" => {
             Ok(domain_transaction_detail_report((connection, query, user))?.into_http_response()?)
@@ -67,7 +67,7 @@ pub async fn get_report(
 
 pub fn domain_transaction_detail_report(
     (connection, query, user): (Connection, Query<ReportQueryParameters>, AuthUser),
-) -> Result<WebPayload<DomainTransactionReportRow>, BigNeonError> {
+) -> Result<WebPayload<DomainTransactionReportRow>, ApiError> {
     let connection = connection.get();
     user.requires_scope(Scopes::ReportAdmin)?;
 

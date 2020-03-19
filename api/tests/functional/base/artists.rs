@@ -2,10 +2,10 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
-use bigneon_api::controllers::artists;
-use bigneon_api::extractors::*;
-use bigneon_api::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest};
-use bigneon_db::models::*;
+use api::controllers::artists;
+use api::extractors::*;
+use api::models::{CreateArtistRequest, PathParameters, UpdateArtistRequest};
+use db::models::*;
 use serde_json;
 
 pub async fn create(role: Roles, should_test_succeed: bool) {

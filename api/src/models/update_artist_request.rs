@@ -1,5 +1,5 @@
-use bigneon_db::models::ArtistEditableAttributes;
-use bigneon_db::models::{deserialize_unless_blank, double_option_deserialize_unless_blank};
+use db::models::ArtistEditableAttributes;
+use db::models::{deserialize_unless_blank, double_option_deserialize_unless_blank};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone, Default)]
 pub struct UpdateArtistRequest {

@@ -49,13 +49,13 @@ impl SGContact {
         }
     }
 
-    pub fn create(&self, api_key: &str) -> Result<SGCreateContactResponse, BigNeonError> {
+    pub fn create(&self, api_key: &str) -> Result<SGCreateContactResponse, ApiError> {
         let client = Client::new();
         let msg_body = json!(vec![self]).to_string();
         send_request_json(api_key, client.post(Self::api_url(None).as_str()).body(msg_body)).map(|json| json.into())
     }
 
-    pub fn create_many(api_key: &str, contacts: Vec<Self>) -> Result<SGCreateContactResponse, BigNeonError> {
+    pub fn create_many(api_key: &str, contacts: Vec<Self>) -> Result<SGCreateContactResponse, ApiError> {
         let client = Client::new();
         let msg_body = json!(contacts).to_string();
         send_request_json(api_key, client.post(Self::api_url(None).as_str()).body(msg_body)).map(|json| json.into())
@@ -78,7 +78,7 @@ impl SGContactList {
         Self { name }
     }
 
-    pub async fn get_async(&self, api_key: &str, id: String) -> Result<SGContactListResponse, BigNeonError> {
+    pub async fn get_async(&self, api_key: &str, id: String) -> Result<SGContactListResponse, ApiError> {
         reqwest::Client::new()
             .get(Self::api_url(Some(id)).as_str())
             .header("Authorization", format!("Bearer {}", api_key))
@@ -92,13 +92,13 @@ impl SGContactList {
             .map_err(|err| err.into())
     }
 
-    pub fn create(&self, api_key: &str) -> Result<SGContactListResponse, BigNeonError> {
+    pub fn create(&self, api_key: &str) -> Result<SGContactListResponse, ApiError> {
         let client = Client::new();
         let msg_body = self.to_json();
         send_request_json(api_key, client.post(&Self::api_url(None)).body(msg_body)).map(|json| json.into())
     }
 
-    pub fn create_or_return(&self, api_key: &str) -> Result<SGContactListResponse, BigNeonError> {
+    pub fn create_or_return(&self, api_key: &str) -> Result<SGContactListResponse, ApiError> {
         let client = Client::new();
         let msg_body = self.to_json();
         let req = client.post(&Self::api_url(None)).body(msg_body);
@@ -120,20 +120,20 @@ impl SGContactList {
                         if let Some(list) = found_list {
                             Ok(list.clone())
                         } else {
-                            Err(BigNeonError::new(Box::new(err)))
+                            Err(ApiError::new(Box::new(err)))
                         }
                     }
-                    _ => Err(BigNeonError::new(Box::new(err))),
+                    _ => Err(ApiError::new(Box::new(err))),
                 }
             })
     }
 
-    pub fn get_by_id(api_key: &str, id: u64) -> Result<SGContactListResponse, BigNeonError> {
+    pub fn get_by_id(api_key: &str, id: u64) -> Result<SGContactListResponse, ApiError> {
         let client = Client::new();
         send_request_json(api_key, client.get(&Self::api_url(Some(id.to_string())))).map(|json| json.into())
     }
 
-    pub fn fetch_all(api_key: &str) -> Result<Vec<SGContactListResponse>, BigNeonError> {
+    pub fn fetch_all(api_key: &str) -> Result<Vec<SGContactListResponse>, ApiError> {
         let client = Client::new();
         let req = client.get(&Self::api_url(None));
         send_request_json(api_key, req).and_then(|json| {
@@ -174,7 +174,7 @@ impl From<serde_json::Value> for SGContactListResponse {
 }
 
 impl SGContactListResponse {
-    pub fn add_recipients(&self, api_key: &str, recipient_ids: Vec<String>) -> Result<(), BigNeonError> {
+    pub fn add_recipients(&self, api_key: &str, recipient_ids: Vec<String>) -> Result<(), ApiError> {
         let client = Client::new();
         let msg_body = json!(recipient_ids).to_string();
         let req = client.post(&Self::api_url(self.id.to_string())).body(msg_body);
@@ -192,7 +192,7 @@ impl SGContactListResponse {
     }
 }
 
-fn send_request_json(api_key: &str, req: reqwest::blocking::RequestBuilder) -> Result<serde_json::Value, BigNeonError> {
+fn send_request_json(api_key: &str, req: reqwest::blocking::RequestBuilder) -> Result<serde_json::Value, ApiError> {
     send_request(api_key, req)
         .and_then(|r| r.error_for_status())
         .and_then(|r| r.json())

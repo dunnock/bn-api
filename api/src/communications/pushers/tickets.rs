@@ -1,9 +1,9 @@
 use crate::errors::*;
-use bigneon_db::models::*;
+use db::models::*;
 use diesel::pg::PgConnection;
 use itertools::Itertools;
 
-pub fn tickets_received(to_user: &User, from_user: &User, conn: &PgConnection) -> Result<(), BigNeonError> {
+pub fn tickets_received(to_user: &User, from_user: &User, conn: &PgConnection) -> Result<(), ApiError> {
     let tokens = to_user
         .push_notification_tokens(conn)?
         .into_iter()

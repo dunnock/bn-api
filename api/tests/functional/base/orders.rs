@@ -2,11 +2,11 @@ use crate::support;
 use crate::support::database::TestDatabase;
 use crate::support::test_request::TestRequest;
 use actix_web::{http::StatusCode, web::Path, FromRequest, HttpResponse};
-use bigneon_api::controllers::orders::{self, *};
-use bigneon_api::errors::BigNeonError;
-use bigneon_api::extractors::Json;
-use bigneon_api::models::*;
-use bigneon_db::models::*;
+use api::controllers::orders::{self, *};
+use api::errors::ApiError;
+use api::extractors::Json;
+use api::models::*;
+use db::models::*;
 use serde_json;
 use std::collections::HashMap;
 
@@ -148,7 +148,7 @@ pub async fn activity(role: Roles, should_test_true: bool) {
     let test_request = TestRequest::create_with_uri_custom_params("/", vec!["id", "user_id"]);
     let mut path = Path::<PathParameters>::extract(&test_request.request).await.unwrap();
     path.id = order.id;
-    let response: Result<WebPayload<ActivityItem>, BigNeonError> =
+    let response: Result<WebPayload<ActivityItem>, ApiError> =
         orders::activity((database.connection.clone().into(), path, auth_user.clone())).await;
 
     if should_test_true {

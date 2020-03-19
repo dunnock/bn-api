@@ -1,8 +1,8 @@
-use bigneon_db::dev::{times, TestProject};
-use bigneon_db::prelude::*;
-use bigneon_db::schema::ticket_instances;
-use bigneon_db::utils::errors::ErrorCode::ValidationError;
 use chrono::prelude::*;
+use db::dev::{times, TestProject};
+use db::prelude::*;
+use db::schema::ticket_instances;
+use db::utils::errors::ErrorCode::ValidationError;
 use diesel::prelude::*;
 use itertools::Itertools;
 use uuid::Uuid;

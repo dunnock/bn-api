@@ -1,4 +1,4 @@
-use bigneon_db::models::{AccessToken, Scopes, TokenIssuer};
+use db::models::{AccessToken, Scopes, TokenIssuer};
 
 use chrono::Duration;
 use jwt::{decode, encode, errors, Header, TokenData, Validation};

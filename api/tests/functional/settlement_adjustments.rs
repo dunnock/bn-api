@@ -1,5 +1,5 @@
 use crate::functional::base;
-use bigneon_db::models::*;
+use db::models::*;
 
 #[cfg(test)]
 mod index_tests {

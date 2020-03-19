@@ -1,11 +1,11 @@
 use crate::communications::mailers;
 use crate::config::Config;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::domain_events::executor_future::ExecutorFuture;
 use crate::domain_events::routing::DomainActionExecutor;
 use crate::errors::*;
 use crate::models::*;
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use futures::future;
 use log::Level::Error;
 
@@ -30,7 +30,7 @@ impl SendAutomaticReportEmailsExecutor {
         SendAutomaticReportEmailsExecutor { config }
     }
 
-    pub fn perform_job(&self, conn: &Connection) -> Result<(), BigNeonError> {
+    pub fn perform_job(&self, conn: &Connection) -> Result<(), ApiError> {
         let conn = conn.get();
 
         for (report_type, events) in Report::find_event_reports_for_processing(conn)? {

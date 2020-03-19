@@ -9,7 +9,7 @@ pub async fn send_sms_async(
     from: String,
     to: Vec<String>,
     body: &str,
-) -> Result<(), BigNeonError> {
+) -> Result<(), ApiError> {
     let client = twilio::Client::new(account_id, api_key);
     for t in to.iter() {
         let message = OutboundMessage::new(&from, t, body);

@@ -1,8 +1,8 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::models::*;
-use bigneon_db::utils::dates;
-use bigneon_db::utils::errors::{ErrorCode::ValidationError, *};
 use chrono::NaiveDate;
+use db::dev::TestProject;
+use db::models::*;
+use db::utils::dates;
+use db::utils::errors::{ErrorCode::ValidationError, *};
 use diesel;
 use diesel::sql_types;
 use diesel::RunQueryDsl;

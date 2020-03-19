@@ -2,7 +2,7 @@ use crate::auth::user::User as AuthUser;
 use crate::communications::mailers;
 use crate::controllers::auth;
 use crate::controllers::auth::LoginRequest;
-use crate::db::Connection;
+use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
@@ -16,7 +16,7 @@ use actix_web::{
     web::{Path, Query},
     HttpRequest, HttpResponse,
 };
-use bigneon_db::prelude::*;
+use db::prelude::*;
 use diesel::PgConnection;
 use futures::future::{err, ok, Ready};
 use std::collections::HashMap;
@@ -64,7 +64,7 @@ pub struct InputPushNotificationTokens {
     pub token: String,
 }
 
-pub async fn current_user((connection, auth_user): (Connection, AuthUser)) -> Result<CurrentUser, BigNeonError> {
+pub async fn current_user((connection, auth_user): (Connection, AuthUser)) -> Result<CurrentUser, ApiError> {
     let connection = connection.get();
     current_user_from_user(&auth_user.user, connection)
 }
@@ -77,7 +77,7 @@ pub async fn activity(
         Query<ActivityParameters>,
         AuthUser,
     ),
-) -> Result<WebPayload<ActivitySummary>, BigNeonError> {
+) -> Result<WebPayload<ActivitySummary>, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(path.id, connection)?;
     auth_user.requires_scope_for_organization(Scopes::OrgFans, &organization, &connection)?;
@@ -115,7 +115,7 @@ pub async fn activity(
 
 pub async fn profile(
     (connection, path, auth_user): (Connection, Path<OrganizationFanPathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(path.id, connection)?;
     auth_user.requires_scope_for_organization(Scopes::OrgFans, &organization, &connection)?;
@@ -137,7 +137,7 @@ pub async fn history(
         Query<PagingParameters>,
         AuthUser,
     ),
-) -> Result<WebPayload<HistoryItem>, BigNeonError> {
+) -> Result<WebPayload<HistoryItem>, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(path.id, connection)?;
     auth_user.requires_scope_for_organization(Scopes::OrgFans, &organization, &connection)?;
@@ -162,7 +162,7 @@ pub async fn history(
 
 pub async fn update_current_user(
     (connection, user_parameters, auth_user): (Connection, Json<UserProfileAttributes>, AuthUser),
-) -> Result<CurrentUser, BigNeonError> {
+) -> Result<CurrentUser, ApiError> {
     let connection = connection.get();
 
     let updated_user = auth_user
@@ -174,7 +174,7 @@ pub async fn update_current_user(
 
 pub async fn show(
     (connection, parameters, auth_user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let user = User::find(parameters.id, connection)?;
     if !(auth_user.user == user || auth_user.user.is_admin()) {
@@ -191,7 +191,7 @@ pub async fn list_organizations(
         Query<PagingParameters>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let user = User::find(parameters.id, connection)?;
     if !(auth_user.user == user || auth_user.user.is_admin()) {
@@ -210,7 +210,7 @@ pub async fn list_organizations(
 
 pub async fn show_push_notification_tokens_for_user_id(
     (connection, parameters, auth_user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let user = User::find(parameters.id, connection)?;
     if !(auth_user.user == user || auth_user.user.is_admin()) {
@@ -228,7 +228,7 @@ pub async fn show_push_notification_tokens_for_user_id(
 
 pub async fn show_push_notification_tokens(
     (connection, auth_user): (Connection, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
 
     let push_notification_tokens: Vec<DisplayPushNotificationToken> =
@@ -242,7 +242,7 @@ pub async fn show_push_notification_tokens(
 
 pub async fn add_push_notification_token(
     (connection, add_request, auth_user): (Connection, Json<InputPushNotificationTokens>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
 
     let add_push_notification_token_request = add_request.into_inner();
@@ -258,7 +258,7 @@ pub async fn add_push_notification_token(
 
 pub async fn remove_push_notification_token(
     (connection, parameters, auth_user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
 
     PushNotificationToken::remove(auth_user.user.id, parameters.id, connection)?;
@@ -268,7 +268,7 @@ pub async fn remove_push_notification_token(
 
 pub async fn register(
     (http_request, connection, parameters): (HttpRequest, Connection, Json<RegisterRequest>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let state = http_request.state();
     let connection_info = http_request.connection_info();
     let remote_ip = connection_info.remote();
@@ -301,7 +301,7 @@ pub async fn register(
 
 pub async fn register_and_login(
     (http_request, connection, parameters, request_info): (HttpRequest, Connection, Json<RegisterRequest>, RequestInfo),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let state = http_request.state();
     let connection_info = http_request.connection_info();
     let remote_ip = connection_info.remote();
@@ -336,7 +336,7 @@ pub async fn register_and_login(
     Ok(HttpResponse::Created().json(token_response))
 }
 
-fn current_user_from_user(user: &User, connection: &PgConnection) -> Result<CurrentUser, BigNeonError> {
+fn current_user_from_user(user: &User, connection: &PgConnection) -> Result<CurrentUser, ApiError> {
     let roles_by_organization = user.get_roles_by_organization(connection)?;
     let mut scopes_by_organization = HashMap::new();
     for (organization_id, (roles, additional_scopes)) in &roles_by_organization {
@@ -389,7 +389,7 @@ async fn verify_recaptcha(
 
 pub async fn delete(
     (conn, path, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     if user.id() != path.id {
         user.requires_scope(Scopes::UserDelete)?

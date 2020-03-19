@@ -1,8 +1,8 @@
 use crate::auth::user::User as AuthUser;
 use crate::controllers::organizations::DisplayOrganizationUser;
 use crate::controllers::ticket_types;
-use crate::db::Connection;
-use crate::db::{CacheDatabase, ReadonlyConnection};
+use crate::database::Connection;
+use crate::database::{CacheDatabase, ReadonlyConnection};
 use crate::domain_events::executors::UpdateGenresPayload;
 use crate::errors::*;
 use crate::extractors::*;
@@ -18,10 +18,10 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
-use bigneon_db::dev::times;
-use bigneon_db::prelude::*;
 use chrono::prelude::*;
 use chrono::Duration;
+use db::dev::times;
+use db::prelude::*;
 use diesel::PgConnection;
 use serde::Serialize;
 use serde_json::Value;
@@ -194,7 +194,7 @@ impl From<EventSummaryResultTicketType> for EventExportTicketType {
 
 pub async fn export_event_data(
     (connection, path, paging, user): (Connection, Path<PathParameters>, Query<PagingParameters>, AuthUser),
-) -> Result<WebPayload<EventExportData>, BigNeonError> {
+) -> Result<WebPayload<EventExportData>, ApiError> {
     let conn = connection.get();
     let organization = Organization::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::EventDataRead, &organization, conn)?;
@@ -223,7 +223,7 @@ pub async fn export_event_data(
 **/
 pub async fn checkins(
     (conn, query, auth_user, state): (Connection, Query<SearchParameters>, AuthUser, Data<AppState>),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let events = auth_user.user.find_events_with_access_to_scan(conn.get())?;
     let mut payload = Payload::new(
         EventVenueEntry::event_venues_from_events(events, Some(auth_user.user), &state, conn.get())?,
@@ -241,7 +241,7 @@ pub async fn index(
         Query<SearchParameters>,
         OptionalUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let query = query.into_inner();
     let paging = query.clone().into();
@@ -317,7 +317,7 @@ pub async fn show(
         OptionalUser,
         RequestInfo,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let user = user.into_inner();
 
@@ -566,7 +566,7 @@ pub async fn clone(
         AuthUser,
         Data<AppState>,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(path.id, connection)?;
     let organization = event.organization(connection)?;
@@ -593,7 +593,7 @@ pub async fn clone(
 
 pub async fn publish(
     (connection, path, user, cache_database): (Connection, Path<PathParameters>, AuthUser, CacheDatabase),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
     let event = Event::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::EventWrite, &event.organization(conn)?, &event, conn)?;
@@ -609,7 +609,7 @@ pub async fn publish(
 
 pub async fn unpublish(
     (connection, path, user, cache_database): (Connection, Path<PathParameters>, AuthUser, CacheDatabase),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
     let event = Event::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::EventWrite, &event.organization(conn)?, &event, conn)?;
@@ -625,7 +625,7 @@ pub async fn unpublish(
 
 pub async fn ticket_holder_count(
     (connection, path, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
     let event = Event::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::EventWrite, &event.organization(conn)?, &event, conn)?;
@@ -648,7 +648,7 @@ pub async fn redeem_ticket(
         Data<AppState>,
         CacheDatabase,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let db_event = Event::find(parameters.id, connection)?;
     let organization = db_event.organization(connection)?;
@@ -712,7 +712,7 @@ pub async fn redeem_ticket(
 
 pub async fn show_from_organizations(
     (connection, path, paging, user): (Connection, Path<PathParameters>, Query<PagingParameters>, AuthUser),
-) -> Result<WebPayload<EventSummaryResult>, BigNeonError> {
+) -> Result<WebPayload<EventSummaryResult>, ApiError> {
     let conn = connection.get();
     let org = Organization::find(path.id, conn)?;
     user.requires_scope_for_organization(Scopes::OrgReadEvents, &org, conn)?;
@@ -781,7 +781,7 @@ pub async fn dashboard(
         Query<DashboardParameters>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = connection.get();
     let event = Event::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::DashboardRead, &event.organization(conn)?, &event, conn)?;
@@ -806,7 +806,7 @@ pub async fn dashboard(
     }))
 }
 
-fn create_cube_js_token(event_id: Uuid, cube_js_secret: &str) -> Result<String, BigNeonError> {
+fn create_cube_js_token(event_id: Uuid, cube_js_secret: &str) -> Result<String, ApiError> {
     #[derive(Debug, Serialize, Deserialize)]
     struct Claims {
         u: UserData,
@@ -840,7 +840,7 @@ pub struct AddArtistRequest {
 
 pub async fn create(
     (connection, new_event, user): (Connection, Json<NewEvent>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let organization = Organization::find(new_event.organization_id, connection)?;
     user.requires_scope_for_organization(Scopes::EventWrite, &organization, connection)?;
@@ -860,7 +860,7 @@ pub async fn update(
         Json<EventEditableAttributes>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(parameters.id, connection)?;
     let organization = event.organization(connection)?;
@@ -893,7 +893,7 @@ fn create_domain_action_event(event_id: Uuid, conn: &PgConnection) {
 
 pub async fn delete(
     (connection, parameters, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(parameters.id, connection)?;
     let organization = event.organization(connection)?;
@@ -905,7 +905,7 @@ pub async fn delete(
 
 pub async fn cancel(
     (connection, parameters, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(parameters.id, connection)?;
     let organization = event.organization(connection)?;
@@ -919,7 +919,7 @@ pub async fn cancel(
 
 pub async fn list_interested_users(
     (connection, path_parameters, query, user): (Connection, Path<PathParameters>, Query<PagingParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::EventInterest)?;
 
     let connection = connection.get();
@@ -937,7 +937,7 @@ pub async fn list_interested_users(
 
 pub async fn add_interest(
     (connection, parameters, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::EventInterest)?;
 
     let connection = connection.get();
@@ -947,7 +947,7 @@ pub async fn add_interest(
 
 pub async fn remove_interest(
     (connection, parameters, user): (Connection, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     user.requires_scope(Scopes::EventInterest)?;
 
     let connection = connection.get();
@@ -957,7 +957,7 @@ pub async fn remove_interest(
 
 pub async fn add_artist(
     (connection, parameters, event_artist, user): (Connection, Path<PathParameters>, Json<AddArtistRequest>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(parameters.id, connection)?;
     let organization = event.organization(connection)?;
@@ -1007,7 +1007,7 @@ pub async fn update_artists(
         Json<UpdateArtistsRequestList>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(parameters.id, connection)?;
     let organization = event.organization(connection)?;
@@ -1084,7 +1084,7 @@ pub async fn guest_list(
         Path<PathParameters>,
         AuthUser,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     //TODO refactor GuestListQueryParameters to PagingParameters
     let conn = connection.get();
     let event = Event::find(path.id, conn)?;
@@ -1133,7 +1133,7 @@ pub async fn guest_list(
 
 pub async fn codes(
     (conn, query, path, user): (Connection, Query<PagingParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let event = Event::find(path.id, conn)?;
     user.requires_scope_for_organization_event(Scopes::CodeRead, &event.organization(conn)?, &event, conn)?;
@@ -1153,7 +1153,7 @@ pub async fn codes(
 
 pub async fn holds(
     (conn, query, path, user): (Connection, Query<PagingParameters>, Path<PathParameters>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let event = Event::find(path.id, conn)?;
     let organization = &event.organization(conn)?;
@@ -1233,7 +1233,7 @@ pub async fn users(
         Query<PagingParameters>,
         AuthUser,
     ),
-) -> Result<WebPayload<DisplayOrganizationUser>, BigNeonError> {
+) -> Result<WebPayload<DisplayOrganizationUser>, ApiError> {
     let connection = connection.get();
     let event = Event::find(path_parameters.id, connection)?;
     let organization = event.organization(connection)?;
@@ -1277,7 +1277,7 @@ pub struct EventUserPathParams {
 
 pub async fn remove_user(
     (connection, path, user): (Connection, Path<EventUserPathParams>, AuthUser),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();
     let event = Event::find(path.id, connection)?;
     let organization = event.organization(connection)?;
@@ -1316,7 +1316,7 @@ pub async fn create_link(
         AuthUser,
         Connection,
     ),
-) -> Result<HttpResponse, BigNeonError> {
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let event = Event::find(path.id, conn)?;
 

@@ -1,6 +1,6 @@
-use bigneon_db::dev::TestProject;
-use bigneon_db::prelude::*;
-use bigneon_db::schema::ticket_instances;
+use db::dev::TestProject;
+use db::prelude::*;
+use db::schema::ticket_instances;
 
 use chrono::NaiveDate;
 use diesel::prelude::*;

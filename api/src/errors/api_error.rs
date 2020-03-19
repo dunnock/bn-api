@@ -4,10 +4,10 @@ use crate::jwt::errors::Error as JwtError;
 use crate::payments::PaymentProcessorError;
 use actix_web::http::header::ToStrError;
 use actix_web::{error::ResponseError, HttpResponse};
-use bigneon_db::utils::errors::*;
 use branch_rs::BranchError;
 use chrono;
 use customer_io::CustomerIoError;
+use db::utils::errors::*;
 use diesel::result::Error as DieselError;
 use facebook::prelude::FacebookError;
 use globee::GlobeeError;
@@ -22,13 +22,13 @@ use url;
 use uuid::ParseError as UuidParseError;
 
 #[derive(Debug)]
-pub struct BigNeonError(Box<dyn ConvertToWebError + Send + Sync>);
+pub struct ApiError(Box<dyn ConvertToWebError + Send + Sync>);
 
 macro_rules! error_conversion {
     ($e: ty) => {
-        impl From<$e> for BigNeonError {
+        impl From<$e> for ApiError {
             fn from(e: $e) -> Self {
-                BigNeonError(Box::new(e))
+                ApiError(Box::new(e))
             }
         }
     };
@@ -59,27 +59,27 @@ error_conversion!(reqwest::Error);
 error_conversion!(url::ParseError);
 error_conversion!(ToStrError);
 
-impl fmt::Display for BigNeonError {
+impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(&*self.0.to_string())
     }
 }
 
-impl Error for BigNeonError {
+impl Error for ApiError {
     fn description(&self) -> &str {
         self.0.description()
     }
 }
 
-impl ResponseError for BigNeonError {
+impl ResponseError for ApiError {
     fn error_response(&self) -> HttpResponse {
         self.0.to_response()
     }
 }
 
-impl BigNeonError {
-    pub fn new(inner: Box<dyn ConvertToWebError + Send + Sync>) -> BigNeonError {
-        BigNeonError(inner)
+impl ApiError {
+    pub fn new(inner: Box<dyn ConvertToWebError + Send + Sync>) -> ApiError {
+        ApiError(inner)
     }
 
     pub fn into_inner(&self) -> &dyn ConvertToWebError {
@@ -101,9 +101,9 @@ impl ConvertToWebError for std::io::Error {
     }
 }
 
-impl From<TwilioError> for BigNeonError {
+impl From<TwilioError> for ApiError {
     fn from(e: TwilioError) -> Self {
-        BigNeonError::new(Box::new(e))
+        ApiError::new(Box::new(e))
     }
 }
 

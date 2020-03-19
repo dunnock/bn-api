@@ -14,7 +14,7 @@ use tari_messages::*;
 pub fn random_hash() -> String {
     let hash_length = 32;
     let hash_bytes: Vec<u8> = (0..hash_length).map(|_| rand::thread_rng().gen_range(0, 255)).collect();
-    (convert_bytes_to_hexstring(&hash_bytes))
+    convert_bytes_to_hexstring(&hash_bytes)
 }
 
 pub fn convert_hexstring_to_bytes(input_hexstring: &String) -> Vec<u8> {
@@ -26,7 +26,7 @@ pub fn convert_hexstring_to_bytes(input_hexstring: &String) -> Vec<u8> {
 }
 
 pub fn convert_bytes_to_hexstring(input_bytes: &Vec<u8>) -> String {
-    (hex::encode(input_bytes))
+    hex::encode(input_bytes)
 }
 
 fn force_byte_array_size(input_bytes: Vec<u8>, desired_byte_count: usize) -> Vec<u8> {
@@ -34,7 +34,7 @@ fn force_byte_array_size(input_bytes: Vec<u8>, desired_byte_count: usize) -> Vec
     for i in 0..min(input_bytes.len(), desired_byte_count) {
         output_bytes[i] = input_bytes[i];
     }
-    (output_bytes)
+    output_bytes
 }
 
 pub fn cryptographic_keypair() -> (Vec<u8>, Vec<u8>) {
@@ -57,7 +57,7 @@ pub fn cryptographic_hash(input_msg: &String) -> Vec<u8> {
     let mut ripemd = Ripemd160::new();
     ripemd.input(&hash_bytes);
     let hash_hexstring = ripemd.result_str();
-    (convert_hexstring_to_bytes(&hash_hexstring))
+    convert_hexstring_to_bytes(&hash_hexstring)
 }
 
 pub fn cryptographic_signature(input_msg: &String, secret_key: &Vec<u8>) -> Result<Vec<u8>, TariError> {

@@ -1,5 +1,5 @@
-use bigneon_db::models::{DisplayArtist, NewArtist};
 use chrono::NaiveDateTime;
+use db::models::{DisplayArtist, NewArtist};
 use uuid::Uuid;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone, Default)]

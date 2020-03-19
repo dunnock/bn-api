@@ -1,4 +1,4 @@
-use bigneon_db::prelude::*;
+use db::prelude::*;
 
 #[test]
 fn new() {
