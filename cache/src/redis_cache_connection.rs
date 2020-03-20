@@ -26,6 +26,16 @@ pub struct RedisCacheConnection {
     write_timeout: Duration,
 }
 
+impl std::fmt::Debug for RedisCacheConnection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RedisCacheConnection")
+            .field("read_timeout", &self.read_timeout)
+            .field("write_timeout", &self.write_timeout)
+            .field("pool", &self.pool.status())
+            .finish()
+    }
+}
+
 impl RedisCacheConnection {
     pub fn create_connection_pool(
         database_url: &str,
