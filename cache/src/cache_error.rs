@@ -1,7 +1,8 @@
-use crate::r2d2_redis::r2d2::Error as R2D2Error;
-use crate::redis::RedisError;
+use redis::RedisError;
+use deadpool::managed::PoolError;
 use std::error::Error;
 use std::fmt;
+use tokio::time::Elapsed;
 
 #[derive(Debug)]
 pub struct CacheError {
@@ -26,14 +27,20 @@ impl fmt::Display for CacheError {
     }
 }
 
-impl From<R2D2Error> for CacheError {
-    fn from(e: R2D2Error) -> Self {
+impl From<PoolError<RedisError>> for CacheError {
+    fn from(e: PoolError<RedisError>) -> Self {
         CacheError::new(e.to_string())
     }
 }
 
 impl From<RedisError> for CacheError {
     fn from(e: RedisError) -> Self {
+        CacheError::new(e.to_string())
+    }
+}
+
+impl From<Elapsed> for CacheError {
+    fn from(e: Elapsed) -> Self {
         CacheError::new(e.to_string())
     }
 }
