@@ -1,7 +1,6 @@
 use crate::cache_error::*;
 use deadpool_redis::{Pool, Config, ConnectionWrapper};
 use deadpool::managed::{PoolConfig, Timeouts, Object};
-use std::sync::Arc;
 use std::time::Duration;
 use async_trait::async_trait;
 use redis::{RedisError, AsyncCommands};
@@ -22,7 +21,7 @@ pub trait CacheConnection {
 // Implementation
 #[derive(Clone)]
 pub struct RedisCacheConnection {
-    pool: Arc<Pool>,
+    pool: Pool,
     read_timeout: Duration,
     write_timeout: Duration,
 }
@@ -49,7 +48,7 @@ impl RedisCacheConnection {
         let pool = pool_config.create_pool()?;
 
         Ok(RedisCacheConnection {
-            pool: Arc::from(pool),
+            pool,
             read_timeout: Duration::from_millis(read_timeout),
             write_timeout: Duration::from_millis(write_timeout),
         })
