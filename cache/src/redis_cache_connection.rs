@@ -73,10 +73,11 @@ impl RedisCacheConnection {
     }
 }
 
+//#[async_trait]
 impl RedisCacheConnection {
     pub async fn get(&mut self, key: &str) -> Result<Option<String>, CacheError> {
         let mut conn = self.conn().await?;
-        Ok(timeout(self.read_timeout, conn.get(key)).await??)
+        Ok(conn.get(key).await?)
     }
 
     pub async fn publish(&mut self, channel: &str, message: &str) -> Result<(), CacheError> {
