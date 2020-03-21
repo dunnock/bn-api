@@ -89,7 +89,7 @@ impl CacheResource {
 
     // Identify caching action and data based on request
     // When resulting in Cache::Hit route handler will be skipped
-    fn start(&self, request: &HttpRequest) -> Cache {
+    async fn start(&self, request: &HttpRequest) -> Cache {
         let mut cache_configuration = CacheConfiguration::new();
         if request.method() == Method::GET {
             if request
@@ -177,14 +177,11 @@ impl CacheResource {
                 }
             }
 
-            let cache_database = state.database.cache_database.clone();
             // if there is a error in the cache, the value does not exist
-            let cached_value = cache_database
-                .clone()
-                .inner
-                .clone()
-                .and_then(|conn| caching::get_cached_value(conn, &config, &cache_configuration.cache_data));
-            if let Some(response) = cached_value {
+            let value =
+                caching::get_cached_value(&state.database.cache_database, &config, &cache_configuration.cache_data)
+                    .await;
+            if let Some(response) = value {
                 // Insert self into extensions to let response know not to set the value
                 cache_configuration.served_cache = true;
                 return Cache::Hit(response, cache_configuration);
@@ -197,18 +194,27 @@ impl CacheResource {
 
     // Updates cached data based on Cache result
     // This method will also issue unmodified when actual result did not change
-    fn update(cache_configuration: CacheConfiguration, mut response: dev::ServiceResponse) -> dev::ServiceResponse {
+    async fn update(
+        cache_configuration: CacheConfiguration,
+        mut response: dev::ServiceResponse,
+    ) -> dev::ServiceResponse {
+        let state = response.request().state();
+        if state.database.cache_database.inner.is_none() {
+            return response;
+        }
         match *response.request().method() {
             Method::GET if response.status() == StatusCode::OK => {
-                let state = response.request().state();
-                let cache_database = state.database.cache_database.clone();
                 let config = state.config.clone();
 
                 if cache_configuration.cache_response {
-                    cache_database.inner.clone().and_then(|conn| {
-                        caching::set_cached_value(conn, &config, response.response(), &cache_configuration.cache_data)
-                            .ok()
-                    });
+                    caching::set_cached_value(
+                        &state.database.cache_database,
+                        &config,
+                        response.response(),
+                        &cache_configuration.cache_data,
+                    )
+                    .await
+                    .ok();
                 }
 
                 if cache_configuration.served_cache {
@@ -256,13 +262,10 @@ impl CacheResource {
             Method::PUT | Method::PATCH | Method::POST | Method::DELETE => {
                 if response.response().error().is_none() {
                     let path = response.request().path().to_owned();
-                    let state = response.request().state();
-                    let cache_database = state.database.cache_database.clone();
 
-                    cache_database
-                        .inner
-                        .clone()
-                        .and_then(|conn| caching::delete_by_key_fragment(conn, path).ok());
+                    caching::delete_by_key_fragment(&state.database.cache_database, path)
+                        .await
+                        .ok();
                 }
             }
             _ => (),
@@ -326,43 +329,43 @@ where
     fn call(&mut self, request: Self::Request) -> Self::Future {
         let service = self.service.clone();
         let resource = self.resource.clone();
-        let (http_req, payload) = request.into_parts();
-        let cache = resource.start(&http_req);
+        Box::pin(async move {
+            let (http_req, payload) = request.into_parts();
+            let cache = resource.start(&http_req).await;
 
-        match cache {
-            Cache::Hit(response, status) => {
-                log_request(
-                    Level::Debug,
-                    "api::cache_resource",
-                    "Cache hit",
-                    &http_req,
-                    json!({"cache_user_key": status.user_key, "cache_response": status.cache_response, "cache_hit": true}),
-                );
-                let response = dev::ServiceResponse::new(http_req, response);
-                Box::pin(async move { Ok(CacheResource::update(status, response)) })
-            }
-            Cache::Miss(status) => {
-                log_request(
-                    Level::Debug,
-                    "api::cache_resource",
-                    "Cache miss",
-                    &http_req,
-                    json!({"cache_user_key": status.user_key, "cache_response": status.cache_response, "cache_hit": false}),
-                );
-                let request = dev::ServiceRequest::from_parts(http_req, payload)
-                    .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
-                let fut = service.borrow_mut().call(request);
-                Box::pin(async move {
+            match cache {
+                Cache::Hit(response, status) => {
+                    log_request(
+                        Level::Debug,
+                        "api::cache_resource",
+                        "Cache hit",
+                        &http_req,
+                        json!({"cache_user_key": status.user_key, "cache_response": status.cache_response, "cache_hit": true}),
+                    );
+                    let response = dev::ServiceResponse::new(http_req, response);
+                    Ok(CacheResource::update(status, response).await)
+                }
+                Cache::Miss(status) => {
+                    log_request(
+                        Level::Debug,
+                        "api::cache_resource",
+                        "Cache miss",
+                        &http_req,
+                        json!({"cache_user_key": status.user_key, "cache_response": status.cache_response, "cache_hit": false}),
+                    );
+                    let request = dev::ServiceRequest::from_parts(http_req, payload)
+                        .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
+                    let fut = service.borrow_mut().call(request);
                     let response = fut.await?;
-                    Ok(CacheResource::update(status, response))
-                })
+                    Ok(CacheResource::update(status, response).await)
+                }
+                Cache::Skip => {
+                    let request = dev::ServiceRequest::from_parts(http_req, payload)
+                        .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
+                    let fut = service.borrow_mut().call(request);
+                    fut.await
+                }
             }
-            Cache::Skip => {
-                let request = dev::ServiceRequest::from_parts(http_req, payload)
-                    .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
-                let fut = service.borrow_mut().call(request);
-                Box::pin(fut)
-            }
-        }
+        })
     }
 }

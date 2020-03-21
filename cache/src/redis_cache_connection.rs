@@ -1,9 +1,9 @@
 use crate::cache_error::*;
-use deadpool_redis::{Pool, Config, ConnectionWrapper};
-use deadpool::managed::{PoolConfig, Timeouts, Object};
-use std::time::Duration;
 use async_trait::async_trait;
-use redis::{RedisError, AsyncCommands};
+use deadpool::managed::{Object, PoolConfig, Timeouts};
+use deadpool_redis::{Config, ConnectionWrapper, Pool};
+use redis::{AsyncCommands, RedisError};
+use std::time::Duration;
 use tokio::time::timeout;
 
 type Milliseconds = usize;
@@ -42,17 +42,19 @@ impl RedisCacheConnection {
         connection_timeout: u64,
         read_timeout: u64,
         write_timeout: u64,
+        max_size: Option<usize>,
     ) -> Result<RedisCacheConnection, CacheError> {
-        let pool_config = Config { 
+        let max_size = max_size.unwrap_or(PoolConfig::default().max_size);
+        let pool_config = Config {
             url: Some(database_url.to_string()),
-            pool: Some ( PoolConfig { 
+            pool: Some(PoolConfig {
                 timeouts: Timeouts {
                     create: Some(Duration::from_millis(connection_timeout)),
                     wait: Some(Duration::from_millis(connection_timeout)),
                     ..Timeouts::default()
                 },
-                ..PoolConfig::default()
-             } ),
+                max_size,
+            }),
         };
 
         let pool = pool_config.create_pool()?;
@@ -71,51 +73,36 @@ impl RedisCacheConnection {
     }
 }
 
-#[async_trait]
-impl CacheConnection for RedisCacheConnection {
-    async fn get(&mut self, key: &str) -> Result<Option<String>, CacheError> {
-        Ok(
-            timeout(
-                self.read_timeout,
-                self.conn().await?.get(key)
-            ).await??
-        )
+impl RedisCacheConnection {
+    pub async fn get(&mut self, key: &str) -> Result<Option<String>, CacheError> {
+        let mut conn = self.conn().await?;
+        Ok(timeout(self.read_timeout, conn.get(key)).await??)
     }
 
-    async fn publish(&mut self, channel: &str, message: &str) -> Result<(), CacheError> {
-        timeout(
-            self.write_timeout,
-            self.conn().await?.publish(channel, message)
-        ).await??;
+    pub async fn publish(&mut self, channel: &str, message: &str) -> Result<(), CacheError> {
+        let mut conn = self.conn().await?;
+        timeout(self.write_timeout, conn.publish(channel, message)).await??;
         Ok(())
     }
 
-    async fn delete(&mut self, key: &str) -> Result<(), CacheError> {
-        timeout(
-            self.write_timeout,
-            self.conn().await?.del(key.to_string())
-        ).await??;
+    pub async fn delete(&mut self, key: &str) -> Result<(), CacheError> {
+        let mut conn = self.conn().await?;
+        timeout(self.write_timeout, conn.del(key.to_string())).await??;
         Ok(())
     }
 
-    async fn delete_by_key_fragment(&mut self, key_fragment: &str) -> Result<(), CacheError> {
+    pub async fn delete_by_key_fragment(&mut self, key_fragment: &str) -> Result<(), CacheError> {
         let mut conn = self.conn().await?;
         let matches: Vec<String> = conn.keys(key_fragment).await?;
         for key in matches {
-            timeout(
-                self.write_timeout,
-                conn.del(key.to_string())
-            ).await??;
+            timeout(self.write_timeout, conn.del(key.to_string())).await??;
         }
         Ok(())
     }
 
-    async fn add(&mut self, key: &str, data: &str, ttl: Option<Milliseconds>) -> Result<(), CacheError> {
+    pub async fn add(&mut self, key: &str, data: &str, ttl: Option<Milliseconds>) -> Result<(), CacheError> {
         let mut conn = self.conn().await?;
-        timeout(
-            self.write_timeout,
-            conn.set(key, data)
-        ).await??;
+        timeout(self.write_timeout, conn.set(key, data)).await??;
         if let Some(ttl_val) = ttl {
             // Set a key's time to live in milliseconds.
             let _: () = conn.pexpire(key, ttl_val).await?;
@@ -135,7 +122,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_caching() {
-        if let Some(mut conn) = RedisCacheConnection::create_connection_pool("redis://127.0.0.1/", 10, 10, 10).ok() {
+        if let Some(mut conn) =
+            RedisCacheConnection::create_connection_pool("redis://127.0.0.1/", 10, 10, 10, Some(4)).ok()
+        {
             // store key for 10 milliseconds
             conn.add("key", "value", Some(10)).await.unwrap();
             assert_eq!(Some("value".to_string()), conn.get("key").await.unwrap());

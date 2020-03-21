@@ -26,6 +26,7 @@ pub struct Config {
     pub redis_connection_timeout: u64,
     pub redis_read_timeout: u64,
     pub redis_write_timeout: u64,
+    pub redis_pool_max_size: Option<usize>,
     pub readonly_database_url: String,
     pub redis_cache_period: u64,
     pub client_cache_period: u64,
@@ -153,6 +154,7 @@ const REDIS_CONNECTION_TIMEOUT_MILLI: &str = "REDIS_CONNECTION_TIMEOUT_MILLI";
 const REDIS_READ_TIMEOUT_MILLI: &str = "REDIS_READ_TIMEOUT_MILLI";
 const REDIS_WRITE_TIMEOUT_MILLI: &str = "REDIS_WRITE_TIMEOUT_MILLI";
 const REDIS_CACHE_PERIOD_MILLI: &str = "REDIS_CACHE_PERIOD_MILLI";
+const REDIS_POOL_MAX_SIZE: &str = "REDIS_POOL_MAX_SIZE";
 const CLIENT_CACHE_PERIOD: &str = "CLIENT_CACHE_PERIOD";
 const READONLY_DATABASE_URL: &str = "READONLY_DATABASE_URL";
 const DOMAIN: &str = "DOMAIN";
@@ -274,6 +276,9 @@ impl Config {
                     .expect("Not a valid value for redis cache period in milliseconds")
             })
             .unwrap_or(10000);
+        let redis_pool_max_size = env::var(&REDIS_POOL_MAX_SIZE)
+            .ok()
+            .map(|s| s.parse().expect("Not a valid value for maximum size of redis pool"));
         let client_cache_period = env::var(&CLIENT_CACHE_PERIOD)
             .ok()
             .map(|s| s.parse().expect("Not a valid value for client cache period in seconds"))
@@ -456,6 +461,7 @@ impl Config {
             redis_read_timeout,
             redis_write_timeout,
             redis_cache_period,
+            redis_pool_max_size,
             client_cache_period,
             readonly_database_url,
             domain,

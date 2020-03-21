@@ -107,8 +107,7 @@ impl Server {
 
             let clients = Arc::new(Mutex::new(HashMap::new()));
 
-            let mut redis_pubsub_processor =
-                RedisPubSubProcessor::new(config.clone(), database.clone(), clients.clone());
+            let mut redis_pubsub_processor = RedisPubSubProcessor::new(config.clone(), clients.clone());
             if process_redis_pubsub {
                 redis_pubsub_processor.start();
             }

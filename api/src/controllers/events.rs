@@ -599,10 +599,9 @@ pub async fn publish(
     user.requires_scope_for_organization_event(Scopes::EventWrite, &event.organization(conn)?, &event, conn)?;
     event.publish(Some(user.id()), conn)?;
 
-    cache_database
-        .inner
-        .clone()
-        .and_then(|conn| caching::delete_by_key_fragment(conn, event.id.to_string()).ok());
+    caching::delete_by_key_fragment(&cache_database, event.id.to_string())
+        .await
+        .ok();
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -615,10 +614,9 @@ pub async fn unpublish(
     user.requires_scope_for_organization_event(Scopes::EventWrite, &event.organization(conn)?, &event, conn)?;
     event.unpublish(Some(user.id()), conn)?;
 
-    cache_database
-        .inner
-        .clone()
-        .and_then(|conn| caching::delete_by_key_fragment(conn, event.id.to_string()).ok());
+    caching::delete_by_key_fragment(&cache_database, event.id.to_string())
+        .await
+        .ok();
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -681,14 +679,12 @@ pub async fn redeem_ticket(
                     let redeemable = TicketInstance::show_redeemable_ticket(ticket.id, connection)?;
 
                     // Publish redeem event for redis pubsub
-                    cache_database
-                        .inner
-                        .clone()
-                        .and_then(|conn| caching::publish(conn, RedisPubSubChannel::TicketRedemptions, messages::TicketRedemption {
-                            ticket_id: ticket.id,
-                            event_id: db_event.id,
-                            redeemer_id: auth_user.id()
-                        }).ok());
+                    let msg = messages::TicketRedemption {
+                        ticket_id: ticket.id,
+                        event_id: db_event.id,
+                        redeemer_id: auth_user.id()
+                    };
+                    caching::publish(&cache_database, RedisPubSubChannel::TicketRedemptions, msg).await.ok();
 
                     Ok(HttpResponse::Ok().json(redeemable))
                 }

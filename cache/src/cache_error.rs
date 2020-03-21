@@ -1,5 +1,5 @@
-use redis::RedisError;
 use deadpool::managed::PoolError;
+use redis::RedisError;
 use std::error::Error;
 use std::fmt;
 use tokio::time::Elapsed;

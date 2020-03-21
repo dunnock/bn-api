@@ -71,6 +71,7 @@ pub fn load_redis_connection(config: &Config) -> Option<RedisCacheConnection> {
             config.redis_connection_timeout,
             config.redis_read_timeout,
             config.redis_write_timeout,
+            config.redis_pool_max_size,
         )
         .expect("Redis failed to create connection pool")
     })
