@@ -399,3 +399,23 @@ pub async fn delete(
     target_user.disable(Some(&user.user), conn)?;
     Ok(HttpResponse::Ok().finish())
 }
+
+pub fn create_marketplace_account(
+    (user, state, conn): (AuthUser, State<AppState>, Connection),
+) -> Result<HttpResponse, AnimoError> {
+    let conn = conn.get();
+    let db_user = &user.user;
+    if MarketplaceAccount::find_by_user_id(db_user.id, conn)?.len() > 0 {
+        return application::unprocessable("User already has a market place account");
+    }
+    if db_user.email.is_none() {
+        return application::unprocessable("Cannot create a market place account for a user with no email");
+    }
+    let password = OsRng.next_u64().to_string();
+    let account = MarketplaceAccount::create(user.id(), db_user.email.clone().unwrap(), password).commit(conn)?;
+
+    let marketplace_api = state.service_locator.create_marketplace_api()?;
+    let marketplace_account_id = marketplace_api.link_user(&db_user, &account)?;
+    account.update_marketplace_id(marketplace_account_id, conn)?;
+    Ok(HttpResponse::Created().finish())
+}

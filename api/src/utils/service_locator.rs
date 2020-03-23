@@ -87,7 +87,6 @@ impl ServiceLocator {
         )))
     }
 
-
     pub fn create_marketplace_api(&self) -> Result<Box<dyn MarketplaceApi>, AnimoError> {
         Ok(Box::new(SharetribeMarketplaceApi::new(
             self.sharetribe_client_id.clone(),

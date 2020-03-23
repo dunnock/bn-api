@@ -3,6 +3,7 @@ WITH r AS (SELECT t.id
                     INNER JOIN assets AS a ON t.asset_id = a.id
            WHERE ((t.reserved_until < now() AND t.status = 'Reserved') OR t.status = 'Available')
              AND a.ticket_type_id = $2
+             and t.parent_id is null
              AND coalesce($4, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11') =
                  coalesce(t.hold_id, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11') -- dummy guid
            ORDER BY t.status, t.reserved_until -- Grab available tickets first, then old reserved
