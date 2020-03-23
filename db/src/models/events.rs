@@ -387,6 +387,11 @@ impl Event {
             ticket_type.app_sales_enabled,
             ticket_type.web_sales_enabled,
             ticket_type.box_office_sales_enabled,
+            ticket_type.ticket_type_type,
+            vec![],
+            ticket_type.rarity_id,
+            ticket_type.promo_image_url.clone(),
+            ticket_type.content_url.clone(),
             current_user_id,
             conn,
         )?;
@@ -2115,6 +2120,11 @@ impl Event {
         app_sales_enabled: bool,
         web_sales_enabled: bool,
         box_office_sales_enabled: bool,
+        ticket_type_type: TicketTypeType,
+        contents: Vec<NewLootBoxContent>,
+        rarity_id: Option<Uuid>,
+        promo_image_url: Option<String>,
+        content_url: Option<String>,
         current_user_id: Option<Uuid>,
         conn: &PgConnection,
     ) -> Result<TicketType, DatabaseError> {
@@ -2135,15 +2145,50 @@ impl Event {
             app_sales_enabled,
             web_sales_enabled,
             box_office_sales_enabled,
+            ticket_type_type,
+            rarity_id,
+            promo_image_url,
+            content_url,
         )
         .commit(current_user_id, conn)?;
+
+        let mut ticket_type_contents = vec![];
+        if ticket_type_type == TicketTypeType::LootBox {
+            for mut content in contents {
+                content.ticket_type_id = ticket_type.id;
+                ticket_type_contents.push(content.commit(current_user_id, conn)?);
+            }
+        }
+
         let asset = Asset::create(ticket_type.id, asset_name).commit(conn)?;
         let wallet_id = match wallet_id {
             Some(w) => w,
             None => Wallet::find_default_for_organization(self.organization_id, conn)?.id,
         };
 
-        TicketInstance::create_multiple(asset.id, 0, quantity, wallet_id, conn)?;
+        match ticket_type_type {
+            TicketTypeType::Token => TicketInstance::create_multiple(asset.id, 0, quantity, wallet_id, conn)?,
+            TicketTypeType::LootBox => {
+                // TODO: This is a potentially very heavy operation. Every lootbox is created sequentially.
+                for i in 0..quantity {
+                    let instance = TicketInstance::create_single(asset.id, i as i32, wallet_id, conn)?;
+
+                    for content in ticket_type_contents.iter() {
+                        TicketInstance::add_to_loot_box_instance(
+                            current_user_id,
+                            instance.id,
+                            content.content_event_id,
+                            content.content_ticket_type_id,
+                            content.min_rarity_id,
+                            content.max_rarity_id,
+                            content.quantity_per_box as i64,
+                            conn,
+                        )?;
+                    }
+                }
+            }
+        }
+
         Ok(ticket_type)
     }
 

@@ -42,6 +42,8 @@ pub struct TicketInstance {
     pub first_name_override: Option<String>,
     pub last_name_override: Option<String>,
     pub check_in_source: Option<CheckInSource>,
+    parent_id: Option<Uuid>,
+    pub listing_id: Option<Uuid>,
 }
 
 #[derive(AsChangeset, Clone, Deserialize, Serialize)]
@@ -237,6 +239,7 @@ impl TicketInstance {
                 transfers::transfer_key.nullable(),
                 transfers::transfer_address.nullable(),
                 ticket_instances::check_in_source,
+                ticket_types::promo_image_url,
             ))
             .first::<DisplayTicketIntermediary>(conn)
             .to_db_error(ErrorCode::QueryError, "Unable to load ticket")?;
@@ -354,6 +357,7 @@ impl TicketInstance {
                 transfers::transfer_key.nullable(),
                 transfers::transfer_address.nullable(),
                 ticket_instances::check_in_source,
+                ticket_types::promo_image_url,
             ))
             .order_by(events::event_start.asc())
             .then_order_by(events::name.asc())
@@ -388,6 +392,24 @@ impl TicketInstance {
             .filter(ticket_instances::id.eq_any(ticket_instance_ids))
             .get_results(conn)
             .to_db_error(ErrorCode::QueryError, "Could not load Ticket Instances")
+    }
+
+    pub fn create_single(
+        asset_id: Uuid,
+        tari_id: i32,
+        wallet_id: Uuid,
+        conn: &PgConnection,
+    ) -> Result<TicketInstance, DatabaseError> {
+        let new_row = NewTicketInstance {
+            asset_id,
+            token_id: tari_id as i32,
+            wallet_id,
+        };
+
+        diesel::insert_into(ticket_instances::table)
+            .values(&new_row)
+            .get_result(conn)
+            .to_db_error(ErrorCode::InsertError, "Could not create ticket instance")
     }
 
     pub fn create_multiple(
@@ -551,6 +573,87 @@ impl TicketInstance {
         Ok(tickets)
     }
 
+    pub fn find_children(&self, conn: &PgConnection) -> Result<Vec<TicketInstance>, DatabaseError> {
+        ticket_instances::table
+            .filter(ticket_instances::parent_id.eq(self.id))
+            .get_results(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not find ticket instances for parent")
+    }
+
+    pub(crate) fn add_to_loot_box_instance(
+        _current_user_id: Option<Uuid>,
+        parent_ticket_instance_id: Uuid,
+        event_id: Uuid,
+        ticket_type_id: Option<Uuid>,
+        min_rarity_id: Option<Uuid>,
+        max_rarity_id: Option<Uuid>,
+        quantity: i64,
+        conn: &PgConnection,
+    ) -> Result<Vec<TicketInstance>, DatabaseError> {
+        println!("{:?}", parent_ticket_instance_id.to_string());
+        println!("{:?}", event_id.to_string());
+        println!(
+            "{:?}",
+            [
+                ticket_type_id.unwrap_or(Uuid::nil()).to_string(),
+                min_rarity_id.unwrap_or(Uuid::nil()).to_string(),
+                max_rarity_id.unwrap_or(Uuid::nil()).to_string()
+            ]
+        );
+        let query = include_str!("../queries/add_tickets_to_loot_box_instance.sql");
+        let q = diesel::sql_query(query)
+            .bind::<sql_types::Uuid, _>(parent_ticket_instance_id)
+            .bind::<sql_types::Uuid, _>(event_id)
+            .bind::<sql_types::Nullable<sql_types::Uuid>, _>(ticket_type_id)
+            .bind::<sql_types::Nullable<sql_types::Uuid>, _>(min_rarity_id)
+            .bind::<sql_types::Nullable<sql_types::Uuid>, _>(max_rarity_id)
+            .bind::<BigInt, _>(quantity);
+
+        let tickets: Vec<TicketInstance> = q
+            .get_results(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not add tickets to the loot box")?;
+
+        if tickets.len() as i64 != quantity {
+            if (tickets.len() as i64) < quantity {
+                jlog!(
+                    Debug,
+                    &format!(
+                        "Could not reserve {} tickets, only {} tickets were available",
+                        quantity,
+                        tickets.len()
+                    )
+                );
+
+                return DatabaseError::validation_error(
+                    "quantity",
+                    "Could not reserve tickets, not enough tickets are available",
+                );
+            } else {
+                jlog!(Error, "Reserved too many tickets for loot box", {"quantity_requested": quantity, "quantity_reserved": quantity, "tickets":&tickets});
+                // This is an unlikely scenario
+                return DatabaseError::business_process_error(&format!(
+                    "Reserved too many tickets, expected {} tickets, reserved {}",
+                    quantity,
+                    tickets.len()
+                ));
+            }
+        }
+
+        //        for ticket in tickets.iter() {
+        //            DomainEvent::create(
+        //                DomainEventTypes::TicketInstanceAddedToHold,
+        //                "Ticket added to hold".to_string(),
+        //                Tables::TicketInstances,
+        //                Some(ticket.id),
+        //                current_user_id,
+        //                Some(json!({"hold_id": hold_id, "from_hold_id": from_hold_id})),
+        //            )
+        //                .commit(conn)?;
+        //        }
+
+        Ok(tickets)
+    }
+
     pub(crate) fn add_to_hold(
         current_user_id: Option<Uuid>,
         hold_id: Uuid,
@@ -604,6 +707,102 @@ impl TicketInstance {
                 Some(ticket.id),
                 current_user_id,
                 Some(json!({"hold_id": hold_id, "from_hold_id": from_hold_id})),
+            )
+            .commit(conn)?;
+        }
+
+        Ok(tickets)
+    }
+
+    pub fn add_to_listing(
+        current_user_id: Option<Uuid>,
+        owner_wallet_id: Uuid,
+        listing_id: Uuid,
+        ticket_type_id: Uuid,
+        quantity: u32,
+        conn: &PgConnection,
+    ) -> Result<Vec<TicketInstance>, DatabaseError> {
+        let query = include_str!("../queries/add_tickets_to_listing.sql");
+        let q = diesel::sql_query(query)
+            .bind::<sql_types::Uuid, _>(owner_wallet_id)
+            .bind::<sql_types::Uuid, _>(ticket_type_id)
+            .bind::<BigInt, _>(quantity as i64)
+            .bind::<sql_types::Uuid, _>(listing_id);
+
+        let tickets: Vec<TicketInstance> = q
+            .get_results(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not add tickets to the listing")?;
+
+        if tickets.len() as u32 != quantity {
+            if (tickets.len() as u32) < quantity {
+                jlog!(
+                    Debug,
+                    &format!(
+                        "Could not reserve {} tickets, only {} tickets were available",
+                        quantity,
+                        tickets.len()
+                    )
+                );
+
+                return DatabaseError::validation_error(
+                    "quantity",
+                    "Could not reserve tickets, not enough tickets are available",
+                );
+            } else {
+                jlog!(Error, "Reserved too many tickets for listing", {"quantity_requested": quantity, "quantity_reserved": quantity, "tickets":&tickets});
+                // This is an unlikely scenario
+                return DatabaseError::business_process_error(&format!(
+                    "Reserved too many tickets, expected {} tickets, reserved {}",
+                    quantity,
+                    tickets.len()
+                ));
+            }
+        }
+
+        for ticket in tickets.iter() {
+            DomainEvent::create(
+                DomainEventTypes::TicketInstanceAddedToListing,
+                "Ticket added to listing".to_string(),
+                Tables::TicketInstances,
+                Some(ticket.id),
+                current_user_id,
+                Some(json!({ "listing_id": listing_id })),
+            )
+            .commit(conn)?;
+        }
+
+        Ok(tickets)
+    }
+
+    pub fn release_from_listing(
+        current_user_id: Option<Uuid>,
+        listing_id: Uuid,
+        ticket_type_id: Uuid,
+        quantity: u32,
+        conn: &PgConnection,
+    ) -> Result<Vec<TicketInstance>, DatabaseError> {
+        let query = include_str!("../queries/release_tickets_from_listing.sql");
+        let q = diesel::sql_query(query)
+            .bind::<sql_types::Uuid, _>(listing_id)
+            .bind::<sql_types::Uuid, _>(ticket_type_id)
+            .bind::<BigInt, _>(quantity as i64);
+
+        let tickets: Vec<TicketInstance> = q
+            .get_results(conn)
+            .to_db_error(ErrorCode::QueryError, "Could not release tickets from the listing")?;
+
+        if tickets.len() as u32 != quantity {
+            return DatabaseError::validation_error("quantity", "Could not release the correct amount of tickets");
+        }
+
+        for ticket in tickets.iter() {
+            DomainEvent::create(
+                DomainEventTypes::TicketInstanceReleasedFromListing,
+                "Ticket released from listing".to_string(),
+                Tables::TicketInstances,
+                Some(ticket.id),
+                current_user_id,
+                Some(json!({ "listing_id": listing_id })),
             )
             .commit(conn)?;
         }
@@ -1190,6 +1389,8 @@ pub struct DisplayTicket {
     pub id: Uuid,
     pub order_id: Uuid,
     pub price_in_cents: u32,
+    pub collectible_id: Uuid,
+    pub collectible_name: String,
     pub ticket_type_id: Uuid,
     pub ticket_type_name: String,
     pub status: TicketInstanceStatus,
@@ -1201,6 +1402,7 @@ pub struct DisplayTicket {
     pub transfer_key: Option<Uuid>,
     pub transfer_address: Option<String>,
     pub check_in_source: Option<CheckInSource>,
+    pub promo_image_url: Option<String>,
 }
 
 #[derive(Queryable, QueryableByName)]
@@ -1243,6 +1445,8 @@ pub struct DisplayTicketIntermediary {
     pub transfer_address: Option<String>,
     #[sql_type = "Nullable<Text>"]
     pub check_in_source: Option<CheckInSource>,
+    #[sql_type = "Nullable<Text>"]
+    pub promo_image_url: Option<String>,
 }
 
 impl From<DisplayTicketIntermediary> for DisplayTicket {
@@ -1274,6 +1478,8 @@ impl From<DisplayTicketIntermediary> for DisplayTicket {
             id: ticket_intermediary.id,
             order_id: ticket_intermediary.order_id,
             price_in_cents: ticket_intermediary.unit_price_in_cents as u32,
+            collectible_id: ticket_intermediary.ticket_type_id,
+            collectible_name: ticket_intermediary.name.clone(),
             ticket_type_id: ticket_intermediary.ticket_type_id,
             ticket_type_name: ticket_intermediary.name.clone(),
             status: ticket_intermediary.status.clone(),
@@ -1285,6 +1491,7 @@ impl From<DisplayTicketIntermediary> for DisplayTicket {
             transfer_key: ticket_intermediary.transfer_key,
             transfer_address: ticket_intermediary.transfer_address,
             check_in_source: ticket_intermediary.check_in_source,
+            promo_image_url: ticket_intermediary.promo_image_url,
         }
     }
 }

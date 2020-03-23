@@ -73,6 +73,7 @@ pub struct Config {
     pub ssr_trigger_header: String,
     pub ssr_trigger_value: String,
     pub customer_io: CustomerIoSettings,
+    pub sharetribe: SharetribeConfig,
 }
 
 #[derive(Clone)]
@@ -91,6 +92,12 @@ pub struct ConnectionPoolConfig {
 #[derive(Clone)]
 pub struct CubeJs {
     pub secret: String,
+}
+
+#[derive(Clone)]
+pub struct SharetribeConfig {
+    pub client_id: String,
+    pub client_secret: String,
 }
 
 #[derive(Clone)]
@@ -227,6 +234,9 @@ const CONNECTION_POOL_MAX: &str = "CONNECTION_POOL_MAX";
 
 const SSR_TRIGGER_HEADER: &str = "SSR_TRIGGER_HEADER";
 const SSR_TRIGGER_VALUE: &str = "SSR_TRIGGER_VALUE";
+
+const SHARETRIBE_CLIENT_ID: &str = "SHARETRIBE_CLIENT_ID";
+const SHARETRIBE_CLIENT_SECRET: &str = "SHARETRIBE_CLIENT_SECRET";
 
 fn get_env_var(var: &str) -> String {
     env::var(var).unwrap_or_else(|_| panic!("{} must be defined", var))
@@ -451,6 +461,10 @@ impl Config {
         let ssr_trigger_value = env::var(&SSR_TRIGGER_VALUE).unwrap_or("facebook".to_string());
 
         let static_file_path = env::var(&STATIC_FILE_PATH).map(|s| Some(s)).unwrap_or(None);
+        let sharetribe = SharetribeConfig {
+            client_id: get_env_var(SHARETRIBE_CLIENT_ID),
+            client_secret: get_env_var(SHARETRIBE_CLIENT_SECRET),
+        };
 
         Config {
             actix: Actix {
@@ -516,6 +530,7 @@ impl Config {
             connection_pool,
             ssr_trigger_header,
             ssr_trigger_value,
+            sharetribe,
         }
     }
 }

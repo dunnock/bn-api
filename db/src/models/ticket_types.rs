@@ -44,6 +44,10 @@ pub struct TicketType {
     pub web_sales_enabled: bool,
     pub box_office_sales_enabled: bool,
     pub app_sales_enabled: bool,
+    pub rarity_id: Option<Uuid>,
+    pub ticket_type_type: TicketTypeType,
+    pub promo_image_url: Option<String>,
+    pub content_url: Option<String>,
 }
 
 impl PartialOrd for TicketType {
@@ -155,6 +159,10 @@ impl TicketType {
         app_sales_enabled: bool,
         web_sales_enabled: bool,
         box_office_sales_enabled: bool,
+        ticket_type_type: TicketTypeType,
+        rarity_id: Option<Uuid>,
+        promo_image_url: Option<String>,
+        content_url: Option<String>,
     ) -> NewTicketType {
         NewTicketType {
             event_id,
@@ -173,6 +181,10 @@ impl TicketType {
             app_sales_enabled,
             web_sales_enabled,
             box_office_sales_enabled,
+            ticket_type_type,
+            rarity_id,
+            promo_image_url,
+            content_url,
         }
     }
 
@@ -783,7 +795,11 @@ pub struct NewTicketType {
     pub end_date_type: TicketTypeEndDateType,
     pub app_sales_enabled: bool,
     pub web_sales_enabled: bool,
+    pub ticket_type_type: TicketTypeType,
     pub box_office_sales_enabled: bool,
+    pub rarity_id: Option<Uuid>,
+    pub promo_image_url: Option<String>,
+    pub content_url: Option<String>,
 }
 
 impl NewTicketType {

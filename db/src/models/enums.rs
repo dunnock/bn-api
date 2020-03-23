@@ -97,7 +97,7 @@ define_enum! { AnnouncementEngagementAction [Dismiss] }
 define_enum! { AssetStatus [Unsynced] }
 define_enum! { BroadcastAudience [ PeopleAtTheEvent, TicketHolders, OrganizationMembers ]}
 define_enum! { CartItemStatus [CodeExpired, HoldExpired, TicketNullified, TicketNotReserved, Valid] }
-define_enum! { CheckInSource [GuestList, Scanned] }
+define_enum! { CheckInSource [GuestList, Scanned, LootBox] }
 define_enum! { CodeTypes [Access, Discount] }
 define_enum! { CommunicationChannelType [Email, Sms, Push, Webhook]}
 define_enum! { CommunicationType [EmailTemplate, Sms, Push, Webhook]}
@@ -163,10 +163,12 @@ define_enum! { DomainEventTypes [
     TrackingDataUpdated,
     TemporaryUserCreated,
     TicketInstanceAddedToHold,
+    TicketInstanceAddedToListing,
     TicketInstanceNullified,
     TicketInstancePurchased,
     TicketInstanceRedeemed,
     TicketInstanceReleasedFromHold,
+    TicketInstanceReleasedFromListing,
     TicketInstanceUpdated,
     TicketPricingAdded,
     TicketPricingCreated,
@@ -208,6 +210,8 @@ define_enum! { ExternalPaymentType [Cash, CreditCard, Voucher]}
 define_enum! { FanSortField [FirstName, LastName, Email, Phone, OrganizationId, UserCreated, Orders, FirstOrder, LastOrder, Revenue, FirstInteracted, LastInteracted] }
 define_enum! { HistoryType [Purchase]}
 define_enum! { HoldTypes [Discount, Comp] }
+define_enum! { ListingStatus [Pending, Published] }
+define_enum! { MarketplaceAccountStatus [ Pending, Linked ]}
 define_enum! { OrderStatus [Cancelled, Draft, Paid, PendingPayment] }
 define_enum! { OrderItemTypes [Tickets, PerUnitFees, EventFees, Discount, CreditCardFees]}
 define_enum! { OrderTypes [Cart, BackOffice] }
@@ -234,6 +238,7 @@ define_enum! { TicketInstanceStatus [Available, Reserved, Purchased, Redeemed, N
 define_enum! { TicketPricingStatus [Published, Deleted, Default] }
 define_enum! { TicketTypeEndDateType [DoorTime, EventEnd, EventStart, Manual] }
 define_enum! { TicketTypeStatus [NoActivePricing, Published, SoldOut, OnSaleSoon, SaleEnded, Cancelled, Deleted] }
+define_enum! { TicketTypeType [ Token, LootBox ]}
 define_enum! { TicketTypeVisibility [ Always, Hidden, WhenAvailable ]}
 define_enum! { TransferMessageType [Email, Phone] }
 define_enum! { TransferStatus [Pending, Cancelled, Completed, EventEnded] }

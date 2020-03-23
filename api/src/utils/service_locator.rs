@@ -19,6 +19,8 @@ pub struct ServiceLocator {
     api_keys_encryption_key: String,
     country_lookup_service: CountryLookup,
     token_issuer: Box<dyn TokenIssuer>,
+    sharetribe_client_id: String,
+    sharetribe_client_secret: String,
 }
 
 impl ServiceLocator {
@@ -40,6 +42,8 @@ impl ServiceLocator {
             api_keys_encryption_key: config.api_keys_encryption_key.clone(),
             country_lookup_service,
             token_issuer: config.token_issuer.clone(),
+            sharetribe_client_id: config.sharetribe.client_id.clone(),
+            sharetribe_client_secret: config.sharetribe.client_secret.clone(),
         })
     }
 
@@ -80,6 +84,14 @@ impl ServiceLocator {
             self.branch_io_base_url.clone(),
             self.branch_io_branch_key.clone(),
             self.branch_io_timeout,
+        )))
+    }
+
+
+    pub fn create_marketplace_api(&self) -> Result<Box<dyn MarketplaceApi>, AnimoError> {
+        Ok(Box::new(SharetribeMarketplaceApi::new(
+            self.sharetribe_client_id.clone(),
+            self.sharetribe_client_secret.clone(),
         )))
     }
 

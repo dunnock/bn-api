@@ -345,6 +345,10 @@ impl User {
         })
     }
 
+    pub fn marketplace_account(&self, conn: &PgConnection) -> Result<Option<MarketplaceAccount>, DatabaseError> {
+        Ok(MarketplaceAccount::find_by_user_id(self.id, conn)?.pop())
+    }
+
     pub fn login_domain_event(&self, json: Value, conn: &PgConnection) -> Result<(), DatabaseError> {
         DomainEvent::create(
             DomainEventTypes::UserLogin,
