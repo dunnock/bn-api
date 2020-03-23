@@ -16,7 +16,7 @@ Following libraries were benchmarked:
 ## Conclusions based on data provided below:
 
 - Redis-async provides fastest response times, though it might be less stable on response times, which might be ok for cache.
--- redis-async with a pool is using custom simplistic pool implementation, based on a fact that client requires only readonly access and is recovering connection by itself, hence fixed array with sync round robin is enough.
+- - redis-async with a pool is using custom simplistic pool implementation, based on a fact that client requires only readonly access and is recovering connection by itself, hence fixed array with sync round robin is enough.
 - Most pools will start timing out over certain number of concurrent connections. It seems between 32 and 64, but will heavily depend on setup.
 
 
