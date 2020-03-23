@@ -1,7 +1,7 @@
 use crate::errors::ApiError;
 use crate::server::GetAppState;
 use actix_web::{dev::Payload, FromRequest, HttpRequest, Result};
-use cache::RedisCacheConnection;
+use cache::{RedisCacheConnection, RedisAsyncCacheConnection};
 use futures::future::{ok, Ready};
 
 #[derive(Debug, Clone)]

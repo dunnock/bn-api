@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::database::{CacheDatabase, ConnectionType};
 use crate::database::{Connection, ReadonlyConnection};
 use ::r2d2::Error as R2D2Error;
-use cache::RedisCacheConnection;
+use cache::{RedisCacheConnection, RedisAsyncCacheConnection};
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::PgConnection;
 
@@ -14,20 +14,20 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn from_config(config: &Config) -> Database {
+    pub async fn from_config(config: &Config) -> Database {
         Database {
             connection_pool: create_connection_pool(&config, config.database_url.clone()),
             cache_database: CacheDatabase {
-                inner: load_redis_connection(config),
+                inner: load_redis_connection(config).await,
             },
         }
     }
 
-    pub fn readonly_from_config(config: &Config) -> Database {
+    pub async fn readonly_from_config(config: &Config) -> Database {
         Database {
             connection_pool: create_connection_pool(&config, config.readonly_database_url.clone()),
             cache_database: CacheDatabase {
-                inner: load_redis_connection(config),
+                inner: load_redis_connection(config).await,
             },
         }
     }
@@ -64,15 +64,18 @@ fn create_connection_pool(config: &Config, database_url: String) -> R2D2Pool {
         .expect("Failed to create connection pool.")
 }
 
-pub fn load_redis_connection(config: &Config) -> Option<RedisCacheConnection> {
-    config.redis_connection_string.as_ref().map(|redis_connection_string| {
-        RedisCacheConnection::create_connection_pool(
-            &redis_connection_string,
-            config.redis_connection_timeout,
-            config.redis_read_timeout,
-            config.redis_write_timeout,
-            config.redis_pool_max_size,
-        )
-        .expect("Redis failed to create connection pool")
-    })
+pub async fn load_redis_connection(config: &Config) -> Option<RedisCacheConnection> {
+    match config.redis_connection_string {
+        Some(ref redis_connection_string) => {
+            Some(RedisCacheConnection::create_connection_pool(
+                &redis_connection_string,
+                config.redis_connection_timeout,
+                config.redis_read_timeout,
+                config.redis_write_timeout,
+                None
+            )
+            .expect("Redis failed to create connection pool"))
+        },
+        None => None,
+    }
 }

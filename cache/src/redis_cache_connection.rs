@@ -1,5 +1,4 @@
 use crate::cache_error::*;
-use async_trait::async_trait;
 use deadpool::managed::{Object, PoolConfig, Timeouts};
 use deadpool_redis::{Config, ConnectionWrapper, Pool};
 use redis::{AsyncCommands, RedisError};
@@ -7,16 +6,6 @@ use std::time::Duration;
 use tokio::time::timeout;
 
 type Milliseconds = usize;
-
-#[async_trait]
-// Contract for the Cache
-pub trait CacheConnection {
-    async fn get(&mut self, key: &str) -> Result<Option<String>, CacheError>;
-    async fn delete(&mut self, key: &str) -> Result<(), CacheError>;
-    async fn add(&mut self, key: &str, data: &str, ttl: Option<Milliseconds>) -> Result<(), CacheError>;
-    async fn publish(&mut self, channel: &str, message: &str) -> Result<(), CacheError>;
-    async fn delete_by_key_fragment(&mut self, key_fragment: &str) -> Result<(), CacheError>;
-}
 
 // Implementation
 #[derive(Clone)]
@@ -77,7 +66,9 @@ impl RedisCacheConnection {
 impl RedisCacheConnection {
     pub async fn get(&mut self, key: &str) -> Result<Option<String>, CacheError> {
         let mut conn = self.conn().await?;
-        Ok(conn.get(key).await?)
+        Ok(
+            timeout(self.read_timeout, conn.get(key)).await??
+        )
     }
 
     pub async fn publish(&mut self, channel: &str, message: &str) -> Result<(), CacheError> {

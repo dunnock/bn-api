@@ -81,8 +81,8 @@ impl Server {
         jlog!(Debug, "api::server", "Server start requested", {"process_actions": process_actions, "process_events": process_events, "process_http":process_http, "process_actions_til_empty": process_actions_til_empty});
         let bind_addr = format!("{}:{}", config.api_host, config.api_port);
 
-        let database = Database::from_config(&config);
-        let database_ro = Database::readonly_from_config(&config);
+        let database = Database::from_config(&config).await;
+        let database_ro = Database::readonly_from_config(&config).await;
 
         let mut domain_action_monitor = DomainActionMonitor::new(config.clone(), database.clone(), 1);
         if process_actions_til_empty {

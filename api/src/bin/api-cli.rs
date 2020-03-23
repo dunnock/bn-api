@@ -16,6 +16,7 @@ use std::str::FromStr;
 use std::{thread, time};
 use uuid::Uuid;
 
+#[tokio::main]
 pub fn main() {
     logging::setup_logger();
     info!("Loading environment");
@@ -26,7 +27,7 @@ pub fn main() {
 
     let config = Config::new(environment);
     let service_locator = ServiceLocator::new(&config).expect("Expected service locator to load");
-    let database = Database::from_config(&config);
+    let database = Database::from_config(&config).await;
 
     let matches = clap_app!(myapp =>
     (name: "Big Neon CLI Utility")
@@ -71,8 +72,8 @@ pub fn main() {
     .get_matches();
 
     match matches.subcommand() {
-        ("sync-purchase-metadata", Some(_)) => sync_purchase_metadata(database, service_locator),
-        ("sync-spotify-genres", Some(_)) => sync_spotify_genres(config, database),
+        ("sync-purchase-metadata", Some(_)) => sync_purchase_metadata(database, service_locator).await,
+        ("sync-spotify-genres", Some(_)) => sync_spotify_genres(config, database).await,
         ("regenerate-interaction-records", Some(args)) => {
             regenerate_interaction_records(args.value_of("organization"), database)
         }
@@ -291,9 +292,8 @@ fn schedule_missing_domain_actions(sync_holds: bool, config: Config, database: D
     schedule_domain_actions(connection).expect("Expected to schedule any missing domain actions");
 }
 
-fn sync_spotify_genres(config: Config, database: Database) {
+async fn sync_spotify_genres(config: Config, database: Database) {
     info!("Syncing spotify genres data");
-    let mut rt = tokio::runtime::Runtime::new().expect("Failed to start async Runtime");
     let connection = database.get_connection().expect("Expected connection to establish");
     let connection = connection.get();
     let artists =
@@ -313,7 +313,7 @@ fn sync_spotify_genres(config: Config, database: Database) {
     for artist in artists {
         i += 1;
         if let Some(spotify_id) = artist.spotify_id.clone() {
-            let result = rt.block_on(spotify_client.read_artist(&spotify_id));
+            let result = spotify_client.read_artist(&spotify_id).await;
             match result {
                 Ok(spotify_artist_result) => match spotify_artist_result {
                     Some(spotify_artist) => {
@@ -362,7 +362,7 @@ fn sync_spotify_genres(config: Config, database: Database) {
     }
 }
 
-fn sync_purchase_metadata(database: Database, service_locator: ServiceLocator) {
+async fn sync_purchase_metadata(database: Database, service_locator: ServiceLocator) {
     info!("Syncing purchase metadata");
     let connection = database.get_connection().expect("Expected connection to establish");
     let mut i = 0;
@@ -382,8 +382,6 @@ fn sync_purchase_metadata(database: Database, service_locator: ServiceLocator) {
             break;
         }
 
-        let mut rt = tokio::runtime::Runtime::new().expect("Failed to start async Runtime");
-
         for (payment, order) in payments {
             let organizations = order.organizations(connection.get()).unwrap();
 
@@ -395,7 +393,7 @@ fn sync_purchase_metadata(database: Database, service_locator: ServiceLocator) {
                 let purchase_metadata = order
                     .purchase_metadata(connection.get())
                     .expect("Expected purchase metadata for order");
-                let result = rt.block_on(stripe.update_metadata(&external_reference, purchase_metadata));
+                let result = stripe.update_metadata(&external_reference, purchase_metadata).await;
 
                 match result {
                     // Sleep to avoid hammering Stripe API

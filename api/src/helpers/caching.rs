@@ -3,7 +3,6 @@ use crate::database::CacheDatabase;
 use crate::errors::*;
 use crate::helpers::*;
 use crate::utils::redis::*;
-use cache::CacheConnection;
 use actix_web::HttpResponse;
 use serde::Serialize;
 use serde_json::{self, Value};
