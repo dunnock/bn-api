@@ -1,6 +1,9 @@
 Simplistic cache implementation, allowing basic operations: get, set, publish and subscribe.
 
-# Benchmark comparison of various concurrent cache implementations from a single threaded caller
+## Benchmark comparisons 
+of various concurrent cache implementations from a single threaded caller
+
+Following libraries were benchmarked:
 
 - r2d2-redis
 - redis-async without pool with pipelining
@@ -10,9 +13,10 @@ Simplistic cache implementation, allowing basic operations: get, set, publish an
 
 *) redis-async handles reconnection logic under the hood, though while reconnecting there might be error responses.
 
-# Conclusions based on below data:
+## Conclusions based on data provided below:
 
-- Redis-async provides fastest response times, though it might be less stable on response times, which might be ok for cache
+- Redis-async provides fastest response times, though it might be less stable on response times, which might be ok for cache.
+-- redis-async with a pool is using custom simplistic pool implementation, based on a fact that client requires only readonly access and is recovering connection by itself, hence fixed array with sync round robin is enough.
 - Most pools will start timing out over certain number of concurrent connections. It seems between 32 and 64, but will heavily depend on setup.
 
 
