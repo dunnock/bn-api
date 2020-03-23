@@ -2,6 +2,20 @@ Simplistic cache implementation, allowing basic operations: get, set, publish an
 
 # Benchmark comparison of various concurrent cache implementations from a single threaded caller
 
+- r2d2-redis
+- redis-async without pool with pipelining
+- deadpool-redis async pool
+- bb8-redis async pool
+- redis-async with fixed set of connections with pipelining
+
+*) redis-async handles reconnection logic under the hood, though while reconnecting there might be error responses.
+
+# Conclusions based on below data:
+
+- Redis-async provides fastest response times, though it might be less stable on response times, which might be ok for cache
+- Most pools will start timing out over certain number of concurrent connections. It seems between 32 and 64, but will heavily depend on setup.
+
+
 ### r2d2-redis
 
 ```
@@ -40,8 +54,6 @@ Response times percentiles:
 deadpool-redis with pool of connections/concurrency = 1                                                                            
                         time:   [2.1201 ms 2.7085 ms 3.8693 ms]
                         thrpt:  [5.7769 MiB/s 8.2528 MiB/s 10.543 MiB/s]
-Found 1 outliers among 10 measurements (10.00%)
-  1 (10.00%) high severe
 Response times percentiles:
 0.02% < 1.470ms
 50.32% < 2.141ms
@@ -129,10 +141,6 @@ Response times percentiles:
 redis-async-pool with pool of connections/concurrency = 4                                                                            
                         time:   [586.60 us 645.72 us 681.37 us]
                         thrpt:  [32.805 MiB/s 34.616 MiB/s 38.105 MiB/s]
-                 change:
-                        time:   [-11.274% -1.2427% +9.3262%] (p = 0.82 > 0.05)
-                        thrpt:  [-8.5307% +1.2584% +12.707%]
-                        No change in performance detected.
 Response times percentiles:
 0.01% < 0.915ms
 50.08% < 2.359ms
@@ -203,7 +211,7 @@ Response times percentiles:
 99.22% < 10.887ms
 ```
 
-========== CONCUREENCY == 16 ============
+### ========== CONCUREENCY == 16 ============
 
 ```
 redis-async with single connection/concurrency = 16                                                                            
@@ -223,10 +231,6 @@ Response times percentiles:
 deadpool-redis with pool of connections/concurrency = 16                                                                            
                         time:   [732.79 us 803.18 us 849.94 us]
                         thrpt:  [26.299 MiB/s 27.830 MiB/s 30.503 MiB/s]
-                 change:
-                        time:   [-53.396% -36.305% -7.6062%] (p = 0.05 < 0.05)
-                        thrpt:  [+8.2324% +56.998% +114.58%]
-                        Change within noise threshold.
 Response times percentiles:
 0.01% < 2.933ms
 50.07% < 12.471ms
@@ -324,7 +328,7 @@ Response times percentiles:
 99.22% < 35.295ms
 ```
 
-========== CONCUREENCY == 64 ============
+### ========== CONCUREENCY == 64 ============
 
 ```
 redis-async with single connection/concurrency = 64                                                                            
