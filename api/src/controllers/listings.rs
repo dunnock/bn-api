@@ -1,16 +1,19 @@
-use actix_web::{HttpResponse, Path, State};
-use animo_db::models::{Scopes, TicketInstance};
-use animo_db::prelude::Listing;
-use auth::user::User;
-use db::Connection;
-use errors::AnimoError;
-use extractors::Json;
-use helpers::application;
-use models::PathParameters;
-use server::AppState;
+use crate::auth::user::User;
+use crate::database::Connection;
+use crate::errors::ApiError;
+use crate::extractors::Json;
+use crate::helpers::application;
+use crate::models::PathParameters;
+use crate::server::AppState;
+use actix_web::{
+    web::{Data, Path, Query},
+    HttpResponse,
+};
+use db::models::Listing;
+use db::models::{Scopes, TicketInstance};
 use uuid::Uuid;
 
-pub fn create((user, conn, data): (User, Connection, Json<CreateListingRequest>)) -> Result<HttpResponse, AnimoError> {
+pub fn create((user, conn, data): (User, Connection, Json<CreateListingRequest>)) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     user.requires_scope(Scopes::ListingWrite)?;
     let data = data.into_inner();
@@ -30,8 +33,8 @@ pub fn create((user, conn, data): (User, Connection, Json<CreateListingRequest>)
 }
 
 pub fn publish(
-    (path, user, conn, state): (Path<PathParameters>, User, Connection, State<AppState>),
-) -> Result<HttpResponse, AnimoError> {
+    (path, user, conn, state): (Path<PathParameters>, User, Connection, Data<AppState>),
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     user.requires_scope(Scopes::ListingWrite)?;
     let listing = Listing::find(path.id, conn)?;

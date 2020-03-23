@@ -14,6 +14,7 @@ use redis::RedisError;
 use reqwest::header::ToStrError as ReqwestToStrError;
 use reqwest::Error as ReqwestError;
 use serde_json::Error as SerdeError;
+use sharetribe_flex::ShareTribeError;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::Debug;
@@ -92,6 +93,12 @@ impl ConvertToWebError for GlobeeError {
 impl ConvertToWebError for BranchError {
     fn to_response(&self) -> HttpResponse {
         error!("Branch error: {}", self);
+        internal_error("Internal error")
+    }
+}
+impl ConvertToWebError for ShareTribeError {
+    fn to_response(&self) -> HttpResponse {
+        error!("Sharetribe error: {}", self);
         internal_error("Internal error")
     }
 }

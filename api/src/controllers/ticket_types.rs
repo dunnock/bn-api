@@ -14,6 +14,7 @@ use chrono::prelude::*;
 use db::dev::times;
 use db::models::*;
 use diesel::PgConnection;
+use itertools::Itertools;
 use log::Level::Debug;
 use serde_with::rust::double_option;
 use tari_client::MessagePayloadCreateAsset as TariNewAsset;
@@ -59,6 +60,15 @@ pub struct CreateTicketTypeRequest {
     pub box_office_sales_enabled: bool,
     #[serde(default = "default_as_true")]
     pub app_sales_enabled: bool,
+
+    #[serde(default, deserialize_with = "deserialize_unless_blank")]
+    pub ticket_type_type: Option<String>,
+    #[serde(default)]
+    pub contents: Vec<CreateLootBoxContentRequest>,
+    #[serde(default)]
+    pub rarity_id: Option<Uuid>,
+    #[serde(default)]
+    pub promo_image_url: Option<String>,
 }
 
 impl Default for CreateTicketTypeRequest {
@@ -81,6 +91,32 @@ impl Default for CreateTicketTypeRequest {
             web_sales_enabled: true,
             box_office_sales_enabled: true,
             app_sales_enabled: true,
+            ticket_type_type: None,
+            contents: vec![],
+            rarity_id: None,
+            promo_image_url: None,
+        }
+    }
+}
+
+#[derive(Deserialize, Clone)]
+pub struct CreateLootBoxContentRequest {
+    pub event_id: Uuid,
+    pub ticket_type_id: Option<Uuid>,
+    pub min_rarity_id: Option<Uuid>,
+    pub max_rarity_id: Option<Uuid>,
+    pub quantity_per_box: i32,
+}
+
+impl From<CreateLootBoxContentRequest> for NewLootBoxContent {
+    fn from(s: CreateLootBoxContentRequest) -> Self {
+        NewLootBoxContent {
+            quantity_per_box: s.quantity_per_box,
+            max_rarity_id: s.max_rarity_id,
+            min_rarity_id: s.min_rarity_id,
+            ticket_type_id: Uuid::nil(),
+            content_event_id: s.event_id,
+            content_ticket_type_id: s.ticket_type_id,
         }
     }
 }
@@ -523,6 +559,15 @@ fn create_ticket_types(
             ticket_type_data.app_sales_enabled,
             ticket_type_data.web_sales_enabled,
             ticket_type_data.box_office_sales_enabled,
+            ticket_type_data
+                .ticket_type_type
+                .as_ref()
+                .unwrap_or(&"Token".to_string())
+                .parse()?,
+            ticket_type_data.contents.iter().map(|c| c.clone().into()).collect_vec(),
+            ticket_type_data.rarity_id,
+            ticket_type_data.promo_image_url.clone(),
+            None,
             Some(user.id()),
             connection,
         )?;

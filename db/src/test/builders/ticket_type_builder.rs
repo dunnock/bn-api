@@ -95,6 +95,11 @@ impl<'a> TicketTypeBuilder<'a> {
                 true,
                 true,
                 true,
+                TicketTypeType::Token,
+                vec![],
+                None,
+                None,
+                None,
                 None,
                 connection,
             )

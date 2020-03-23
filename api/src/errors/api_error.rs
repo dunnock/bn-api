@@ -14,6 +14,7 @@ use globee::GlobeeError;
 use redis::RedisError;
 use reqwest;
 use serde_json::Error as SerdeError;
+use sharetribe_flex::ShareTribeError;
 use std::error::Error;
 use std::fmt;
 use tari_client::TariError;
@@ -58,6 +59,7 @@ error_conversion!(sitemap::Error);
 error_conversion!(reqwest::Error);
 error_conversion!(url::ParseError);
 error_conversion!(ToStrError);
+error_conversion!(ShareTribeError);
 
 impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

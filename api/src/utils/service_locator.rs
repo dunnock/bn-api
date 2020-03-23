@@ -5,6 +5,8 @@ use crate::payments::stripe::StripePaymentProcessor;
 use crate::payments::PaymentProcessor;
 use crate::utils::deep_linker::BranchDeepLinker;
 use crate::utils::deep_linker::DeepLinker;
+use crate::utils::marketplace_api::MarketplaceApi;
+use crate::utils::sharetribe_marketplace_api::SharetribeMarketplaceApi;
 use db::prelude::*;
 use db::services::CountryLookup;
 use db::utils::errors::DatabaseError;
@@ -87,7 +89,7 @@ impl ServiceLocator {
         )))
     }
 
-    pub fn create_marketplace_api(&self) -> Result<Box<dyn MarketplaceApi>, AnimoError> {
+    pub fn create_marketplace_api(&self) -> Result<Box<dyn MarketplaceApi>, ApiError> {
         Ok(Box::new(SharetribeMarketplaceApi::new(
             self.sharetribe_client_id.clone(),
             self.sharetribe_client_secret.clone(),

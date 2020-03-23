@@ -372,6 +372,20 @@ table! {
 }
 
 table! {
+    loot_box_contents (id) {
+        id -> Uuid,
+        ticket_type_id -> Uuid,
+        content_event_id -> Uuid,
+        min_rarity_id -> Nullable<Uuid>,
+        max_rarity_id -> Nullable<Uuid>,
+        content_ticket_type_id -> Nullable<Uuid>,
+        quantity_per_box -> Int4,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+table! {
     marketplace_accounts (id) {
         id -> Uuid,
         user_id -> Uuid,
@@ -589,6 +603,18 @@ table! {
 }
 
 table! {
+    rarities (id) {
+        id -> Uuid,
+        event_id -> Nullable<Uuid>,
+        name -> Text,
+        rank -> Int4,
+        color -> Nullable<Text>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+table! {
     refund_items (id) {
         id -> Uuid,
         refund_id -> Uuid,
@@ -750,6 +776,7 @@ table! {
         first_name_override -> Nullable<Text>,
         last_name_override -> Nullable<Text>,
         check_in_source -> Nullable<Text>,
+        parent_id -> Nullable<Uuid>,
         listing_id -> Nullable<Uuid>,
     }
 }
@@ -804,6 +831,10 @@ table! {
         web_sales_enabled -> Bool,
         box_office_sales_enabled -> Bool,
         app_sales_enabled -> Bool,
+        rarity_id -> Nullable<Uuid>,
+        ticket_type_type -> Varchar,
+        promo_image_url -> Nullable<Text>,
+        content_url -> Nullable<Text>,
     }
 }
 
@@ -940,6 +971,7 @@ joinable!(fee_schedule_ranges -> fee_schedules (fee_schedule_id));
 joinable!(holds -> events (event_id));
 joinable!(holds -> ticket_types (ticket_type_id));
 joinable!(listings -> users (user_id));
+joinable!(loot_box_contents -> events (content_event_id));
 joinable!(marketplace_accounts -> users (user_id));
 joinable!(order_items -> codes (code_id));
 joinable!(order_items -> events (event_id));
@@ -964,6 +996,7 @@ joinable!(payments -> orders (order_id));
 joinable!(payments -> refunds (refund_id));
 joinable!(payments -> users (created_by));
 joinable!(push_notification_tokens -> users (user_id));
+joinable!(rarities -> events (event_id));
 joinable!(refund_items -> order_items (order_item_id));
 joinable!(refund_items -> refunds (refund_id));
 joinable!(refunded_tickets -> order_items (order_item_id));
@@ -987,6 +1020,7 @@ joinable!(ticket_pricing -> ticket_types (ticket_type_id));
 joinable!(ticket_type_codes -> codes (code_id));
 joinable!(ticket_type_codes -> ticket_types (ticket_type_id));
 joinable!(ticket_types -> events (event_id));
+joinable!(ticket_types -> rarities (rarity_id));
 joinable!(transfer_tickets -> ticket_instances (ticket_instance_id));
 joinable!(transfer_tickets -> transfers (transfer_id));
 joinable!(user_genres -> genres (genre_id));
@@ -1020,6 +1054,7 @@ allow_tables_to_appear_in_same_query!(
     genres,
     holds,
     listings,
+    loot_box_contents,
     marketplace_accounts,
     notes,
     order_items,
@@ -1033,6 +1068,7 @@ allow_tables_to_appear_in_same_query!(
     payment_methods,
     payments,
     push_notification_tokens,
+    rarities,
     refund_items,
     refunded_tickets,
     refunds,

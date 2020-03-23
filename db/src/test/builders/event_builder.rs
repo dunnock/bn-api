@@ -250,6 +250,11 @@ impl<'a> EventBuilder<'a> {
                         true,
                         true,
                         true,
+                        TicketTypeType::Token,
+                        vec![],
+                        None,
+                        None,
+                        None,
                         None,
                         self.connection,
                     )

@@ -1,9 +1,9 @@
-use animo_db::models::{Listing, MarketplaceAccount, User};
-use errors::AnimoError;
+use crate::errors::ApiError;
+use crate::utils::marketplace_api::MarketplaceApi;
+use db::models::{Listing, MarketplaceAccount, User};
 use sharetribe_flex::market_place_api::endpoints::current_user::CreateCurrentUserRequest;
 use sharetribe_flex::market_place_api::endpoints::own_listings::{CreateListingRequest, Price};
 use sharetribe_flex::MarketplaceClient;
-use utils::marketplace_api::MarketplaceApi;
 
 pub struct SharetribeMarketplaceApi {
     client_id: String,
@@ -20,7 +20,7 @@ impl SharetribeMarketplaceApi {
 }
 
 impl MarketplaceApi for SharetribeMarketplaceApi {
-    fn link_user(&self, user: &User, account: &MarketplaceAccount) -> Result<String, AnimoError> {
+    fn link_user(&self, user: &User, account: &MarketplaceAccount) -> Result<String, ApiError> {
         let mut client = MarketplaceClient::with_anonymous_auth(self.client_id.clone());
         let user = CreateCurrentUserRequest {
             email: account.marketplace_user_id.clone(),
@@ -39,7 +39,7 @@ impl MarketplaceApi for SharetribeMarketplaceApi {
         Ok(account.id.to_string())
     }
 
-    fn publish_listing(&self, listing: &Listing, account: &MarketplaceAccount) -> Result<String, AnimoError> {
+    fn publish_listing(&self, listing: &Listing, account: &MarketplaceAccount) -> Result<String, ApiError> {
         let mut client = MarketplaceClient::with_user_auth(
             self.client_id.clone(),
             account.marketplace_user_id.clone(),

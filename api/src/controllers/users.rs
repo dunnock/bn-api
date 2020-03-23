@@ -7,13 +7,16 @@ use crate::errors::*;
 use crate::extractors::*;
 use crate::helpers::application;
 use crate::models::*;
+use crate::server::AppState;
 use crate::server::GetAppState;
 use crate::utils::google_recaptcha;
+use ::rand::rngs::OsRng;
+use ::rand::RngCore;
 use actix_web;
 use actix_web::Responder;
 use actix_web::{
     http::StatusCode,
-    web::{Path, Query},
+    web::{Data, Path, Query},
     HttpRequest, HttpResponse,
 };
 use db::prelude::*;
@@ -401,8 +404,8 @@ pub async fn delete(
 }
 
 pub fn create_marketplace_account(
-    (user, state, conn): (AuthUser, State<AppState>, Connection),
-) -> Result<HttpResponse, AnimoError> {
+    (user, state, conn): (AuthUser, Data<AppState>, Connection),
+) -> Result<HttpResponse, ApiError> {
     let conn = conn.get();
     let db_user = &user.user;
     if MarketplaceAccount::find_by_user_id(db_user.id, conn)?.len() > 0 {
