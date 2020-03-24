@@ -1,10 +1,20 @@
 use std::time::Duration;
 
+
+/// Configuration for the cache
 pub struct Config {
+	/// Redis connection string, only host and port parts are supported atm
 	pub database_url: String,
+	/// Timeout for read operations
 	pub read_timeout: Duration,
+	/// Timeout for write operations
 	pub write_timeout: Duration,
+	/// Number of connections in the pool
+	/// Default number of connections is number of CPUs on instance
 	pub max_size: usize,
+	/// Concurrency level for `GET` operations in the pool per connection
+	/// `GET` operations will hold while there are >= `concurrency * max_size` GET operations in progress
+	/// Default is 4 per connection
 	pub concurrency: usize,
 }
 
