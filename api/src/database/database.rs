@@ -26,9 +26,7 @@ impl Database {
     pub async fn readonly_from_config(config: &Config) -> Database {
         Database {
             connection_pool: create_connection_pool(&config, config.readonly_database_url.clone()),
-            cache_database: CacheDatabase {
-                inner: load_redis_connection(config).await,
-            },
+            cache_database: CacheDatabase { inner: None },
         }
     }
 
