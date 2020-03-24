@@ -75,6 +75,8 @@ pub struct Config {
 #[derive(Clone)]
 pub struct Actix {
     pub workers: Option<usize>,
+    pub backlog: Option<usize>,
+    pub maxconn: Option<usize>,
 }
 
 #[derive(Clone)]
@@ -140,6 +142,8 @@ const CUSTOMER_IO_SITE_ID: &str = "CUSTOMER_IO_SITE_ID";
 const CUSTOMER_IO_BASE_URL: &str = "CUSTOMER_IO_BASE_URL";
 const CUBE_JS_SECRET: &str = "CUBE_JS_SECRET";
 const ACTIX_WORKERS: &str = "ACTIX_WORKERS";
+const ACTIX_BACKLOG: &str = "ACTIX_BACKLOG";
+const ACTIX_MAXCONN: &str = "ACTIX_MAXCONN";
 const ALLOWED_ORIGINS: &str = "ALLOWED_ORIGINS";
 const APP_NAME: &str = "APP_NAME";
 const API_HOST: &str = "API_HOST";
@@ -303,8 +307,14 @@ impl Config {
             _ => env::var(&READONLY_DATABASE_URL).unwrap_or_else(|_| database_url.clone()),
         };
 
-        let actix_workers: Option<usize> = env::var(&ACTIX_WORKERS)
+        let workers: Option<usize> = env::var(&ACTIX_WORKERS)
             .map(|r| r.parse().expect(&format!("{} is not a valid usize", ACTIX_WORKERS)))
+            .ok();
+        let backlog: Option<usize> = env::var(&ACTIX_BACKLOG)
+            .map(|r| r.parse().expect(&format!("{} is not a valid usize", ACTIX_BACKLOG)))
+            .ok();
+        let maxconn: Option<usize> = env::var(&ACTIX_MAXCONN)
+            .map(|r| r.parse().expect(&format!("{} is not a valid usize", ACTIX_MAXCONN)))
             .ok();
         let domain = env::var(&DOMAIN).unwrap_or_else(|_| "api.bigneon.com".to_string());
 
@@ -457,7 +467,11 @@ impl Config {
         let static_file_path = env::var(&STATIC_FILE_PATH).map(|s| Some(s)).unwrap_or(None);
 
         Config {
-            actix: Actix { workers: actix_workers },
+            actix: Actix {
+                workers,
+                backlog,
+                maxconn,
+            },
             customer_io,
             allowed_origins,
             app_name,

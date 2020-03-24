@@ -131,9 +131,7 @@ impl Server {
                                 .allowed_headers(vec![
                                     http::header::AUTHORIZATION,
                                     http::header::ACCEPT,
-                                    "X-API-Client-Version"
-                                        .parse::<http::header::HeaderName>()
-                                        .unwrap(),
+                                    "X-API-Client-Version".parse::<http::header::HeaderName>().unwrap(),
                                 ])
                                 .allowed_header(http::header::CONTENT_TYPE)
                                 .expose_headers(vec!["x-app-version", "x-cached-response"])
@@ -145,25 +143,33 @@ impl Server {
                         .wrap(DatabaseTransaction::new())
                         .wrap(AppVersionHeader::new())
                         .wrap(Metatags::new(&conf))
-                        .configure( routing::routes )
-                        .configure( |conf| {
+                        .configure(routing::routes)
+                        .configure(|conf| {
                             if let Some(static_file_path) = &static_file_conf.static_file_path {
                                 conf.service(fs::Files::new("/", static_file_path));
                             }
                         })
-                        .default_service(
-                            web::get().to(|| HttpResponse::NotFound().json(json!({"error": "Not found"})))
-                        )
+                        .default_service(web::get().to(|| HttpResponse::NotFound().json(json!({"error": "Not found"}))))
                 }
-            })
-                //            .keep_alive(keep_alive)
-                .bind(&bind_addr)
-                .unwrap_or_else(|_| panic!("Can not bind to {}", bind_addr));
+            });
+            //            .keep_alive(keep_alive)
 
             if let Some(workers) = config.actix.workers {
                 server = server.workers(workers);
-            }
-            match server.run().await {
+            };
+            if let Some(backlog) = config.actix.backlog {
+                server = server.backlog(backlog as i32);
+            };
+            if let Some(maxconn) = config.actix.maxconn {
+                server = server.maxconn(maxconn);
+            };
+            let exit = server
+                .bind(&bind_addr)
+                .unwrap_or_else(|_| panic!("Can not bind to {}", bind_addr))
+                .run()
+                .await;
+
+            match exit {
                 Ok(_) => {}
                 Err(e) => jlog!(Warn, "api::server", "Server exit with error", {"error": e.description()}),
             };
