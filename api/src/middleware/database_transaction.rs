@@ -45,7 +45,7 @@ impl DatabaseTransaction {
             match transaction_response {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    error!("Diesel Error: {}", e.description());
+                    error!("Diesel Error: {}", e.to_string());
                     let error: ApiError = e.into();
                     Err(error)
                 }

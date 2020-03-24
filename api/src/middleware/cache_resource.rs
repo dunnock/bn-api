@@ -49,6 +49,7 @@ enum Cache {
     Miss(CacheConfiguration),
     Hit(HttpResponse, CacheConfiguration),
     Skip,
+    Timeout(CacheConfiguration),
 }
 
 #[derive(Clone)]
@@ -181,10 +182,15 @@ impl CacheResource {
             let value =
                 caching::get_cached_value(&state.database.cache_database, &config, &cache_configuration.cache_data)
                     .await;
-            if let Some(response) = value {
-                // Insert self into extensions to let response know not to set the value
-                cache_configuration.served_cache = true;
-                return Cache::Hit(response, cache_configuration);
+            match value {
+                Ok(Some(response)) => {
+                    cache_configuration.served_cache = true;
+                    return Cache::Hit(response, cache_configuration);
+                }
+                Err(e) if e.timeout => {
+                    return Cache::Timeout(cache_configuration);
+                }
+                _ => {}
             }
         }
 
@@ -340,7 +346,7 @@ where
                         "api::cache_resource",
                         "Cache hit",
                         &http_req,
-                        json!({"cache_user_key": status.user_key, "cache_response": status.cache_response, "cache_hit": true}),
+                        json!({"cache_result": "hit", "cache_user_key": status.user_key, "cache_response": status.cache_response, "cache_hit": true}),
                     );
                     let response = dev::ServiceResponse::new(http_req, response);
                     Ok(CacheResource::update(status, response).await)
@@ -351,7 +357,7 @@ where
                         "api::cache_resource",
                         "Cache miss",
                         &http_req,
-                        json!({"cache_user_key": status.user_key, "cache_response": status.cache_response, "cache_hit": false}),
+                        json!({"cache_result": "miss", "cache_user_key": status.user_key, "cache_response": status.cache_response, "cache_hit": false}),
                     );
                     let request = dev::ServiceRequest::from_parts(http_req, payload)
                         .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
@@ -360,6 +366,20 @@ where
                     Ok(CacheResource::update(status, response).await)
                 }
                 Cache::Skip => {
+                    let request = dev::ServiceRequest::from_parts(http_req, payload)
+                        .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
+                    let fut = service.borrow_mut().call(request);
+                    fut.await
+                }
+                Cache::Timeout(status) => {
+                    // When timing out from cache, we don't need to update it
+                    log_request(
+                        Level::Debug,
+                        "api::cache_resource",
+                        "Cache timeout",
+                        &http_req,
+                        json!({"cache_result": "timeout", "cache_user_key": status.user_key, "cache_response": status.cache_response, "cache_hit": false}),
+                    );
                     let request = dev::ServiceRequest::from_parts(http_req, payload)
                         .unwrap_or_else(|_| unreachable!("Failed to recompose request in CacheResourceService::call"));
                     let fut = service.borrow_mut().call(request);

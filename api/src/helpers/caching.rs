@@ -17,7 +17,7 @@ pub(crate) async fn set_cached_value<T: Serialize>(
     if cache_db.inner.is_none() {
         return Ok(());
     }
-    let mut cache_connection = cache_db.inner.clone().unwrap();
+    let cache_connection = cache_db.inner.clone().unwrap();
 
     let body = application::unwrap_body_to_string(http_response).map_err(|e| ApplicationError::new(e.to_string()))?;
     let cache_period = config.redis_cache_period;
@@ -35,34 +35,34 @@ pub(crate) async fn get_cached_value<T: Serialize>(
     cache_db: &CacheDatabase,
     _config: &Config,
     query: T,
-) -> Option<HttpResponse> {
+) -> Result<Option<HttpResponse>, cache::CacheError> {
     if cache_db.inner.is_none() {
-        return None;
+        return Ok(None);
     }
-    let mut cache_connection = cache_db.inner.clone().unwrap();
+    let cache_connection = cache_db.inner.clone().unwrap();
 
-    let query_serialized = serde_json::to_string(&query).ok()?;
+    let query_serialized = serde_json::to_string(&query).map_err(|e| cache::CacheError::new(e.to_string()))?;
 
     match cache_connection.get(&query_serialized).await {
         Ok(cached_value) => {
             if let Some(value) = cached_value {
-                let payload: Value = serde_json::from_str(&value).ok()?;
-                return Some(HttpResponse::Ok().json(&payload));
+                let payload: Value = serde_json::from_str(&value).map_err(|e| cache::CacheError::new(e.to_string()))?;
+                return Ok(Some(HttpResponse::Ok().json(&payload)));
             }
         }
         Err(err) => {
             error!("helpers::caching#get_cached_value: {:?}", err);
-            return None;
+            return Err(err);
         }
     }
-    None
+    Ok(None)
 }
 
 pub(crate) async fn delete_by_key_fragment(cache_db: &CacheDatabase, key_fragment: String) -> Result<(), ApiError> {
     if cache_db.inner.is_none() {
         return Ok(());
     }
-    let mut cache_connection = cache_db.inner.clone().unwrap();
+    let cache_connection = cache_db.inner.clone().unwrap();
 
     if let Err(err) = cache_connection.delete_by_key_fragment(&key_fragment).await {
         error!("helpers::caching#delete_by_key_fragment: {:?}", err);
@@ -78,7 +78,7 @@ pub(crate) async fn publish<T: Serialize>(
     if cache_db.inner.is_none() {
         return Ok(());
     }
-    let mut cache_connection = cache_db.inner.clone().unwrap();
+    let cache_connection = cache_db.inner.clone().unwrap();
 
     if let Err(err) = cache_connection
         .publish(&redis_pubsub_channel.to_string(), &serde_json::to_string(&message)?)

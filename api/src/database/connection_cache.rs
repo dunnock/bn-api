@@ -1,12 +1,12 @@
 use crate::errors::ApiError;
 use crate::server::GetAppState;
 use actix_web::{dev::Payload, FromRequest, HttpRequest, Result};
-use cache::{RedisCacheConnection, RedisAsyncCacheConnection};
+use cache::RedisAsyncPool;
 use futures::future::{ok, Ready};
 
 #[derive(Debug, Clone)]
 pub struct CacheDatabase {
-    pub inner: Option<RedisCacheConnection>,
+    pub inner: Option<RedisAsyncPool>,
 }
 
 impl FromRequest for CacheDatabase {

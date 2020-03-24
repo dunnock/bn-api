@@ -22,11 +22,7 @@ pub struct Config {
     pub app_name: String,
     pub cube_js: CubeJs,
     pub database_url: String,
-    pub redis_connection_string: Option<String>,
-    pub redis_connection_timeout: u64,
-    pub redis_read_timeout: u64,
-    pub redis_write_timeout: u64,
-    pub redis_pool_max_size: Option<usize>,
+    pub redis: Option<cache::Config>,
     pub readonly_database_url: String,
     pub redis_cache_period: u64,
     pub client_cache_period: u64,
@@ -155,6 +151,7 @@ const REDIS_READ_TIMEOUT_MILLI: &str = "REDIS_READ_TIMEOUT_MILLI";
 const REDIS_WRITE_TIMEOUT_MILLI: &str = "REDIS_WRITE_TIMEOUT_MILLI";
 const REDIS_CACHE_PERIOD_MILLI: &str = "REDIS_CACHE_PERIOD_MILLI";
 const REDIS_POOL_MAX_SIZE: &str = "REDIS_POOL_MAX_SIZE";
+const REDIS_POOL_CONNECTION_CONCURRENCY: &str = "REDIS_POOL_CONNECTION_CONCURRENCY";
 const CLIENT_CACHE_PERIOD: &str = "CLIENT_CACHE_PERIOD";
 const READONLY_DATABASE_URL: &str = "READONLY_DATABASE_URL";
 const DOMAIN: &str = "DOMAIN";
@@ -244,31 +241,47 @@ impl Config {
 
         let app_name = env::var(&APP_NAME).unwrap_or_else(|_| SITE_NAME.to_string());
 
-        let redis_connection_string = match environment {
+        let mut redis = match environment {
             Environment::Test => None,
-            _ => env::var(&REDIS_CONNECTION_STRING).ok(),
+            _ => Some(cache::Config::default()),
         };
-        let redis_connection_timeout = env::var(&REDIS_CONNECTION_TIMEOUT_MILLI)
-            .ok()
-            .map(|s| {
-                s.parse()
-                    .expect("Not a valid value for redis connection timeout in milliseconds")
-            })
-            .unwrap_or(50);
-        let redis_read_timeout = env::var(&REDIS_READ_TIMEOUT_MILLI)
-            .ok()
-            .map(|s| {
+        if let Some(ref mut redis) = redis.as_mut() {
+            if let Some(database_url) = env::var(&REDIS_CONNECTION_STRING).ok() {
+                redis.database_url = database_url
+            }
+            if let Some(database_url) = env::var(&REDIS_CONNECTION_STRING).ok() {
+                redis.database_url = database_url
+            }
+
+            if let Some(read_timeout) = env::var(&REDIS_READ_TIMEOUT_MILLI).ok().map(|s| {
                 s.parse()
                     .expect("Not a valid value for redis read timeout in milliseconds")
-            })
-            .unwrap_or(50);
-        let redis_write_timeout = env::var(&REDIS_WRITE_TIMEOUT_MILLI)
-            .ok()
-            .map(|s| {
+            }) {
+                redis.read_timeout = std::time::Duration::from_millis(read_timeout);
+            }
+
+            if let Some(write_timeout) = env::var(&REDIS_WRITE_TIMEOUT_MILLI).ok().map(|s| {
                 s.parse()
                     .expect("Not a valid value for redis write timeout in milliseconds")
-            })
-            .unwrap_or(50);
+            }) {
+                redis.write_timeout = std::time::Duration::from_millis(write_timeout);
+            }
+
+            if let Some(max_size) = env::var(&REDIS_POOL_MAX_SIZE)
+                .ok()
+                .map(|s| s.parse().expect("Not a valid value for maximum size of redis pool"))
+            {
+                redis.max_size = max_size;
+            }
+
+            if let Some(concurrency) = env::var(&REDIS_POOL_CONNECTION_CONCURRENCY)
+                .ok()
+                .map(|s| s.parse().expect("Not a valid value for redis connections concurrency"))
+            {
+                redis.concurrency = concurrency;
+            }
+        }
+
         let redis_cache_period = env::var(&REDIS_CACHE_PERIOD_MILLI)
             .ok()
             .map(|s| {
@@ -276,9 +289,6 @@ impl Config {
                     .expect("Not a valid value for redis cache period in milliseconds")
             })
             .unwrap_or(10000);
-        let redis_pool_max_size = env::var(&REDIS_POOL_MAX_SIZE)
-            .ok()
-            .map(|s| s.parse().expect("Not a valid value for maximum size of redis pool"));
         let client_cache_period = env::var(&CLIENT_CACHE_PERIOD)
             .ok()
             .map(|s| s.parse().expect("Not a valid value for client cache period in seconds"))
@@ -456,12 +466,8 @@ impl Config {
             api_port,
             cube_js,
             database_url,
-            redis_connection_string,
-            redis_connection_timeout,
-            redis_read_timeout,
-            redis_write_timeout,
+            redis,
             redis_cache_period,
-            redis_pool_max_size,
             client_cache_period,
             readonly_database_url,
             domain,

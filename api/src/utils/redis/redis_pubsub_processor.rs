@@ -30,9 +30,9 @@ impl RedisPubSubProcessor {
         websocket_clients: Arc<Mutex<HashMap<Uuid, Vec<Addr<EventWebSocket>>>>>,
     ) -> RedisPubSubProcessor {
         let client = config
-            .redis_connection_string
+            .redis
             .clone()
-            .map(|url| redis::Client::open(url).unwrap());
+            .map(|config| redis::Client::open(config.database_url).unwrap());
         RedisPubSubProcessor {
             config,
             client,
@@ -48,7 +48,7 @@ impl RedisPubSubProcessor {
         rx: Receiver<()>,
     ) -> Result<(), ApiError> {
         let mut pubsub = conn.as_pubsub();
-        pubsub.set_read_timeout(Some(Duration::from_millis(config.redis_read_timeout)))?;
+        pubsub.set_read_timeout(config.redis.map(|config| config.read_timeout))?;
 
         // Todo: switch channels into enum
         pubsub.subscribe(RedisPubSubChannel::TicketRedemptions.to_string())?;
