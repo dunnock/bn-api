@@ -99,13 +99,17 @@ impl RequestBuilder {
 }
 
 fn get_dbs(config: &Config) -> (Database, Database) {
-    let get_db = |db: Arc<Mutex<Option<Database>>>| {
+    let get_db = |db: Arc<Mutex<Option<Database>>>| async {
         let mut db_guard = db.lock().unwrap();
         if let Some(ref db) = *db_guard {
             return db.clone();
         };
-        *db_guard = Some(Database::from_config(config));
+        *db_guard = Some(Database::from_config(config).await);
         db_guard.as_ref().unwrap().clone()
     };
-    (get_db(DB.clone()), get_db(RO_DB.clone()))
+    let rt = tokio::runtime::Runtime().new();
+    rt.block_on(async {
+        (get_db(DB.clone()).await, get_db(RO_DB.clone()).await)
+    })
+    
 }
