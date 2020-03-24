@@ -16,8 +16,8 @@ use std::str::FromStr;
 use std::{thread, time};
 use uuid::Uuid;
 
-#[tokio::main]
-pub fn main() {
+#[actix_rt::main]
+pub async fn main() {
     logging::setup_logger();
     info!("Loading environment");
     dotenv().ok();
