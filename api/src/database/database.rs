@@ -32,6 +32,13 @@ impl Database {
         }
     }
 
+    pub fn from_config_no_cache(config: &Config) -> Database {
+        Database {
+            connection_pool: create_connection_pool(&config, config.database_url.clone()),
+            cache_database: CacheDatabase { inner: None },
+        }
+    }
+
     pub fn get_connection(&self) -> Result<Connection, R2D2Error> {
         let conn = self.connection_pool.get()?;
         Ok(ConnectionType::R2D2(conn).into())

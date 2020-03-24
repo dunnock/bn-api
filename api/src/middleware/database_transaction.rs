@@ -7,7 +7,6 @@ use actix_web::{FromRequest, HttpRequest};
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
 use futures::future::{ok, Ready};
-use std::error::Error;
 
 pub trait RequestConnection {
     fn connection(&self) -> Result<Connection, ApiError>;
