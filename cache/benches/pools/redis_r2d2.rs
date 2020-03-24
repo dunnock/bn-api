@@ -1,13 +1,12 @@
 use super::cache_error::*;
+use r2d2_redis::r2d2::Error as R2D2Error;
 use r2d2_redis::r2d2::{Pool, PooledConnection};
 use r2d2_redis::RedisConnectionManager;
-use r2d2_redis::r2d2::Error as R2D2Error;
 use redis::Commands;
 use std::sync::Arc;
 use std::time::Duration;
 
 type Milliseconds = usize;
-
 
 // Implementation
 #[derive(Debug, Clone)]
@@ -38,8 +37,12 @@ impl RedisR2D2 {
 
     pub fn conn(&self) -> Result<PooledConnection<RedisConnectionManager>, R2D2Error> {
         let connection = self.pool.get()?;
-        connection.set_read_timeout(Some(Duration::from_millis(self.read_timeout))).unwrap();
-        connection.set_write_timeout(Some(Duration::from_millis(self.write_timeout))).unwrap();
+        connection
+            .set_read_timeout(Some(Duration::from_millis(self.read_timeout)))
+            .unwrap();
+        connection
+            .set_write_timeout(Some(Duration::from_millis(self.write_timeout)))
+            .unwrap();
 
         Ok(connection)
     }

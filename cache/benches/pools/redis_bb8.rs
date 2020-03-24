@@ -1,9 +1,9 @@
 use super::cache_error::*;
-use std::time::Duration;
-use tokio::time::timeout;
-use bb8_redis::bb8::{Pool};
+use bb8_redis::bb8::Pool;
 use bb8_redis::RedisConnectionManager;
 use std::ops::DerefMut;
+use std::time::Duration;
+use tokio::time::timeout;
 
 // Implementation
 #[derive(Clone)]

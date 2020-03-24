@@ -3,9 +3,9 @@ use redis::RedisError;
 use redis_async::error::Error as RedisAsyncError;
 use std::error::Error;
 use std::fmt;
+use std::net::AddrParseError;
 use tokio::time::Elapsed;
 use url::ParseError;
-use std::net::AddrParseError;
 
 #[derive(Debug)]
 pub struct CacheError {

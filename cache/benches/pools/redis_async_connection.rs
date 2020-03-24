@@ -1,9 +1,9 @@
 use super::cache_error::*;
 use redis_async::{client, client::paired::PairedConnection, resp_array};
-use std::time::Duration;
-use tokio::time::timeout;
 use std::net::SocketAddr;
 use std::str::FromStr;
+use std::time::Duration;
+use tokio::time::timeout;
 
 // Implementation
 #[derive(Clone, Debug)]
@@ -19,11 +19,10 @@ impl RedisAsyncConnection {
         read_timeout: u64,
         write_timeout: u64,
     ) -> Result<RedisAsyncConnection, CacheError> {
-
         let url = url::Url::parse(database_url)?;
         let host = url.host().unwrap();
         let port = url.port_or_known_default().unwrap_or(6379);
-        
+
         let addr = SocketAddr::from_str(format!("{}:{}", host, port).as_str())?;
         let conn = client::paired_connect(&addr).await?;
 

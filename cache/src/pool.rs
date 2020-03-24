@@ -1,14 +1,14 @@
 use crate::cache_error::CacheError;
 use crate::Config;
+use futures::future::try_join_all;
 use redis_async::{client, client::paired::PairedConnection, resp_array};
-use std::time::Duration;
-use tokio::time::timeout;
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::sync::Arc;
-use futures::future::try_join_all;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::Semaphore;
+use tokio::time::timeout;
 
 pub type Milliseconds = usize;
 
@@ -24,14 +24,13 @@ pub struct RedisAsyncPool {
 }
 
 impl RedisAsyncPool {
-    pub async fn from_config(config: Config) -> Result<RedisAsyncPool, CacheError> {
-
+    pub async fn from_config(config: &Config) -> Result<RedisAsyncPool, CacheError> {
         let url = url::Url::parse(config.database_url.as_str())?;
         let host = url.host().unwrap();
         let port = url.port_or_known_default().unwrap_or(6379);
-        
+
         let addr = SocketAddr::from_str(format!("{}:{}", host, port).as_str())?;
-        let conns: Vec<_> = (0..config.max_size).map(|_| client::paired_connect(&addr) ).collect();
+        let conns: Vec<_> = (0..config.max_size).map(|_| client::paired_connect(&addr)).collect();
         let connections = try_join_all(conns).await?;
         let concurrency = Arc::new(Semaphore::new(config.max_size * config.concurrency));
 
@@ -158,7 +157,6 @@ mod tests {
         assert_eq!(Some("value".to_string()), pool.get("key2").await.unwrap());
     }
 
-
     #[tokio::test]
     async fn test_publish() {
         let pool = RedisAsyncPool::from_config(test_config()).await.unwrap();
@@ -171,8 +169,14 @@ mod tests {
         pool.add("uniquekey1", "value", Some(1000)).await.unwrap();
         pool.add("uniquekey2", "value", Some(1000)).await.unwrap();
         pool.delete("uniquekey1").await.unwrap();
-        assert!(pool.get("uniquekey1").await.unwrap().is_none(), "deleted key should not be present");
-        assert!(pool.get("uniquekey2").await.unwrap().is_some(), "not deleted key should be present");
+        assert!(
+            pool.get("uniquekey1").await.unwrap().is_none(),
+            "deleted key should not be present"
+        );
+        assert!(
+            pool.get("uniquekey2").await.unwrap().is_some(),
+            "not deleted key should be present"
+        );
     }
 
     #[tokio::test]
@@ -183,9 +187,18 @@ mod tests {
         pool.add("keyset:2", "value", Some(1000)).await.unwrap();
 
         pool.delete_by_key_fragment("keyset").await.unwrap();
-        assert!(pool.get("keyset:1").await.unwrap().is_none(), "deleted key should not be present");
-        assert!(pool.get("keyset:2").await.unwrap().is_none(), "deleted key should not be present");
-        assert!(pool.get("uniquekey3").await.unwrap().is_some(), "not deleted key should be present");
+        assert!(
+            pool.get("keyset:1").await.unwrap().is_none(),
+            "deleted key should not be present"
+        );
+        assert!(
+            pool.get("keyset:2").await.unwrap().is_none(),
+            "deleted key should not be present"
+        );
+        assert!(
+            pool.get("uniquekey3").await.unwrap().is_some(),
+            "not deleted key should be present"
+        );
     }
 
     #[tokio::test]
@@ -197,7 +210,13 @@ mod tests {
         const REQUESTS: u128 = 1000;
 
         // set low concurrency to avoid timeout failure
-        let pool = RedisAsyncPool::from_config(Config { concurrency: 1, max_size: 1, ..Config::default() }).await.unwrap();
+        let pool = RedisAsyncPool::from_config(Config {
+            concurrency: 1,
+            max_size: 1,
+            ..Config::default()
+        })
+        .await
+        .unwrap();
         pool.add("uniquekey4", data.as_str(), Some(10_000)).await.unwrap();
         let cmds = (1..REQUESTS).map(|_| pool.get_bench("uniquekey4"));
         let res = try_join_all(cmds).await.unwrap();
@@ -205,24 +224,37 @@ mod tests {
         let avg_response_single = res.iter().fold(0, |s, i| s + i.unwrap_or(10_000)) / REQUESTS;
 
         // with high concurrency we guaranteed to timeout
-        let pool = RedisAsyncPool::from_config(Config { concurrency: 1_000, max_size: 1, ..Config::default() }).await.unwrap();
+        let pool = RedisAsyncPool::from_config(Config {
+            concurrency: 1_000,
+            max_size: 1,
+            ..Config::default()
+        })
+        .await
+        .unwrap();
         pool.add("uniquekey5", data.as_str(), Some(10_000)).await.unwrap();
         let cmds = (1..REQUESTS).map(|_| pool.get_bench("uniquekey5"));
         let res = try_join_all(cmds).await.unwrap();
         responses_report("Concurrency = 1_000", res.clone());
         let avg_response_concur = res.iter().fold(0, |s, i| s + i.unwrap_or(10_000)) / REQUESTS;
 
-        assert!(avg_response_concur / avg_response_single > 10, "response time for single vs concurrent less than factor 10");
+        assert!(
+            avg_response_concur / avg_response_single > 10,
+            "response time for single vs concurrent less than factor 10"
+        );
     }
 
     fn responses_report(name: &str, data: Vec<Option<u128>>) {
-        let mut histo = hdrhistogram::Histogram::<u64>::new_with_bounds(1, 1000*1000*10, 3).unwrap();
+        let mut histo = hdrhistogram::Histogram::<u64>::new_with_bounds(1, 1000 * 1000 * 10, 3).unwrap();
         for item in data.iter() {
             histo += item.unwrap() as u64;
         }
         println!("{} / response times percentiles:", name);
         for val in histo.iter_quantiles(1).take(8) {
-            println!("{:.2}% < {:.3}ms", val.percentile(), val.value_iterated_to() as f64 / 1000.0);
+            println!(
+                "{:.2}% < {:.3}ms",
+                val.percentile(),
+                val.value_iterated_to() as f64 / 1000.0
+            );
         }
     }
 }

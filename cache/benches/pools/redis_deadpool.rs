@@ -59,7 +59,7 @@ impl RedisDeadpool {
         Ok(connection)
     }
 
-    pub async fn get(&mut self, key: &str) -> Result<Option<String>, CacheError>  {
+    pub async fn get(&mut self, key: &str) -> Result<Option<String>, CacheError> {
         let mut conn = self.conn().await.unwrap();
         Ok(timeout(self.read_timeout, conn.get(key)).await??)
     }

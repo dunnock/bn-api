@@ -1,12 +1,12 @@
 use super::cache_error::*;
+use futures::future::try_join_all;
 use redis_async::{client, client::paired::PairedConnection, resp_array};
-use std::time::Duration;
-use tokio::time::timeout;
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::sync::Arc;
-use futures::future::try_join_all;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::time::timeout;
 
 // Implementation
 #[derive(Clone, Debug)]
@@ -25,15 +25,14 @@ impl RedisAsyncConnectionPool {
         write_timeout: u64,
         max_size: Option<usize>,
     ) -> Result<RedisAsyncConnectionPool, CacheError> {
-
         let max_size = max_size.unwrap_or(num_cpus::get()); //change to num_cpus
 
         let url = url::Url::parse(database_url)?;
         let host = url.host().unwrap();
         let port = url.port_or_known_default().unwrap_or(6379);
-        
+
         let addr = SocketAddr::from_str(format!("{}:{}", host, port).as_str())?;
-        let conns: Vec<_> = (0..max_size).map(|_| client::paired_connect(&addr) ).collect();
+        let conns: Vec<_> = (0..max_size).map(|_| client::paired_connect(&addr)).collect();
         let objects = try_join_all(conns).await?;
 
         Ok(RedisAsyncConnectionPool {
@@ -50,7 +49,6 @@ impl RedisAsyncConnectionPool {
         let idx = self.current.fetch_add(1, Ordering::Relaxed) % self.max_size;
         &self.objects[idx]
     }
-
 
     pub async fn get(&self, key: &str) -> Result<Option<String>, CacheError> {
         let cmd = resp_array!["GET", key];

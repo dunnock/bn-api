@@ -1,10 +1,10 @@
 use redis_async::error::Error as RedisAsyncError;
 use std::error::Error;
 use std::fmt;
-use tokio::time::Elapsed;
-use url::ParseError;
 use std::net::AddrParseError;
 use std::num::ParseIntError;
+use tokio::time::Elapsed;
+use url::ParseError;
 
 #[derive(Debug)]
 pub struct CacheError {
