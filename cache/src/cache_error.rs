@@ -1,20 +1,23 @@
-use deadpool::managed::PoolError;
-use redis::RedisError;
 use redis_async::error::Error as RedisAsyncError;
 use std::error::Error;
 use std::fmt;
 use tokio::time::Elapsed;
 use url::ParseError;
 use std::net::AddrParseError;
+use std::num::ParseIntError;
 
 #[derive(Debug)]
 pub struct CacheError {
     pub reason: String,
+    pub timeout: bool,
 }
 
 impl CacheError {
     pub fn new(reason: String) -> CacheError {
-        CacheError { reason }
+        CacheError { reason, timeout: false }
+    }
+    pub fn new_timeout(reason: String) -> CacheError {
+        CacheError { reason, timeout: true }
     }
 }
 
@@ -30,18 +33,6 @@ impl fmt::Display for CacheError {
     }
 }
 
-impl From<PoolError<RedisError>> for CacheError {
-    fn from(e: PoolError<RedisError>) -> Self {
-        CacheError::new(e.to_string())
-    }
-}
-
-impl From<RedisError> for CacheError {
-    fn from(e: RedisError) -> Self {
-        CacheError::new(e.to_string())
-    }
-}
-
 impl From<RedisAsyncError> for CacheError {
     fn from(e: RedisAsyncError) -> Self {
         CacheError::new(format!("{:?}", e))
@@ -50,7 +41,7 @@ impl From<RedisAsyncError> for CacheError {
 
 impl From<Elapsed> for CacheError {
     fn from(e: Elapsed) -> Self {
-        CacheError::new(e.to_string())
+        CacheError::new_timeout(e.to_string())
     }
 }
 
@@ -62,6 +53,12 @@ impl From<AddrParseError> for CacheError {
 
 impl From<ParseError> for CacheError {
     fn from(e: ParseError) -> Self {
+        CacheError::new(e.to_string())
+    }
+}
+
+impl From<ParseIntError> for CacheError {
+    fn from(e: ParseIntError) -> Self {
         CacheError::new(e.to_string())
     }
 }

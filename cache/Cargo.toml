@@ -5,23 +5,24 @@ authors = ["toiletspider <dan4rie@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-redis = "0.15"
 redis-async = "0.6"
-deadpool-redis = "0.5"
-deadpool = "0.5"
 chrono = {version = "0.4", features = ["serde"]}
-tokio = { version = "0.2", features = ["macros", "rt-core", "time", "sync"] }
-actix-rt = "1.0"
+tokio = { version = "0.2", features = ["time", "sync"] }
 url = "2.1"
 num_cpus = "1.12"
+futures = "0.3"
 
 [dev-dependencies]
 criterion = "0.3"
-futures = "0.3"
 r2d2_redis = "0.13.0"
 bb8-redis = "0.4"
 hdrhistogram = "7.0"
 crossbeam-queue = "0.2"
+deadpool-redis = "0.5"
+deadpool = "0.5"
+redis = "0.15"
+actix-rt = "1.0"
+tokio = { version = "0.2", features = ["macros", "rt-core"] }
 
 [[bench]]
 name = "pools"
