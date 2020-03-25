@@ -225,7 +225,7 @@ impl CacheResource {
                         log_request(
                             Level::Error,
                             "api::cache_resource",
-                            format!("Failed to update cache: {:?}", err),
+                            format!("Failed to update cache: {:?}", err).as_str(),
                             response.request(),
                             json!({"cache_result": "miss", "cache_user_key": cache_configuration.user_key, "cache_response": true, "cache_hit": false}),
                         );
