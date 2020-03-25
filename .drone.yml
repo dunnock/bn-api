@@ -160,6 +160,7 @@ steps:
             TEST_DATABASE_URL: postgres://app:password@database/other_tests
             TEST_READONLY_DATABASE_URL: postgres://app:password@database/other_tests
             TEST_DATABASE_ADMIN_URL: postgres://app:password@database/other_tests
+            REDIS_CONNECTION_STRING: redis://redis/
         commands:
             - ./scripts/run-other-tests-ci.sh
         when:
@@ -193,6 +194,7 @@ steps:
             TEST_READONLY_DATABASE_URL: postgres://app:password@database/integration_tests
             TEST_DATABASE_ADMIN_URL: postgres://app:password@database/integration_tests
             RUST_LOG: error
+            REDIS_CONNECTION_STRING: redis://redis/
         commands:
             - ./scripts/run-integration-tests-ci.sh
         when:
@@ -310,6 +312,11 @@ services:
         environment:
             POSTGRES_USER: app
             POSTGRES_PASSWORD: password
+        when:
+            event: [pull_request, push]
+            branch: [master, develop]
+    -   name: redis
+        image: redis:5.0
         when:
             event: [pull_request, push]
             branch: [master, develop]

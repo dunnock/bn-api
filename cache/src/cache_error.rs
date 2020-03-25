@@ -33,6 +33,12 @@ impl fmt::Display for CacheError {
     }
 }
 
+impl From<std::io::Error> for CacheError {
+    fn from(e: std::io::Error) -> Self {
+        CacheError::new(format!("{:?}", e))
+    }
+}
+
 impl From<RedisAsyncError> for CacheError {
     fn from(e: RedisAsyncError) -> Self {
         CacheError::new(format!("{:?}", e))

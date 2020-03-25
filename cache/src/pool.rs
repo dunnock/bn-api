@@ -2,8 +2,7 @@ use crate::cache_error::CacheError;
 use crate::Config;
 use futures::future::try_join_all;
 use redis_async::{client, client::paired::PairedConnection, resp_array};
-use std::net::SocketAddr;
-use std::str::FromStr;
+use std::net::ToSocketAddrs;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -29,11 +28,21 @@ impl RedisAsyncPool {
         let host = url.host().unwrap();
         let port = url.port_or_known_default().unwrap_or(6379);
 
-        let addr = SocketAddr::from_str(format!("{}:{}", host, port).as_str())?;
+        // resolve redis url and pick first socket addr (no round robin)
+        // this is blocking call, but since from_config is called on startup it should be fine
+        let addr = format!("{}:{}", host, port)
+            .to_socket_addrs()?
+            .next()
+            .ok_or(CacheError::new(format!(
+                "Failed to resolve redis IP via dns: {}",
+                config.database_url
+            )))?;
+        // create pool of connections. redis-async is managing reconnection self.
         let conns: Vec<_> = (0..config.max_size).map(|_| client::paired_connect(&addr)).collect();
         let connections = try_join_all(conns)
             .await
             .map_err(|e| CacheError::new(format!("{:?}: '{}'", e, config.database_url)))?;
+        // concurrency for GET requests, will be awaiting when more than max_size * concurrency GET requests
         let concurrency = Arc::new(Semaphore::new(config.max_size * config.concurrency));
 
         Ok(RedisAsyncPool {

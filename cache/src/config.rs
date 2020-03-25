@@ -25,7 +25,7 @@ impl Default for Config {
     fn default() -> Self {
         let max_size = num_cpus::get();
         Config {
-            database_url: "redis://127.0.0.1/".to_owned(),
+            database_url: "redis://localhost/".to_owned(),
             read_timeout: Duration::from_millis(100),
             write_timeout: Duration::from_millis(100),
             max_size,

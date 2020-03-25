@@ -213,14 +213,24 @@ impl CacheResource {
                 let config = state.config.clone();
 
                 if cache_configuration.cache_response {
-                    caching::set_cached_value(
+                    let updated = caching::set_cached_value(
                         &state.database.cache_database,
                         &config,
                         response.response(),
                         &cache_configuration.cache_data,
                     )
-                    .await
-                    .ok();
+                    .await;
+                    // when failed to update value in the cache - do not add cache headers
+                    if let Err(err) = updated {
+                        log_request(
+                            Level::Error,
+                            "api::cache_resource",
+                            format!("Failed to update cache: {:?}", err),
+                            response.request(),
+                            json!({"cache_result": "miss", "cache_user_key": cache_configuration.user_key, "cache_response": true, "cache_hit": false}),
+                        );
+                        return response;
+                    }
                 }
 
                 if cache_configuration.served_cache {
@@ -374,7 +384,7 @@ where
                 Cache::Timeout(status) => {
                     // When timing out from cache, we don't need to update it
                     log_request(
-                        Level::Debug,
+                        Level::Warn,
                         "api::cache_resource",
                         "Cache timeout",
                         &http_req,
