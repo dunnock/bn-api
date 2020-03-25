@@ -5,7 +5,7 @@
     exit 1
 }
 
-./target/release/server -t false &> /tmp/api.log &
+./target/release/server -t false -r false &> /tmp/api.log &
 export SERVER_PID=$!$1
 
 # Run newman tests

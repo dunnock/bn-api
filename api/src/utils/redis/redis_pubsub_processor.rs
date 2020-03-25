@@ -103,7 +103,7 @@ impl RedisPubSubProcessor {
             {}
         );
 
-        let connection = self.client.as_ref().unwrap().get_connection().unwrap();
+        let connection = self.client.as_ref().expect("failed to start pubsub without redis connection").get_connection().expect("failed to start pubsub: redis connection failed");
         let config = self.config.clone();
         let websocket_clients = self.websocket_clients.clone();
         self.worker_threads.push((
