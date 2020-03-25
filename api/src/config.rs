@@ -246,15 +246,17 @@ impl Config {
 
         let mut redis = match environment {
             Environment::Test => None,
-            _ => Some(cache::Config::default()),
+            _ => {
+                if let Some(database_url) = env::var(&REDIS_CONNECTION_STRING).ok() {
+                    let mut redis = cache::Config::default();
+                    redis.database_url = database_url;
+                    Some(redis)
+                } else {
+                    None
+                }
+            },
         };
         if let Some(ref mut redis) = redis.as_mut() {
-            if let Some(database_url) = env::var(&REDIS_CONNECTION_STRING).ok() {
-                redis.database_url = database_url
-            }
-            if let Some(database_url) = env::var(&REDIS_CONNECTION_STRING).ok() {
-                redis.database_url = database_url
-            }
 
             if let Some(read_timeout) = env::var(&REDIS_READ_TIMEOUT_MILLI).ok().map(|s| {
                 s.parse()
