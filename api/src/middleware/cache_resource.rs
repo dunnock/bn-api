@@ -76,9 +76,15 @@ impl CacheConfiguration {
         }
     }
 
-    fn start_error(mut self, error: &str) -> Cache {
+    fn start_error(mut self, request: &HttpRequest, error: &str) -> Cache {
         self.error = true;
-        error!("CacheResource Middleware start: {:?}", error);
+        log_request(
+            Level::Error,
+            "api::cache_resource",
+            format!("CacheResource Middleware start: {}", error).as_str(),
+            request,
+            json!({"cache_result": "error", "cache_user_key": self.user_key, "cache_response": false, "cache_hit": false}),
+        );
         return Cache::Miss(self);
     }
 }
@@ -119,7 +125,7 @@ impl CacheResource {
                 let user = match OptionalUser::from_request(request, &mut dev::Payload::None).into_inner() {
                     Ok(user) => user,
                     Err(error) => {
-                        return cache_configuration.start_error(&format!("{:?}", error));
+                        return cache_configuration.start_error(request, &format!("{:?}", error));
                     }
                 };
                 if let Some(user) = user.0 {
@@ -151,7 +157,8 @@ impl CacheResource {
                                         let organization = match Organization::find(organization_id, connection) {
                                             Ok(organization) => organization,
                                             Err(error) => {
-                                                return cache_configuration.start_error(&format!("{:?}", error));
+                                                return cache_configuration
+                                                    .start_error(request, &format!("{:?}", error));
                                             }
                                         };
 
@@ -159,7 +166,8 @@ impl CacheResource {
                                             match user.has_scope_for_organization(*scope, &organization, connection) {
                                                 Ok(organization_scopes) => organization_scopes,
                                                 Err(error) => {
-                                                    return cache_configuration.start_error(&format!("{:?}", error));
+                                                    return cache_configuration
+                                                        .start_error(request, &format!("{:?}", error));
                                                 }
                                             };
 
@@ -168,7 +176,7 @@ impl CacheResource {
                                     }
                                 }
                             } else {
-                                return cache_configuration.start_error("unable to load connection");
+                                return cache_configuration.start_error(request, "unable to load connection");
                             }
                         }
                     }
