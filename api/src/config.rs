@@ -254,10 +254,9 @@ impl Config {
                 } else {
                     None
                 }
-            },
+            }
         };
         if let Some(ref mut redis) = redis.as_mut() {
-
             if let Some(read_timeout) = env::var(&REDIS_READ_TIMEOUT_MILLI).ok().map(|s| {
                 s.parse()
                     .expect("Not a valid value for redis read timeout in milliseconds")
