@@ -31,7 +31,9 @@ impl RedisAsyncPool {
 
         let addr = SocketAddr::from_str(format!("{}:{}", host, port).as_str())?;
         let conns: Vec<_> = (0..config.max_size).map(|_| client::paired_connect(&addr)).collect();
-        let connections = try_join_all(conns).await?;
+        let connections = try_join_all(conns)
+            .await
+            .map_err(|e| CacheError::new(format!("{:?}: '{}'", e, config.database_url)))?;
         let concurrency = Arc::new(Semaphore::new(config.max_size * config.concurrency));
 
         Ok(RedisAsyncPool {
