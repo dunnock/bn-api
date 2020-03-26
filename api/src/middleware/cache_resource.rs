@@ -97,6 +97,11 @@ impl CacheResource {
     // Identify caching action and data based on request
     // When resulting in Cache::Hit route handler will be skipped
     async fn start(&self, request: &HttpRequest) -> Cache {
+        let state = request.state().clone();
+        if state.database.cache_database.inner.is_none() {
+            return Cache::Skip;
+        }
+
         let mut cache_configuration = CacheConfiguration::new();
         if request.method() == Method::GET {
             if request
@@ -118,7 +123,6 @@ impl CacheResource {
             cache_configuration
                 .cache_data
                 .insert("method".to_string(), request.method().to_string());
-            let state = request.state().clone();
             let config = state.config.clone();
 
             if self.cache_users_by != CacheUsersBy::None {
@@ -216,6 +220,7 @@ impl CacheResource {
         if state.database.cache_database.inner.is_none() {
             return response;
         }
+
         match *response.request().method() {
             Method::GET if response.status() == StatusCode::OK => {
                 let config = state.config.clone();
@@ -279,19 +284,21 @@ impl CacheResource {
     }
 
     fn etag_transform(mut response: dev::ServiceResponse) -> dev::ServiceResponse {
-        if let Ok(response_str) = application::unwrap_body_to_string(response.response()) {
-            if let Ok(payload) = serde_json::from_str::<Value>(&response_str) {
-                let etag_hash = etag_hash(&payload.to_string());
-                if let Ok(new_header_value) = HeaderValue::from_str(&etag_hash) {
-                    response.headers_mut().insert(ETAG, new_header_value);
-                    let headers = response.request().headers();
-                    if headers.contains_key(IF_NONE_MATCH) {
-                        let etag = ETag(EntityTag::weak(etag_hash.to_string()));
-                        let if_none_match = headers.get(IF_NONE_MATCH).map(|h| h.to_str().ok());
-                        if let Some(Some(header_value)) = if_none_match {
-                            let etag_header = ETag(EntityTag::weak(header_value.to_string()));
-                            if etag.weak_eq(&etag_header) {
-                                return response.into_response(HttpResponse::NotModified().finish());
+        if *response.request().method() == Method::GET && response.status() == StatusCode::OK {
+            if let Ok(response_str) = application::unwrap_body_to_string(response.response()) {
+                if let Ok(payload) = serde_json::from_str::<Value>(&response_str) {
+                    let etag_hash = etag_hash(&payload.to_string());
+                    if let Ok(new_header_value) = HeaderValue::from_str(&etag_hash) {
+                        response.headers_mut().insert(ETAG, new_header_value);
+                        let headers = response.request().headers();
+                        if headers.contains_key(IF_NONE_MATCH) {
+                            let etag = ETag(EntityTag::weak(etag_hash.to_string()));
+                            let if_none_match = headers.get(IF_NONE_MATCH).map(|h| h.to_str().ok());
+                            if let Some(Some(header_value)) = if_none_match {
+                                let etag_header = ETag(EntityTag::weak(header_value.to_string()));
+                                if etag.weak_eq(&etag_header) {
+                                    return response.into_response(HttpResponse::NotModified().finish());
+                                }
                             }
                         }
                     }
@@ -360,7 +367,7 @@ where
             let (http_req, payload) = request.into_parts();
             let cache = resource.start(&http_req).await;
 
-            match cache {
+            let response = match cache {
                 Cache::Hit(response, status) => {
                     log_request(
                         Level::Debug,
@@ -406,6 +413,10 @@ where
                     let fut = service.borrow_mut().call(request);
                     fut.await
                 }
+            };
+            match response {
+                Ok(response) => Ok(CacheResource::etag_transform(response)),
+                Err(err) => Err(err),
             }
         })
     }
