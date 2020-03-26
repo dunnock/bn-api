@@ -820,7 +820,6 @@ fn create_cube_js_token(event_id: Uuid, cube_js_secret: &str) -> Result<String, 
         exp: dates::now().add_days(30).finish().timestamp(),
     };
 
-    println!("Secret {}", cube_js_secret);
     let token = encode(&Header::default(), &claims, cube_js_secret.as_ref())?;
     Ok(token)
 }

@@ -23,6 +23,9 @@ use tari_client::TariError;
 use uuid::ParseError as UuidParseError;
 
 pub trait ConvertToWebError: Debug + Error + ToString {
+    fn status_code(&self) -> StatusCode {
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
     fn to_response(&self) -> HttpResponse;
 }
 
@@ -32,14 +35,6 @@ fn internal_error(message: &str) -> HttpResponse {
 
 fn unauthorized(message: &str) -> HttpResponse {
     status_code_and_message(StatusCode::UNAUTHORIZED, message)
-}
-
-fn forbidden(message: &str) -> HttpResponse {
-    status_code_and_message(StatusCode::FORBIDDEN, message)
-}
-
-fn unprocessable(message: &str) -> HttpResponse {
-    status_code_and_message(StatusCode::UNPROCESSABLE_ENTITY, message)
 }
 
 fn not_found() -> HttpResponse {
@@ -97,6 +92,9 @@ impl ConvertToWebError for BranchError {
 }
 
 impl ConvertToWebError for NotFoundError {
+    fn status_code(&self) -> StatusCode {
+        StatusCode::NOT_FOUND
+    }
     fn to_response(&self) -> HttpResponse {
         not_found()
     }
@@ -110,6 +108,9 @@ impl ConvertToWebError for RedisError {
 }
 
 impl ConvertToWebError for JwtError {
+    fn status_code(&self) -> StatusCode {
+        StatusCode::UNAUTHORIZED
+    }
     fn to_response(&self) -> HttpResponse {
         match self.kind().clone() {
             JwtErrorKind::ExpiredSignature => info!("JWT error: {}", self),
@@ -141,6 +142,12 @@ impl ConvertToWebError for ReqwestToStrError {
 }
 
 impl ConvertToWebError for PaymentProcessorError {
+    fn status_code(&self) -> StatusCode {
+        match self.validation_response {
+            Some(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            None => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
     fn to_response(&self) -> HttpResponse {
         if let Some(ref validation_response) = self.validation_response {
             let mut fields = HashMap::new();
@@ -188,15 +195,22 @@ impl ConvertToWebError for StripeError {
 }
 
 impl ConvertToWebError for ApplicationError {
+    fn status_code(&self) -> StatusCode {
+        match self.error_type {
+            ApplicationErrorType::Internal => StatusCode::INTERNAL_SERVER_ERROR,
+            ApplicationErrorType::Unprocessable => StatusCode::UNPROCESSABLE_ENTITY,
+            ApplicationErrorType::BadRequest => StatusCode::BAD_REQUEST,
+            ApplicationErrorType::ServerConfigError => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
     fn to_response(&self) -> HttpResponse {
         warn!("Application error: {}", self);
 
-        match self.error_type {
-            ApplicationErrorType::Internal => internal_error("Internal error"),
-            ApplicationErrorType::Unprocessable => unprocessable(&self.reason),
-            ApplicationErrorType::BadRequest => status_code_and_message(StatusCode::BAD_REQUEST, &self.reason),
-            ApplicationErrorType::ServerConfigError => internal_error(&self.reason),
-        }
+        let message = match self.error_type {
+            ApplicationErrorType::Internal => "Internal error",
+            _ => &self.reason,
+        };
+        status_code_and_message(self.status_code(), message)
     }
 }
 
@@ -215,55 +229,73 @@ impl ConvertToWebError for TariError {
 }
 
 impl ConvertToWebError for chrono::ParseError {
+    fn status_code(&self) -> StatusCode {
+        StatusCode::BAD_REQUEST
+    }
     fn to_response(&self) -> HttpResponse {
         status_code_and_message(StatusCode::BAD_REQUEST, "Invalid input")
     }
 }
 
 impl ConvertToWebError for url::ParseError {
+    fn status_code(&self) -> StatusCode {
+        StatusCode::BAD_REQUEST
+    }
     fn to_response(&self) -> HttpResponse {
         status_code_and_message(StatusCode::BAD_REQUEST, "Invalid URL")
     }
 }
 
 impl ConvertToWebError for AuthError {
+    fn status_code(&self) -> StatusCode {
+        match self.error_type {
+            AuthErrorType::Forbidden => StatusCode::FORBIDDEN,
+            AuthErrorType::Unauthorized => StatusCode::UNAUTHORIZED,
+        }
+    }
     fn to_response(&self) -> HttpResponse {
         warn!("AuthError error: {}", self.reason);
 
-        match self.error_type {
-            AuthErrorType::Forbidden => forbidden(&self.reason),
-            AuthErrorType::Unauthorized => unauthorized(&self.reason),
-        }
+        status_code_and_message(self.status_code(), &self.reason)
     }
 }
 
 impl ConvertToWebError for DatabaseError {
-    fn to_response(&self) -> HttpResponse {
+    fn status_code(&self) -> StatusCode {
         match self.code {
-            1000 => status_code_and_message(StatusCode::BAD_REQUEST, "Invalid input"),
-            1100 => status_code_and_message(StatusCode::BAD_REQUEST, "Missing input"),
-            2000 => status_code_and_message(StatusCode::NOT_FOUND, "No results"),
-            3000 => internal_error("Query error"),
-            3100 => internal_error("Could not insert record"),
-            3200 => internal_error("Could not update record"),
-            3300 => internal_error("Could not delete record"),
-            3400 => status_code_and_message(
-                StatusCode::CONFLICT,
-                &self.cause.clone().unwrap_or("Duplicate record exists".to_string()),
-            ),
-            4000 => internal_error("Connection error"),
-            5000 => internal_error("Internal error"),
-            7000 => {
-                let cause = self.cause.clone().unwrap_or("Unknown Cause".to_string());
-                status_code_and_message(StatusCode::UNPROCESSABLE_ENTITY, cause.as_str())
-            }
-            7200 => match &self.error_code {
-                ValidationError { errors } => HttpResponse::UnprocessableEntity()
-                    .json(json!({"error": "Validation error".to_string(), "fields": errors})),
-                _ => HttpResponse::UnprocessableEntity().json(json!({"error": "Validation error".to_string()})),
-            },
-            7300 => internal_error("Internal error"),
-            _ => internal_error("Unknown error"),
+            1000 | 1100 => StatusCode::BAD_REQUEST,
+            2000 => StatusCode::NOT_FOUND,
+            3400 => StatusCode::CONFLICT,
+            7000 | 7200 => StatusCode::UNPROCESSABLE_ENTITY,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
+    }
+    fn to_response(&self) -> HttpResponse {
+        let message = match self.code {
+            1000 => "Invalid input",
+            1100 => "Missing input",
+            2000 => "No results",
+            3000 => "Query error",
+            3100 => "Could not insert record",
+            3200 => "Could not update record",
+            3300 => "Could not delete record",
+            3400 => self
+                .cause
+                .as_ref()
+                .map(|s| s.as_str())
+                .unwrap_or("Duplicate record exists"),
+            4000 => "Connection error",
+            7000 => self.cause.as_ref().map(|s| s.as_str()).unwrap_or("Unknown Cause"),
+            7200 => match &self.error_code {
+                ValidationError { errors } => {
+                    return HttpResponse::UnprocessableEntity()
+                        .json(json!({"error": "Validation error".to_string(), "fields": errors}))
+                }
+                _ => "Validation error",
+            },
+            5000 | 7300 => "Internal error",
+            _ => "Unknown error",
+        };
+        status_code_and_message(self.status_code(), message)
     }
 }
