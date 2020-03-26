@@ -237,7 +237,7 @@ impl CacheResource {
                             response.request(),
                             json!({"cache_result": "miss", "cache_user_key": cache_configuration.user_key, "cache_response": true, "cache_hit": false}),
                         );
-                        return response;
+                        return CacheResource::etag_transform(response);
                     }
                 }
 
@@ -252,35 +252,15 @@ impl CacheResource {
                     // Cache headers for client
                     if let Ok(cache_control_header_value) = HeaderValue::from_str(&format!(
                         "{}, max-age={}",
-                        if cache_configuration.user_key.is_none() {
-                            "public"
-                        } else {
-                            "private"
+                        match cache_configuration.user_key {
+                            None => "public",
+                            _ => "private",
                         },
                         config.client_cache_period
                     )) {
                         response.headers_mut().insert(CACHE_CONTROL, cache_control_header_value);
                     }
-
-                    if let Ok(response_str) = application::unwrap_body_to_string(response.response()) {
-                        if let Ok(payload) = serde_json::from_str::<Value>(&response_str) {
-                            let etag_hash = etag_hash(&payload.to_string());
-                            if let Ok(new_header_value) = HeaderValue::from_str(&etag_hash) {
-                                response.headers_mut().insert(ETAG, new_header_value);
-                                let headers = response.request().headers();
-                                if headers.contains_key(IF_NONE_MATCH) {
-                                    let etag = ETag(EntityTag::weak(etag_hash.to_string()));
-                                    let if_none_match = headers.get(IF_NONE_MATCH).map(|h| h.to_str().ok());
-                                    if let Some(Some(header_value)) = if_none_match {
-                                        let etag_header = ETag(EntityTag::weak(header_value.to_string()));
-                                        if etag.weak_eq(&etag_header) {
-                                            return response.into_response(HttpResponse::NotModified().finish());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    return CacheResource::etag_transform(response);
                 }
             }
             Method::PUT | Method::PATCH | Method::POST | Method::DELETE => {
@@ -295,6 +275,29 @@ impl CacheResource {
             _ => (),
         };
 
+        response
+    }
+
+    fn etag_transform(mut response: dev::ServiceResponse) -> dev::ServiceResponse {
+        if let Ok(response_str) = application::unwrap_body_to_string(response.response()) {
+            if let Ok(payload) = serde_json::from_str::<Value>(&response_str) {
+                let etag_hash = etag_hash(&payload.to_string());
+                if let Ok(new_header_value) = HeaderValue::from_str(&etag_hash) {
+                    response.headers_mut().insert(ETAG, new_header_value);
+                    let headers = response.request().headers();
+                    if headers.contains_key(IF_NONE_MATCH) {
+                        let etag = ETag(EntityTag::weak(etag_hash.to_string()));
+                        let if_none_match = headers.get(IF_NONE_MATCH).map(|h| h.to_str().ok());
+                        if let Some(Some(header_value)) = if_none_match {
+                            let etag_header = ETag(EntityTag::weak(header_value.to_string()));
+                            if etag.weak_eq(&etag_header) {
+                                return response.into_response(HttpResponse::NotModified().finish());
+                            }
+                        }
+                    }
+                }
+            }
+        };
         response
     }
 }
