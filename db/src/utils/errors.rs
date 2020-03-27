@@ -414,7 +414,7 @@ impl<T> SingleResult<T> for Result<Vec<T>, DatabaseError> {
 #[test]
 fn error_with_unknown_code() {
     let err = DatabaseError::new(ErrorCode::Unknown, None);
-    assert_eq!(err.to_string(), err.message);
+    assert_eq!(err.message, "Unknown database error");
     assert_eq!(err.code, 10);
     assert!(err.cause.is_none());
     assert_eq!(format!("{}", err), "[10] Unknown database error");
@@ -423,7 +423,7 @@ fn error_with_unknown_code() {
 #[test]
 fn error_with_known_code() {
     let err = DatabaseError::new(ErrorCode::InvalidInput, None);
-    assert_eq!(err.to_string(), "Invalid input");
+    assert_eq!(err.message, "Invalid input");
     assert_eq!(err.code, 1000);
     assert!(err.cause.is_none());
     assert_eq!(format!("{}", err), "[1000] Invalid input");
@@ -432,8 +432,8 @@ fn error_with_known_code() {
 #[test]
 fn unknown_error_with_cause() {
     let cause = DatabaseError::new(ErrorCode::Unknown, None);
-    let err = DatabaseError::new(ErrorCode::InvalidInput, Some(cause.to_string()));
-    assert_eq!(err.to_string(), "Invalid input");
+    let err = DatabaseError::new(ErrorCode::InvalidInput, Some(cause.message));
+    assert_eq!(err.message, "Invalid input");
     assert_eq!(err.code, 1000);
     assert!(err.cause.is_some());
     assert_eq!(
