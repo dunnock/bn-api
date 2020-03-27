@@ -47,7 +47,7 @@ impl Wallet {
             };
         }
 
-        (NewWallet {
+        NewWallet {
             user_id: Some(user_id),
             name,
             secret_key: convert_bytes_to_hexstring(&secret_key),
@@ -55,7 +55,7 @@ impl Wallet {
             default_flag,
             ..Default::default()
         }
-        .commit(conn))
+        .commit(conn)
     }
 
     pub fn create_for_organization(
@@ -71,7 +71,7 @@ impl Wallet {
         } else {
             default_flag = false;
         };
-        (NewWallet {
+        NewWallet {
             organization_id: Some(organization_id),
             name,
             secret_key: convert_bytes_to_hexstring(&secret_key),
@@ -79,7 +79,7 @@ impl Wallet {
             default_flag,
             ..Default::default()
         }
-        .commit(conn))
+        .commit(conn)
     }
 
     pub fn find_for_user(user_id: Uuid, conn: &PgConnection) -> Result<Vec<Wallet>, DatabaseError> {
