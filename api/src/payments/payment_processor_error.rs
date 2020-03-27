@@ -20,7 +20,7 @@ impl Error for PaymentProcessorError {
 impl fmt::Display for PaymentProcessorError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match &self.cause {
-            Some(c) => write!(f, "{} caused by: {}", self.description, c.description()),
+            Some(c) => write!(f, "{} caused by: {}", self.description, c.to_string()),
             None => write!(f, "{}", self.description),
         }
     }

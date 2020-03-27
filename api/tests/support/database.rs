@@ -5,7 +5,6 @@ use db::prelude::*;
 
 use diesel::Connection;
 use diesel::PgConnection;
-use std::error::Error;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -22,7 +21,7 @@ impl TestDatabase {
             panic!(
                 "Connection to {} could not be established:{}",
                 config.database_url,
-                e.description()
+                e.to_string()
             )
         });
 

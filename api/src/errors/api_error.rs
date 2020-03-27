@@ -66,6 +66,7 @@ impl fmt::Display for ApiError {
 }
 
 impl Error for ApiError {
+    #[allow(deprecated)]
     fn description(&self) -> &str {
         self.0.description()
     }

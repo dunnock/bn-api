@@ -2,7 +2,6 @@ use argon2rs::verifier::Encoded;
 use rand;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
-use std::error::Error;
 use std::str;
 use utils::errors::{DatabaseError, ErrorCode};
 
@@ -26,7 +25,7 @@ impl PasswordHash {
             Ok(hash) => Ok(PasswordHash { hash }),
             Err(e) => Err(DatabaseError::new(
                 ErrorCode::InvalidInput,
-                Some(e.description().to_string()),
+                Some(e.to_string()),
             )),
         }
     }
