@@ -1,4 +1,4 @@
-FROM rust:1.41.1 as builder
+FROM rust:1.42 as builder
 
 RUN \
     wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_0-stable.zip && \
