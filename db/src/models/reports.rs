@@ -702,7 +702,7 @@ impl Report {
             DomainAction::upcoming_domain_action(None, None, DomainActionTypes::SendAutomaticReportEmails, conn)?
         {
             if upcoming_domain_action.scheduled_at > Utc::now().naive_utc() {
-                return DatabaseError::business_process_error("Settlement processing domain action is already pending");
+                return DatabaseError::already_scheduled_error("Automatic report domain action is already pending");
             }
         }
 

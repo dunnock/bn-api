@@ -30,6 +30,7 @@ pub enum ErrorCode {
     InternalError,
     AccessError,
     BusinessProcessError,
+    AlreadyScheduledError,
     ConcurrencyError,
     ValidationError {
         errors: HashMap<&'static str, Vec<ValidationError>>,
@@ -72,6 +73,7 @@ pub fn get_error_message(code: &ErrorCode) -> (i32, String) {
             "Could not delete record because there are other entities referencing it".to_string(),
         ),
         ParseError => (7400, "Parse failed:".to_string()),
+        AlreadyScheduledError => (7500, "Already Scheduled error".to_string()),
         // Try not to use this error
         Unknown => (10, "Unknown database error".to_string()),
     }
@@ -234,6 +236,13 @@ impl DatabaseError {
     pub fn business_process_error<T>(message: &str) -> Result<T, DatabaseError> {
         Err(DatabaseError::new(
             ErrorCode::BusinessProcessError,
+            Some(message.to_string()),
+        ))
+    }
+
+    pub fn already_scheduled_error<T>(message: &str) -> Result<T, DatabaseError> {
+        Err(DatabaseError::new(
+            ErrorCode::AlreadyScheduledError,
             Some(message.to_string()),
         ))
     }

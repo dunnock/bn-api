@@ -48,9 +48,13 @@ impl ProcessSettlementReportExecutor {
                         self.config.settlement_period_in_days,
                         conn,
                     )?;
-                }
-                organization
-                    .create_next_settlement_processing_domain_action(self.config.settlement_period_in_days, conn)?;
+                };
+                let next_action = organization
+                    .create_next_settlement_processing_domain_action(self.config.settlement_period_in_days, conn);
+                match next_action {
+                    Err(err) if err.error_code == ErrorCode::AlreadyScheduledError => Ok(()),
+                    r => r,
+                }?;
             }
             _ => return Err(ApplicationError::new("Table not supported".to_string()).into()),
         };

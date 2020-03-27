@@ -229,7 +229,9 @@ impl Organization {
             conn,
         )? {
             if upcoming_domain_action.scheduled_at > Utc::now().naive_utc() {
-                return DatabaseError::business_process_error("Settlement processing domain action is already pending");
+                return DatabaseError::already_scheduled_error(
+                    "Settlement processing domain action is already pending",
+                );
             }
         }
 
