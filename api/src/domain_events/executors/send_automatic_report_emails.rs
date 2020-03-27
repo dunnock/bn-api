@@ -57,7 +57,11 @@ impl SendAutomaticReportEmailsExecutor {
             }
         }
 
-        Report::create_next_automatic_report_domain_action(conn)?;
+        let next_action = Report::create_next_automatic_report_domain_action(conn);
+        match next_action {
+            Err(err) if err.error_code == ErrorCode::AlreadyScheduledError => Ok(()),
+            r => r,
+        }?;
 
         Ok(())
     }
