@@ -23,10 +23,7 @@ impl PasswordHash {
     pub fn from_str(hash_str: &str) -> Result<PasswordHash, DatabaseError> {
         match Encoded::from_u8(hash_str.as_bytes()) {
             Ok(hash) => Ok(PasswordHash { hash }),
-            Err(e) => Err(DatabaseError::new(
-                ErrorCode::InvalidInput,
-                Some(e.to_string()),
-            )),
+            Err(e) => Err(DatabaseError::new(ErrorCode::InvalidInput, Some(e.to_string()))),
         }
     }
 
