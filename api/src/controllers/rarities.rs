@@ -6,7 +6,7 @@ use crate::models::PathParameters;
 use actix_web::{web::Path, HttpResponse};
 use db::models::*;
 
-pub fn create(
+pub async fn create(
     (connection, new_rarity, path, user): (Connection, Json<NewRarity>, Path<PathParameters>, User),
 ) -> Result<HttpResponse, ApiError> {
     let connection = connection.get();

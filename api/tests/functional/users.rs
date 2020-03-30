@@ -670,6 +670,7 @@ async fn current_user_organization_member() {
             "org:fans",
             "org:read",
             "org:read-events",
+            "rarity:write",
             "redeem:ticket",
             "scan-report:read",
             "transfer:cancel",

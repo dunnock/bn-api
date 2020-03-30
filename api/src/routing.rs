@@ -126,6 +126,7 @@ pub fn routes(app: &mut web::ServiceConfig) {
             .route(web::put().to(broadcasts::update)),
     )
     .service(web::resource("/events/{id}/links").route(web::post().to(events::create_link)))
+    .service(web::resource("/events/{id}/rarities").route(web::post().to(rarities::create)))
     .service(web::resource("/events/{id}/redeem/{ticket_instance_id}").route(web::post().to(events::redeem_ticket)))
     .service(web::resource("/events/{id}/redeem").route(web::post().to(events::redeem_ticket)))
     .service(
