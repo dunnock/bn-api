@@ -3,10 +3,7 @@ use crate::database::Connection;
 use crate::errors::*;
 use crate::extractors::*;
 use crate::models::PathParameters;
-use actix_web::{
-    web::{Data, Path, Query},
-    HttpResponse,
-};
+use actix_web::{web::Path, HttpResponse};
 use db::models::*;
 
 pub fn create(

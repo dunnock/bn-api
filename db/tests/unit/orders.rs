@@ -3132,6 +3132,11 @@ fn add_tickets_below_min_fee() {
             true,
             true,
             true,
+            TicketTypeType::Token,
+            vec![],
+            None,
+            None,
+            None,
             None,
             connection,
         )

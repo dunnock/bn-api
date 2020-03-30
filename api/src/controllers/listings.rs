@@ -6,7 +6,7 @@ use crate::helpers::application;
 use crate::models::PathParameters;
 use crate::server::AppState;
 use actix_web::{
-    web::{Data, Path, Query},
+    web::{Data, Path},
     HttpResponse,
 };
 use db::models::Listing;

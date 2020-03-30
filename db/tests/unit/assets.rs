@@ -32,6 +32,11 @@ fn update_asset_blockchain_id() {
             true,
             true,
             true,
+            TicketTypeType::Token,
+            vec![],
+            None,
+            None,
+            None,
             None,
             conn,
         )
@@ -72,6 +77,11 @@ fn asset_find() {
             true,
             true,
             true,
+            TicketTypeType::Token,
+            vec![],
+            None,
+            None,
+            None,
             None,
             conn,
         )

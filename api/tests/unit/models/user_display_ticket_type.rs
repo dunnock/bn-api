@@ -247,6 +247,11 @@ fn from_ticket_type() {
             true,
             true,
             true,
+            TicketTypeType::Token,
+            vec![],
+            None,
+            None,
+            None,
             None,
             conn,
         )

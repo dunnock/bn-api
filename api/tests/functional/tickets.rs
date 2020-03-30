@@ -139,6 +139,7 @@ pub async fn index() {
         transfer_key: None,
         transfer_address: None,
         check_in_source: None,
+        promo_image_url: None,
     };
     assert_eq!(vec![expected_ticket.clone()], found_data.data);
     // Test without specified event
@@ -169,6 +170,7 @@ pub async fn index() {
         transfer_key: None,
         transfer_address: None,
         check_in_source: None,
+        promo_image_url: None,
     };
     assert_eq!(
         vec![
@@ -291,6 +293,7 @@ pub async fn show() {
         transfer_key: None,
         transfer_address: None,
         check_in_source: None,
+        promo_image_url: None,
     };
 
     let expected_result = ShowTicketResponse {

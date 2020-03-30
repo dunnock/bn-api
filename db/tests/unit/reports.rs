@@ -1891,6 +1891,11 @@ fn promo_code_report() {
             true,
             true,
             true,
+            TicketTypeType::Token,
+            vec![],
+            None,
+            None,
+            None,
             None,
             connection,
         )

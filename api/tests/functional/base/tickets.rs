@@ -54,6 +54,7 @@ pub async fn show_other_user_ticket(role: Roles, should_test_succeed: bool) {
             transfer_key: None,
             transfer_address: None,
             check_in_source: None,
+            promo_image_url: None,
         };
 
         let expected_result = ShowTicketResponse {
@@ -121,6 +122,7 @@ pub async fn update(role: Roles, owns_ticket: bool, should_test_succeed: bool) {
             transfer_key: None,
             transfer_address: None,
             check_in_source: None,
+            promo_image_url: None,
         };
 
         let expected_result = ShowTicketResponse {

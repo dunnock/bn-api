@@ -905,6 +905,7 @@ fn find() {
         transfer_key: None,
         transfer_address: None,
         check_in_source: None,
+        promo_image_url: None,
     };
     assert_eq!(
         (display_event, None, expected_ticket),
@@ -975,6 +976,7 @@ fn find_show_no_token() {
         transfer_key: None,
         transfer_address: None,
         check_in_source: None,
+        promo_image_url: None,
     };
     let (found_event, found_user, found_ticket) = TicketInstance::find_for_display(ticket.id, connection).unwrap();
     assert_eq!(
