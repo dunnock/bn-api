@@ -125,7 +125,7 @@ impl OrganizationInvite {
 
     pub fn create(
         org_id: Uuid,
-        invitee_id: Uuid,
+        inviter_id: Uuid,
         email: &str,
         user_id: Option<Uuid>,
         roles: Vec<Roles>,
@@ -133,7 +133,7 @@ impl OrganizationInvite {
     ) -> NewOrganizationInvite {
         NewOrganizationInvite {
             organization_id: org_id,
-            inviter_id: invitee_id,
+            inviter_id,
             user_email: email.into(),
             security_token: None,
             user_id,

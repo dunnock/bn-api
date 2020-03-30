@@ -255,6 +255,62 @@ pub async fn accept_invite_for_other_email_succeeds() {
 }
 
 #[actix_rt::test]
+pub async fn accept_invite_for_user_with_revoked_scopes() {
+    let database = TestDatabase::new();
+    let user = database.create_user().finish();
+    let user2 = database.create_user().finish();
+    let organization = database
+        .create_organization()
+        .with_member(&user, Roles::OrgOwner)
+        .finish();
+    let conn = database.connection.get();
+
+    let org_user = OrganizationUser::find_by_user_id(user.id, organization.id, conn).unwrap();
+    org_user
+        .set_additional_scopes(
+            AdditionalOrgMemberScopes {
+                additional: vec![Scopes::SettlementAdjustmentDelete],
+                revoked: vec![Scopes::BoxOfficeTicketRead],
+            },
+            conn,
+        )
+        .unwrap();
+
+    let invite = database
+        .create_organization_invite()
+        .with_org(&organization)
+        .with_invitee(&user)
+        .link_to_user(&user2)
+        .with_role(Roles::OrgOwner)
+        .with_security_token(None)
+        .finish();
+
+    let test_request = TestRequest::create_with_uri(
+        format!(
+            "/accept_invite?security_token={}",
+            &invite.security_token.unwrap().to_string()
+        )
+        .as_str(),
+    );
+    let parameters = Query::<InviteResponseQuery>::extract(&test_request.request)
+        .await
+        .unwrap();
+    let auth_user = support::create_auth_user_from_user(&user2, Roles::OrgOwner, Some(&organization), &database);
+    let _response: HttpResponse = organization_invites::accept_request((
+        database.clone().connection.into(),
+        parameters,
+        OptionalUser(Some(auth_user)),
+    ))
+    .await
+    .into();
+    let _new_org_user = OrganizationUser::find_by_user_id(user2.id, organization.id, conn).unwrap();
+    let (_, additional_scopes) = organization.get_roles_for_user(&user2, conn).unwrap();
+    let additional_scopes = additional_scopes.unwrap();
+    assert_eq!(additional_scopes.revoked, vec![Scopes::BoxOfficeTicketRead]);
+    assert_eq!(additional_scopes.additional, vec![]);
+}
+
+#[actix_rt::test]
 pub async fn accept_invite_for_user_id_succeeds() {
     let database = TestDatabase::new();
     let user = database.create_user().finish();
