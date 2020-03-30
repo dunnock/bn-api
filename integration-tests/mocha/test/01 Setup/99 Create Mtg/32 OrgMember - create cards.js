@@ -8,7 +8,7 @@ const mtg = require('mtgsdk');
 
 const baseUrl = supertest(pm.environment.get('server'));
 
-const apiEndPoint = '/events/{{last_event_id}}/ticket_types';
+const apiEndPoint = '/events/{{last_mtg_event_id}}/ticket_types';
 
 
 var response;
@@ -48,19 +48,11 @@ var responses = [];
 describe('OrgMember - create cards', function () {
     before(async function () {
         this.timeout(100000);
-console.log("hello");
-// console.log(mtg);
-// console.log(mtg.card);
-// console.log(mtg.card.where({ supertypes: 'legendary', subtypes: 'goblin' }));
         responses = await mtg.card.where({ set: "ELD" })
             .then(async cards => {
-            // .on('data', card => {
-
             return await cards.map(async card => {
                 console.log(card);
                 if (card.imageUrl && rarities[card.rarity]) {
-
-
                     let requestBody = `{
 	"name":"${card.name} (${card.rarity})",
 	"capacity": ${rarities[card.rarity].qty},

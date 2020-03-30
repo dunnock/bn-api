@@ -661,6 +661,8 @@ async fn current_user_organization_member() {
             "event:write",
             "hold:read",
             "hold:write",
+            "listing:write",
+            "loot-box:write",
             "note:read",
             "note:write",
             "order:read",

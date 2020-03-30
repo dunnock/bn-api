@@ -63,7 +63,7 @@ describe('OrgMember  - Create Mtg Set - Theros Beyond Death', function () {
         // add after methods
 
 
-        pm.environment.set("last_event_id", JSON.parse(responseBody).id);
+        pm.environment.set("last_mtg_event_id", JSON.parse(responseBody).id);
     });
 
     it("should be 201", function () {

@@ -7,7 +7,7 @@ const pm = require('../../pm');const debug=require('debug');var log = debug('bn-
 
 const baseUrl = supertest(pm.environment.get('server'));
 
-const apiEndPoint = '/events/{{last_event_id}}/ticket_types';
+const apiEndPoint = '/events/{{last_mtg_event_id}}/ticket_types';
 
 
 var response;
@@ -48,13 +48,13 @@ let requestBody = `{
     "contents": [
      
          {
-           "event_id": "{{last_event_id}}",
+           "event_id": "{{last_mtg_event_id}}",
            "min_rarity_id": "{{mythic}}",
            "max_rarity_id": "{{mythic}}",
            "quantity_per_box": 4
         },
          {
-           "event_id": "{{last_event_id}}",
+           "event_id": "{{last_mtg_event_id}}",
            "min_rarity_id": "{{uncommon}}",
            "max_rarity_id": "{{uncommon}}",
            "quantity_per_box": 6

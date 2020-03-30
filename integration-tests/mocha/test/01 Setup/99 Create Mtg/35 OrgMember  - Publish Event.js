@@ -7,7 +7,7 @@ const pm = require('../../pm');const debug=require('debug');var log = debug('bn-
 
 const baseUrl = supertest(pm.environment.get('server'));
 
-const apiEndPoint = '/events/{{last_event_id}}/publish';
+const apiEndPoint = '/events/{{last_mtg_event_id}}/publish';
 
 
 var response;
@@ -63,4 +63,4 @@ describe('OrgMember  - Publish Event', function () {
 
 });
 
-            
+
