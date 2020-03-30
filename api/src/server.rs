@@ -16,7 +16,6 @@ use actix_web::{web, web::Data, App, HttpServer};
 use db::utils::errors::DatabaseError;
 use log::Level::{Debug, Warn};
 use std::collections::HashMap;
-use std::error::Error;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
@@ -172,7 +171,7 @@ impl Server {
 
             match exit {
                 Ok(_) => {}
-                Err(e) => jlog!(Warn, "api::server", "Server exit with error", {"error": e.description()}),
+                Err(e) => jlog!(Warn, "api::server", "Server exit with error", {"error": e.to_string()}),
             };
 
             if process_actions || process_events {

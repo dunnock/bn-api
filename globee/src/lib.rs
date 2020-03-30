@@ -329,13 +329,13 @@ pub struct Errors(Vec<ValidationError>);
 
 impl StdError for Errors {
     fn description(&self) -> &str {
-        "One or more errors occurred"
+        "One or more globee errors occured"
     }
 }
 
 impl fmt::Display for Errors {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{:?}", self)
     }
 }
 

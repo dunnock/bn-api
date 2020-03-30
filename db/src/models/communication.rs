@@ -28,7 +28,7 @@ impl CommAddress {
     }
 
     pub fn get(&self) -> Vec<String> {
-        (self.addresses.clone())
+        self.addresses.clone()
     }
 
     pub fn get_first(&self) -> Result<String, DatabaseError> {

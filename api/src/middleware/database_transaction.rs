@@ -7,7 +7,6 @@ use actix_web::{FromRequest, HttpRequest};
 use diesel::connection::TransactionManager;
 use diesel::Connection as DieselConnection;
 use futures::future::{ok, Ready};
-use std::error::Error;
 
 pub trait RequestConnection {
     fn connection(&self) -> Result<Connection, ApiError>;
@@ -45,7 +44,7 @@ impl DatabaseTransaction {
             match transaction_response {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    error!("Diesel Error: {}", e.description());
+                    error!("Diesel Error: {}", e.to_string());
                     let error: ApiError = e.into();
                     Err(error)
                 }

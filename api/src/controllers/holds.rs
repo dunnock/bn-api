@@ -14,7 +14,6 @@ use chrono::prelude::*;
 use db::models::*;
 use log::Level::Warn;
 use serde_with::rust::double_option;
-use std::error::Error;
 use uuid::Uuid;
 
 #[derive(Deserialize, Serialize)]
@@ -202,7 +201,7 @@ pub async fn link(
         Ok(l) => l,
         Err(e) => {
             jlog!(Warn, "Error when creating an aliased link",
-            {"error": e.description(), "raw_url": &raw_url, "alias": hold.redemption_code.as_ref().unwrap()});
+            {"error": e.to_string(), "raw_url": &raw_url, "alias": hold.redemption_code.as_ref().unwrap()});
             // Alias might not be unique, create without
             linker.create_deep_link_with_fallback(&raw_url)
         }
