@@ -275,10 +275,26 @@ pub async fn accept_request(
 
 fn accept_invite(user_id: Uuid, invite: &mut OrganizationInvite, connection: &PgConnection) -> Result<(), ApiError> {
     invite.change_invite_status(1, connection)?;
+    let inviter: User = User::find(invite.inviter_id, connection)?;
+
     let organization = Organization::find(invite.organization_id, connection)?;
+    let (_, additional_scopes) = organization.get_roles_for_user(&inviter, connection)?;
+    let revoked = match additional_scopes {
+        Some(additional) => additional.revoked,
+        None => vec![],
+    };
+
     let organization_user =
         organization.add_user(user_id, invite.roles.clone(), invite.event_ids.clone(), connection)?;
 
+    //Always pass revoked scopes down from a user, but not additional
+    organization_user.set_additional_scopes(
+        AdditionalOrgMemberScopes {
+            additional: vec![],
+            revoked,
+        },
+        connection,
+    )?;
     // Check for any additional pending invites for this organization and accept them
     if organization_user.is_event_user() {
         for mut related_invite in OrganizationInvite::find_all_active_organization_invites_by_email(
