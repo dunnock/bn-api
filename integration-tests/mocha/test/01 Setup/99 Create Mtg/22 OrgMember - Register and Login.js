@@ -60,7 +60,7 @@ describe('OrgMember - Register and Login', function () {
 
         let json = JSON.parse(responseBody);
 
-        pm.environment.set("org_member_token", json.access_token);
+        pm.environment.set("mtg_org_member_token", json.access_token);
 
     });
 

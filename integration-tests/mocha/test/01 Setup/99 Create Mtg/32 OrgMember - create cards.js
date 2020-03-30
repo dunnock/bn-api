@@ -20,7 +20,7 @@ const post = async function (request_body) {
         .post(pm.substitute(apiEndPoint))
         .set('Accept', 'application/json')
         .set('Content-Type', 'application/json')
-        .set('Authorization', pm.substitute('Bearer {{org_member_token}}'))
+        .set('Authorization', pm.substitute('Bearer {{mtg_org_member_token}}'))
 
         .send(pm.substitute(request_body));
 };
@@ -29,7 +29,7 @@ const get = async function (request_body) {
     return baseUrl
         .get(pm.substitute(apiEndPoint))
 
-        .set('Authorization', pm.substitute('Bearer {{org_member_token}}'))
+        .set('Authorization', pm.substitute('Bearer {{mtg_org_member_token}}'))
 
         .set('Accept', 'application/json')
         .send();
@@ -51,7 +51,7 @@ describe('OrgMember - create cards', function () {
         responses = await mtg.card.where({ set: "ELD" })
             .then(async cards => {
             return await cards.map(async card => {
-                console.log(card);
+                //console.log(card);
                 if (card.imageUrl && rarities[card.rarity]) {
                     let requestBody = `{
 	"name":"${card.name} (${card.rarity})",
@@ -66,7 +66,7 @@ describe('OrgMember - create cards', function () {
 	"rank":1,
 	"ticket_pricing":[]
 }`;
-                    console.log(requestBody);
+                    //console.log(requestBody);
                     response = await post(requestBody);
                     console.log(response.status);
                     return response;
@@ -98,7 +98,7 @@ describe('OrgMember - create cards', function () {
     });
     //
     it("should be 201", function () {
-        console.log(responses);
+        //console.log(responses);
         for (var i=0;i<responses.length;i++){
             if (responses[i])
             {
