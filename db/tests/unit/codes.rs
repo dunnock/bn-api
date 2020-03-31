@@ -23,11 +23,8 @@ fn purchased_ticket_count() {
         .with_tickets()
         .with_ticket_pricing()
         .finish();
-    let code = project
-        .create_code()
-        .with_event(&event)
-        .with_max_tickets_per_user(Some(100))
-        .finish();
+    let code = project.create_code().with_event(&event).finish();
+    let code2 = project.create_code().with_event(&event).finish();
     project
         .create_order()
         .for_event(&event)
@@ -36,8 +33,18 @@ fn purchased_ticket_count() {
         .for_user(&user)
         .is_paid()
         .finish();
+    project
+        .create_order()
+        .for_event(&event)
+        .quantity(5)
+        .with_redemption_code(code2.redemption_code.clone())
+        .for_user(&user2)
+        .is_paid()
+        .finish();
     assert_eq!(code.purchased_ticket_count(&user, connection), Ok(10));
     assert_eq!(code.purchased_ticket_count(&user2, connection), Ok(0));
+    assert_eq!(code2.purchased_ticket_count(&user2, connection), Ok(5));
+    assert_eq!(code2.purchased_ticket_count(&user, connection), Ok(0));
 
     project
         .create_order()
@@ -49,6 +56,8 @@ fn purchased_ticket_count() {
         .finish();
     assert_eq!(code.purchased_ticket_count(&user, connection), Ok(10));
     assert_eq!(code.purchased_ticket_count(&user2, connection), Ok(5));
+    assert_eq!(code2.purchased_ticket_count(&user2, connection), Ok(5));
+    assert_eq!(code2.purchased_ticket_count(&user, connection), Ok(0));
 }
 
 #[test]
@@ -62,7 +71,7 @@ fn available() {
         .with_ticket_pricing()
         .finish();
     let code = project.create_code().with_event(&event).with_max_uses(100).finish();
-    assert_eq!(code.available(connection).unwrap(), 100);
+    assert_eq!(code.available(connection).unwrap(), Some(100));
     project
         .create_order()
         .for_event(&event)
@@ -70,7 +79,10 @@ fn available() {
         .with_redemption_code(code.redemption_code.clone())
         .is_paid()
         .finish();
-    assert_eq!(code.available(connection).unwrap(), 99);
+    assert_eq!(code.available(connection).unwrap(), Some(99));
+
+    let code = project.create_code().with_event(&event).with_max_uses(0).finish();
+    assert_eq!(code.available(connection).unwrap(), None);
 }
 
 #[test]
@@ -593,7 +605,7 @@ pub fn find_number_of_uses() {
     let code_availability =
         Code::find_by_redemption_code_with_availability(code.redemption_code.clone().as_str(), Some(event.id), conn)
             .unwrap();
-    assert_eq!(code_availability.available, 2);
+    assert_eq!(code_availability.available, Some(2));
     assert_eq!(Code::find_number_of_uses(code.id, None, conn), Ok(0));
 
     // Add some tickets to the cart
@@ -622,7 +634,7 @@ pub fn find_number_of_uses() {
     let code_availability =
         Code::find_by_redemption_code_with_availability(code.redemption_code.clone().as_str(), Some(event.id), conn)
             .unwrap();
-    assert_eq!(code_availability.available, 1);
+    assert_eq!(code_availability.available, Some(1));
     assert_eq!(Code::find_number_of_uses(code.id, None, conn), Ok(1));
 
     // Make cart expire
@@ -637,7 +649,7 @@ pub fn find_number_of_uses() {
     let code_availability =
         Code::find_by_redemption_code_with_availability(code.redemption_code.clone().as_str(), Some(event.id), conn)
             .unwrap();
-    assert_eq!(code_availability.available, 2);
+    assert_eq!(code_availability.available, Some(2));
     assert_eq!(Code::find_number_of_uses(code.id, None, conn), Ok(0));
 
     // Now buy the tickets and make the order expire
@@ -684,7 +696,7 @@ pub fn find_number_of_uses() {
     let code_availability =
         Code::find_by_redemption_code_with_availability(code.redemption_code.clone().as_str(), Some(event.id), conn)
             .unwrap();
-    assert_eq!(code_availability.available, 1);
+    assert_eq!(code_availability.available, Some(1));
     assert_eq!(Code::find_number_of_uses(code.id, None, conn), Ok(1));
 
     // Refund 1 of the 2 purchased tickets
@@ -705,7 +717,7 @@ pub fn find_number_of_uses() {
     let code_availability =
         Code::find_by_redemption_code_with_availability(code.redemption_code.clone().as_str(), Some(event.id), conn)
             .unwrap();
-    assert_eq!(code_availability.available, 1);
+    assert_eq!(code_availability.available, Some(1));
     assert_eq!(Code::find_number_of_uses(code.id, None, conn), Ok(1));
 
     // Refund remaining ticket
@@ -718,7 +730,7 @@ pub fn find_number_of_uses() {
     let code_availability =
         Code::find_by_redemption_code_with_availability(code.redemption_code.clone().as_str(), Some(event.id), conn)
             .unwrap();
-    assert_eq!(code_availability.available, 2);
+    assert_eq!(code_availability.available, Some(2));
     assert_eq!(Code::find_number_of_uses(code.id, None, conn), Ok(0));
 
     // Place two purchases
@@ -732,7 +744,7 @@ pub fn find_number_of_uses() {
     let code_availability =
         Code::find_by_redemption_code_with_availability(code.redemption_code.clone().as_str(), Some(event.id), conn)
             .unwrap();
-    assert_eq!(code_availability.available, 1);
+    assert_eq!(code_availability.available, Some(1));
     assert_eq!(Code::find_number_of_uses(code.id, None, conn), Ok(1));
 
     project
@@ -745,7 +757,7 @@ pub fn find_number_of_uses() {
     let code_availability =
         Code::find_by_redemption_code_with_availability(code.redemption_code.clone().as_str(), Some(event.id), conn)
             .unwrap();
-    assert_eq!(code_availability.available, 0);
+    assert_eq!(code_availability.available, Some(0));
     assert_eq!(Code::find_number_of_uses(code.id, None, conn), Ok(2));
 }
 

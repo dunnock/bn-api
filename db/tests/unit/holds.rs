@@ -113,7 +113,14 @@ fn purchased_ticket_count() {
     let hold = project
         .create_hold()
         .with_hold_type(HoldTypes::Discount)
-        .with_quantity(100)
+        .with_quantity(50)
+        .with_max_per_user(10)
+        .with_ticket_type_id(ticket_types[0].id)
+        .finish();
+    let hold2 = project
+        .create_hold()
+        .with_hold_type(HoldTypes::Discount)
+        .with_quantity(50)
         .with_max_per_user(10)
         .with_ticket_type_id(ticket_types[0].id)
         .finish();
@@ -126,8 +133,18 @@ fn purchased_ticket_count() {
         .for_user(&user)
         .is_paid()
         .finish();
+    project
+        .create_order()
+        .for_event(&event)
+        .quantity(5)
+        .with_redemption_code(hold2.redemption_code.clone().unwrap())
+        .for_user(&user2)
+        .is_paid()
+        .finish();
     assert_eq!(hold.purchased_ticket_count(&user, connection), Ok(10));
     assert_eq!(hold.purchased_ticket_count(&user2, connection), Ok(0));
+    assert_eq!(hold2.purchased_ticket_count(&user2, connection), Ok(5));
+    assert_eq!(hold2.purchased_ticket_count(&user, connection), Ok(0));
 
     project
         .create_order()
@@ -139,6 +156,8 @@ fn purchased_ticket_count() {
         .finish();
     assert_eq!(hold.purchased_ticket_count(&user, connection), Ok(10));
     assert_eq!(hold.purchased_ticket_count(&user2, connection), Ok(5));
+    assert_eq!(hold2.purchased_ticket_count(&user2, connection), Ok(5));
+    assert_eq!(hold2.purchased_ticket_count(&user, connection), Ok(0));
 }
 
 #[test]

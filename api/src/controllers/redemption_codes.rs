@@ -31,7 +31,7 @@ pub enum RedemptionCodeResponse {
         ticket_types: Vec<UserDisplayTicketType>,
         redemption_code: String,
         max_uses: i64,
-        available: i64,
+        available: Option<i64>,
         discount_in_cents: Option<i64>,
         discount_as_percentage: Option<i64>,
         code_type: CodeTypes,

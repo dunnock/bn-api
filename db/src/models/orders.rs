@@ -328,10 +328,10 @@ impl Order {
                 let mut available = available_quantity as i64;
                 if let Some(code_id) = item.code_id {
                     let code = Code::find(code_id, conn)?;
-                    let code_available = code.available(conn)? as i64;
-
-                    if code_available < available {
-                        available = code_available;
+                    if let Some(code_available) = code.available(conn)? {
+                        if code_available < available {
+                            available = code_available;
+                        }
                     }
                 } else if let Some(hold_id) = item.hold_id {
                     let hold = Hold::find(hold_id, conn)?;

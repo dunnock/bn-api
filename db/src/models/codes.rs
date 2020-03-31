@@ -34,7 +34,7 @@ pub struct Code {
 pub struct CodeAvailability {
     #[serde(flatten)]
     pub code: Code,
-    pub available: i64,
+    pub available: Option<i64>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, QueryableByName, Serialize)]
@@ -75,7 +75,7 @@ pub struct DisplayCode {
 pub struct DisplayCodeAvailability {
     #[serde(flatten)]
     pub display_code: DisplayCode,
-    pub available: i64,
+    pub available: Option<i64>,
 }
 
 #[derive(AsChangeset, Debug, Default, Deserialize, Validate)]
@@ -102,6 +102,7 @@ impl Code {
                     .or(orders::on_behalf_of_user_id.is_null().and(orders::user_id.eq(user.id))),
             )
             .filter(orders::status.eq(OrderStatus::Paid))
+            .filter(codes::id.eq(self.id))
             .select(sql::<BigInt>("CAST(COALESCE(SUM(order_items.quantity), 0) AS BIGINT)"))
             .first(conn)
             .to_db_error(
@@ -133,8 +134,21 @@ impl Code {
         Ok(CodeAvailability { code, available })
     }
 
-    pub fn available(&self, conn: &PgConnection) -> Result<i64, DatabaseError> {
-        Ok(self.max_uses - Code::find_number_of_uses(self.id, None, conn)?)
+    pub fn available(&self, conn: &PgConnection) -> Result<Option<i64>, DatabaseError> {
+        Code::availablity_by_code_id_max_uses(self.id, self.max_uses, conn)
+    }
+
+    // TODO: retire this method in the future after we make max_uses an optional field and refactor the logic to removex 0 == infinite behavior
+    fn availablity_by_code_id_max_uses(
+        id: Uuid,
+        max_uses: i64,
+        conn: &PgConnection,
+    ) -> Result<Option<i64>, DatabaseError> {
+        if max_uses == 0 {
+            Ok(None)
+        } else {
+            Ok(Some(max_uses - Code::find_number_of_uses(id, None, conn)?))
+        }
     }
 
     pub fn find_number_of_uses(
@@ -219,8 +233,7 @@ impl Code {
             deleted_at: None,
         };
 
-        let available = display_code.max_uses - Code::find_number_of_uses(display_code.id, None, conn)?;
-
+        let available = self.available(conn)?;
         Ok(DisplayCodeAvailability {
             display_code,
             available,
@@ -323,7 +336,7 @@ impl Code {
         let mut display_codes_availability = Vec::new();
 
         for dc in display_codes {
-            let available = dc.max_uses - Code::find_number_of_uses(dc.id, None, conn)?;
+            let available = Code::availablity_by_code_id_max_uses(dc.id, dc.max_uses, conn)?;
             display_codes_availability.push(DisplayCodeAvailability {
                 display_code: dc,
                 available,

@@ -212,6 +212,7 @@ impl Hold {
                     .eq(user.id)
                     .or(orders::on_behalf_of_user_id.is_null().and(orders::user_id.eq(user.id))),
             )
+            .filter(holds::id.eq(self.id))
             .filter(orders::status.eq(OrderStatus::Paid))
             .select(sql::<BigInt>("CAST(COALESCE(SUM(order_items.quantity), 0) AS BIGINT)"))
             .first(conn)

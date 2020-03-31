@@ -257,7 +257,7 @@ async fn show_code() {
             assert_eq!(end_date, code.end_date);
             assert_eq!(discount_in_cents, code.discount_in_cents);
             assert_eq!(code_type, CodeTypes::Discount);
-            assert_eq!(available, 30);
+            assert_eq!(available, Some(30));
             assert_eq!(discount_as_percentage, None);
             assert_eq!(user_purchased_ticket_count, None);
         }
