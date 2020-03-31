@@ -19,7 +19,7 @@ const post = async function (request_body) {
         .post(pm.substitute(apiEndPoint))
         .set('Accept', 'application/json')
         .set('Content-Type', 'application/json')
-        .set('Authorization', pm.substitute('Bearer {{org_member_token}}'))
+        .set('Authorization', pm.substitute('Bearer {{mtg_org_member_token}}'))
 
         .send(pm.substitute(request_body));
 };
@@ -28,7 +28,7 @@ const get = async function (request_body) {
     return baseUrl
         .get(pm.substitute(apiEndPoint))
 
-        .set('Authorization', pm.substitute('Bearer {{org_member_token}}'))
+        .set('Authorization', pm.substitute('Bearer {{mtg_org_member_token}}'))
 
         .set('Accept', 'application/json')
         .send();
@@ -70,7 +70,6 @@ describe('OrgMember  - Create Rarities', function () {
     });
 
     it("should be 201", function () {
-        console.log(responses);
         for (var i=0;i<requestBodies.length;i++){
             expect(responses[i].status).to.equal(201);
         }

@@ -19,7 +19,7 @@ const post = async function (request_body) {
         .post(pm.substitute(apiEndPoint))
         .set('Accept', 'application/json')
         .set('Content-Type', 'application/json')
-        .set('Authorization', pm.substitute('Bearer {{org_member_token}}'))
+        .set('Authorization', pm.substitute('Bearer {{mtg_org_member_token}}'))
 
         .send(pm.substitute(request_body));
 };
@@ -28,7 +28,7 @@ const get = async function (request_body) {
     return baseUrl
         .get(pm.substitute(apiEndPoint))
 
-        .set('Authorization', pm.substitute('Bearer {{org_member_token}}'))
+        .set('Authorization', pm.substitute('Bearer {{mtg_org_member_token}}'))
 
         .set('Accept', 'application/json')
         .send();
@@ -71,7 +71,6 @@ let requestBody = `{
 describe('OrgMember  - Create loot boxes', function () {
     before(async function () {
         this.timeout(100000);
-        console.log(pm.substitute(requestBody));
         response = await post(requestBody);
         log(response.request.header);
         log(response.request.url);
