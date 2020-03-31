@@ -7,7 +7,7 @@ const pm = require('../../pm');const debug=require('debug');var log = debug('bn-
 
 const baseUrl = supertest(pm.environment.get('server'));
 
-const apiEndPoint = '/organizations/{{last_org_id}}/invites';
+const apiEndPoint = '/organizations/{{mtg_last_org_id}}/invites';
 
 
 var response;

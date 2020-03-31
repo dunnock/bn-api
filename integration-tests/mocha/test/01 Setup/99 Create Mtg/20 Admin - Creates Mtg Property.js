@@ -56,7 +56,7 @@ describe('20 Admin - Creates Mtg Property (Org)', function () {
 
     after(async function () {
         // add after methods
-        pm.environment.set("last_org_id", JSON.parse(responseBody).id);
+        pm.environment.set("mtg_last_org_id", JSON.parse(responseBody).id);
 
     });
 

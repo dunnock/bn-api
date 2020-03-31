@@ -36,7 +36,7 @@ const get = async function (request_body) {
 
 let requestBody = `{
     "name": "Throne of Eldraine",
-    "organization_id": "{{last_org_id}}",
+    "organization_id": "{{mtg_last_org_id}}",
     "venue_id": "{{last_venue_id}}",
     "event_start": "2020-11-13T12:00:00",
     "event_end": "2020-11-14T12:00:00",
