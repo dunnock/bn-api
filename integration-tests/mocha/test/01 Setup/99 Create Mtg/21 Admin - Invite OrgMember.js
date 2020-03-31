@@ -25,14 +25,14 @@ const post = async function (request_body) {
 };
 
 let requestBody = `{
-"user_email": "{{last_org_member_email}}",
+"user_email": "{{mtg_last_org_member_email}}",
  "roles" : ["OrgMember"]
 }`;
 
 
 describe('OrgAdmin - Invite OrgMember', function () {
     before(async function () {
-        pm.environment.set("last_org_member_email", "orgmember" + Math.floor(Math.random() * 10000) + "@test.com");
+        pm.environment.set("mtg_last_org_member_email", "orgmember" + Math.floor(Math.random() * 10000) + "@test.com");
 
         response = await post(requestBody);
         log(response.request.header);

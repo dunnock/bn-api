@@ -35,7 +35,7 @@ const get = async function (request_body) {
 let requestBody = `{
 	"first_name":"Org",
 	"last_name":"Member",
-	"email":"{{last_org_member_email}}",
+	"email":"{{mtg_last_org_member_email}}",
 	"phone":"555",
 	"password": "itsasecret"
 }`;
