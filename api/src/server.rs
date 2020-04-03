@@ -141,15 +141,7 @@ impl Server {
                         .wrap(ApiLogger::new())
                         .wrap(DatabaseTransaction::new())
                         .wrap(AppVersionHeader::new())
-                        .wrap(Metatags::new(&conf))
-                        .configure(|conf| {
-                            if let Some(static_file_path) = &static_file_conf.static_file_path {
-                                conf.service(fs::Files::new("/", static_file_path));
-                            }
-                        })
-                        .default_service(
-                            web::get().to(|| HttpResponse::NotFound().json(json!({"error": "Not found"}))),
-                        );
+                        .wrap(Metatags::new(&conf));
 
                     match conf.product_context {
                         ProductContext::Collectibles => app
@@ -157,6 +149,12 @@ impl Server {
                             .configure(routing::routes),
                         ProductContext::BigNeon => app.configure(routing::routes),
                     }
+                    .configure(|conf| {
+                        if let Some(static_file_path) = &static_file_conf.static_file_path {
+                            conf.service(fs::Files::new("/", static_file_path));
+                        }
+                    })
+                    .default_service(web::get().to(|| HttpResponse::NotFound().json(json!({"error": "Not found"}))))
                 }
             });
             //            .keep_alive(keep_alive)
