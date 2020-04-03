@@ -5,21 +5,18 @@ use crate::payments::PaymentProcessorError;
 use actix_web::http::{header::ToStrError, StatusCode};
 use actix_web::{error::ResponseError, HttpResponse};
 use branch_rs::BranchError;
-use chrono;
 use customer_io::CustomerIoError;
 use db::utils::errors::*;
 use diesel::result::Error as DieselError;
 use facebook::prelude::FacebookError;
 use globee::GlobeeError;
 use redis::RedisError;
-use reqwest;
 use serde_json::Error as SerdeError;
 use sharetribe_flex::ShareTribeError;
 use std::error::Error;
 use std::fmt;
 use tari_client::TariError;
 use twilio::TwilioError;
-use url;
 use uuid::ParseError as UuidParseError;
 
 #[derive(Debug)]

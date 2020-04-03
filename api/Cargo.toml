@@ -23,14 +23,14 @@ caching_derive = { path = "../http/caching_derive", package="bigneon_caching_der
 branch_rs = {path="../branch_rs"}
 bytes = "0.5"
 chrono = {version = "0.4", features = ["serde"]}
-clap = "2.32"
+clap = "2.33"
 customer_io= {path="../customer_io"}
 cache= {path="../cache"}
 diesel="1.4.4"
 dotenv = "0.13"
 
 # Pulling from github as dependency fix merged into master has yet to be released
-expo-server-sdk = { git = "https://github.com/expo/expo-server-sdk-rust", rev="a4334d2d7243ac5e0ecb77478bb42774bbd9af54" }
+expo-server-sdk = { git = "https://github.com/big-neon/expo-server-sdk-rust", rev="5e133bce17d76b5cd9ef8e3f9e58dd194a4c453c" }
 facebook = { version = "0.2.0", path = "../facebook"}
 futures = "0.3"
 globee = { version = "0.2.0", path = "../globee" }
@@ -43,7 +43,7 @@ macros = {path="../macros"}
 phonenumber = "0.2.3"
 rand = "0.7.3"
 r2d2 = "0.8.8"
-redis = "0.13"
+redis = "0.15.1"
 regex = "1"
 reqwest = { version = "0.10.4", features = ["blocking", "json"] }
 serde = "1.0"
@@ -54,7 +54,7 @@ sharetribe_flex={path="../sharetribe_flex"}
 stripe = { version = "0.2.0", path = "../stripe" }
 tari-client= {path="../tari-client"}
 tokio = { version = "0.2", features = ["rt-core", "rt-threaded", "time"] }
-twilio= { git = "https://github.com/big-neon/twilio-rs", rev="8a746caed756c3cfe57e082084fda8be3170721a"}
+twilio= { version = "0.1.5", git = "https://github.com/big-neon/twilio-rs", rev = "a82be0694c5f1e1ef5333aba14d71b240d5badc5" }
 uuid = { version = "0.6", features = ["serde", "v4"] }
 url="1.7.2"
 validator = "0.8"

@@ -24,10 +24,10 @@ impl CurrentUserEndpoint {
             .write()
             .map_err(|_| ShareTribeError::ConcurrencyError)?
             .get_token()?;
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
         let url = format!("{}{}", BASE_URI, "api/current_user/create?expand=true");
         // let url = format!("https://cc56e343.ngrok.io/{}", "api/current_user/create?expand=true");
-        let mut resp = client
+        let resp = client
             .post(&url)
             .bearer_auth(token)
             .json(&user)

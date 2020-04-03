@@ -6,7 +6,7 @@ authors = ["Mike Berry <mikethetike@tari.com>"]
 [dependencies]
 
 
-reqwest = "0.9"
+reqwest = { version="0.10", features=["blocking", "json"] }
 
 log = "0.4"
 logging = {path="../logging"}

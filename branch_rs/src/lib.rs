@@ -49,22 +49,24 @@ impl LinksResource {
     }
 
     pub fn create(&self, link: DeepLink) -> Result<String, BranchError> {
-        let client = reqwest::Client::builder()
+        let client = reqwest::blocking::Client::builder()
             .timeout(Duration::from_secs(self.timeout as u64))
             .build()?;
         let link = BranchApiRequest {
             data: link,
             branch_key: &self.branch_key,
         };
-        let mut resp = client.post(&self.url).json(&link).send()?;
+        let resp = client.post(&self.url).json(&link).send()?;
+        let status = resp.status();
+        let error_for_status = resp.error_for_status_ref().err().map(|e| e.into());
         let value: serde_json::Value = resp.json()?;
         jlog!(Debug, "Response from Branch", { "response": &value });
 
-        let status = resp.status();
         if status != StatusCode::OK {
-            return Err(resp.error_for_status().err().map(|e| e.into()).unwrap_or(
-                BranchError::UnexpectedResponseError(format!("Unexpected status code from Branch: {}", status)),
-            ));
+            return Err(error_for_status.unwrap_or(BranchError::UnexpectedResponseError(format!(
+                "Unexpected status code from Branch: {}",
+                status
+            ))));
         };
         #[derive(Deserialize)]
         struct R {

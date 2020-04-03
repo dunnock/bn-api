@@ -24,13 +24,13 @@ impl OwnListingEndpoint {
             .write()
             .map_err(|_| ShareTribeError::ConcurrencyError)?
             .get_token()?;
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
         let url = format!("{}{}", BASE_URI, "api/own_listings/create?expand=true");
         // let url = format!(
         //     "{}{}",
         //     "https://06d2f6c2.ngrok.io/", "api/own_listings/create?expand=true,include=images"
         // );
-        let mut resp = client
+        let resp = client
             .post(&url)
             .bearer_auth(token)
             .json(&listing)

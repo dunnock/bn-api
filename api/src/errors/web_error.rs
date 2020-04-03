@@ -9,7 +9,6 @@ use db::utils::errors::*;
 use diesel::result::Error as DieselError;
 use facebook::prelude::FacebookError;
 use globee::GlobeeError;
-use r2d2;
 use redis::RedisError;
 use reqwest::header::ToStrError as ReqwestToStrError;
 use reqwest::Error as ReqwestError;

@@ -15,9 +15,9 @@ impl TokenEndpoint {
     }
 
     pub fn create(&self) -> Result<AccessToken, ShareTribeError> {
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
         let url = format!("{}{}", BASE_URI, "auth/token");
-        let mut resp = client
+        let resp = client
             .post(&url)
             .form(&self.credentials)
             .send()

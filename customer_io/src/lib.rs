@@ -31,33 +31,35 @@ impl CustomerIoClient {
 
     pub fn create_event(&self, event: Event, customer_id: Uuid) -> Result<(), CustomerIoError> {
         let url = self.base_url.join(&format!("customers/{}/events", customer_id))?;
-        let mut response = reqwest::Client::new()
+        let response = reqwest::blocking::Client::new()
             .post(&url.to_string())
             .basic_auth(&self.site_id, Some(&self.api_key))
             .json(&event)
             .send()?;
+        let error_for_status = response.error_for_status_ref().map(|_| ());
         if let Some(response_string) = response.text().ok() {
             jlog!(Debug, "bigneon::domain_actions", "Response from customer.io", {
                 "response": response_string
             });
         }
-        response.error_for_status()?;
+        error_for_status?;
         Ok(())
     }
 
     pub fn create_anonymous_event(&self, event: Event) -> Result<(), CustomerIoError> {
         let url = self.base_url.join("events")?;
-        let mut response = reqwest::Client::new()
+        let response = reqwest::blocking::Client::new()
             .post(&url.to_string())
             .basic_auth(&self.site_id, Some(&self.api_key))
             .json(&event)
             .send()?;
+        let error_for_status = response.error_for_status_ref().map(|_| ());
         if let Some(response_string) = response.text().ok() {
             jlog!(Debug, "bigneon::domain_actions", "Response from customer.io", {
                 "response": response_string
             });
         }
-        response.error_for_status()?;
+        error_for_status?;
         Ok(())
     }
 }

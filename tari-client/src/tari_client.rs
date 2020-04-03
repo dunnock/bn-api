@@ -3,7 +3,7 @@ use tari_error::TariError;
 
 use cryptographic::*;
 use log::Level;
-use reqwest;
+use reqwest::blocking::Client;
 use serde_json;
 
 pub trait TariClient {
@@ -87,8 +87,8 @@ impl TariClient for HttpTariClient {
         let public_key = convert_hexstring_to_bytes(&public_key);
         let jsonrpc_request = construct_jsonrpc_request(header_command, msg_payload, &secret_key, &public_key)?;
 
-        let client = reqwest::Client::new();
-        let mut resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
+        let client = Client::new();
+        let resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
         let raw: String = resp.text()?;
         jlog!(Level::Info, &format!("Response from create_asset:{}", raw));
         let response_message: RPCResponse = serde_json::from_str(&raw)?;
@@ -124,8 +124,8 @@ impl TariClient for HttpTariClient {
         let public_key = convert_hexstring_to_bytes(&public_key);
         let jsonrpc_request = construct_jsonrpc_request(header_command, msg_payload, &secret_key, &public_key)?;
 
-        let client = reqwest::Client::new();
-        let mut resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
+        let client = Client::new();
+        let resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
         let raw: String = resp.text()?;
         jlog!(Level::Info, &format!("Response from modify_asset: {}", raw));
         let response_message: RPCResponse = serde_json::from_str(&raw)?;
@@ -161,8 +161,8 @@ impl TariClient for HttpTariClient {
         let public_key = convert_hexstring_to_bytes(&public_key);
         let jsonrpc_request = construct_jsonrpc_request(header_command, msg_payload, &secret_key, &public_key)?;
 
-        let client = reqwest::Client::new();
-        let mut resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
+        let client = Client::new();
+        let resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
         let raw: String = resp.text()?;
         jlog!(Level::Info, &format!("Response from modify_asset: {}", raw));
         let response_message: RPCResponse = serde_json::from_str(&raw)?;
@@ -198,8 +198,8 @@ impl TariClient for HttpTariClient {
         let public_key = convert_hexstring_to_bytes(&public_key);
         let jsonrpc_request = construct_jsonrpc_request(header_command, msg_payload, &secret_key, &public_key)?;
 
-        let client = reqwest::Client::new();
-        let mut resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
+        let client = Client::new();
+        let resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
         let raw: String = resp.text()?;
         jlog!(Level::Info, &format!("Response from modify_asset: {}", raw));
         let response_message: RPCResponse = serde_json::from_str(&raw)?;
@@ -233,8 +233,8 @@ impl TariClient for HttpTariClient {
         let public_key = convert_hexstring_to_bytes(&public_key);
         let jsonrpc_request = construct_jsonrpc_request(header_command, msg_payload, &secret_key, &public_key)?;
 
-        let client = reqwest::Client::new();
-        let mut resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
+        let client = Client::new();
+        let resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
         let raw: String = resp.text()?;
         jlog!(Level::Info, &format!("Response from transfer_token: {}", raw));
         let response_message: RPCResponse = serde_json::from_str(&raw)?;
@@ -267,8 +267,8 @@ impl TariClient for HttpTariClient {
         let public_key = convert_hexstring_to_bytes(&public_key);
         let jsonrpc_request = construct_jsonrpc_request(header_command, msg_payload, &secret_key, &public_key)?;
 
-        let client = reqwest::Client::new();
-        let mut resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
+        let client = Client::new();
+        let resp = client.post(&self.tari_url).json(&jsonrpc_request).send()?;
         let raw: String = resp.text()?;
         jlog!(Level::Info, &format!("Response from read_asset: {}", raw));
         let response_message: RPCResponse = serde_json::from_str(&raw)?;

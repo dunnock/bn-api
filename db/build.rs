@@ -28,6 +28,9 @@ fn main() {
             continue;
         }
         let file_name = entry.path();
+        if let Some(path) = file_name.to_str() {
+            println!("cargo:rerun-if-changed={}", path);
+        }
 
         writeln!(
             f,
