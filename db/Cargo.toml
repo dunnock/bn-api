@@ -18,8 +18,8 @@ path="src/bin.rs"
 
 
 [dependencies]
-backtrace = "0.2"
-diesel = {version="1.4.4", features = ["postgres", "uuid", "chrono","numeric", "serde_json", "r2d2", "64-column-tables"]}
+backtrace = "0.3"
+diesel = {version="1.4.4", default_features=false, features = ["postgres", "uuid", "chrono", "serde_json", "64-column-tables"]}
 diesel_derives = "1.4.1"
 bigneon_http = { path = "../http" }
 bigneon_caching_derive = { path = "../http/caching_derive" }
