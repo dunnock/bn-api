@@ -242,6 +242,7 @@ impl WebhookPublisher {
         }
         data.insert("webhook_event_type".to_string(), json!("purchase_ticket"));
         data.insert("order_number".to_string(), json!(order.order_number()));
+        data.insert("order_id".to_string(), json!(order.id));
         let user = order.user(conn)?;
         data.insert("customer_email".to_string(), json!(user.email));
         data.insert("customer_first_name".to_string(), json!(user.first_name));
