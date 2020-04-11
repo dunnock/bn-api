@@ -725,8 +725,9 @@ impl Transfer {
             .filter(transfer_tickets::transfer_id.eq(self.id))
             .select(events::all_columns)
             .distinct()
-            .load(conn)
+            .load::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Could not load transfer events")
+            .map(EventData::vec_into_events)
     }
 
     pub fn orders(&self, conn: &PgConnection) -> Result<Vec<Order>, DatabaseError> {

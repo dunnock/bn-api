@@ -45,8 +45,9 @@ impl OrderItem {
     pub fn event(&self, conn: &PgConnection) -> Result<Event, DatabaseError> {
         events::table
             .filter(events::id.nullable().eq(self.event_id))
-            .first(conn)
+            .first::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Could not load event for order item")
+            .map(Event::from)
     }
 
     pub fn find_fee_item(&self, conn: &PgConnection) -> Result<Option<OrderItem>, DatabaseError> {

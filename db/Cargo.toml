@@ -19,13 +19,13 @@ path="src/bin.rs"
 
 [dependencies]
 backtrace = "0.3"
-diesel = {version="1.4.4", default_features=false, features = ["postgres", "uuid", "chrono", "serde_json", "64-column-tables"]}
+diesel = {version="1.4.4", default_features=false, features = ["postgres", "uuid", "chrono", "serde_json", "32-column-tables"]}
 diesel_derives = "1.4.1"
 bigneon_http = { path = "../http" }
 bigneon_caching_derive = { path = "../http/caching_derive" }
 dotenv = "0.13"
 hex = "0.3.2"
-rand = "0.5"
+rand = "0.7"
 uuid = { version = "0.6", features = ["serde", "v3", "v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 chrono-tz = "0.5"
@@ -47,7 +47,7 @@ validator = "0.8"
 validator_derive = "0.8"
 tari-client= {path="../tari-client"}
 unidecode= "0.3"
-url = "1.7.1"
+url = "2.1.1"
 embed_dirs_derive = {path="../embed_dirs_derive"}
 
 [dev-dependencies]

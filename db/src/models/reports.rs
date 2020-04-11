@@ -676,7 +676,8 @@ impl Report {
             ORDER BY e.event_end;",
         )
         .bind::<Timestamp, _>(last_report)
-        .get_results(conn)
+        .get_results::<EventData>(conn)
+        .map(EventData::vec_into_events)
         .to_db_error(ErrorCode::QueryError, "Error loading events")?;
 
         result.insert(ReportTypes::TicketCounts, active_events_with_orders);

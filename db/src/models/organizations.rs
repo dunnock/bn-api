@@ -517,8 +517,9 @@ impl Organization {
             .filter(events::deleted_at.is_null())
             .filter(events::organization_id.eq(self.id))
             .order_by(events::created_at)
-            .get_results(conn)
+            .get_results::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Could not retrieve events")
+            .map(EventData::vec_into_events)
     }
 
     pub fn upcoming_events(&self, conn: &PgConnection) -> Result<Vec<Event>, DatabaseError> {
@@ -528,8 +529,9 @@ impl Organization {
             .filter(events::status.eq(EventStatus::Published))
             .filter(events::event_start.ge(Utc::now().naive_utc()))
             .order_by(events::created_at)
-            .get_results(conn)
+            .get_results::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Could not retrieve upcoming events")
+            .map(EventData::vec_into_events)
     }
 
     pub fn venues(&self, conn: &PgConnection) -> Result<Vec<Venue>, DatabaseError> {

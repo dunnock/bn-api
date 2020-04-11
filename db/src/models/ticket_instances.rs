@@ -63,8 +63,9 @@ impl TicketInstance {
             .inner_join(events::table.on(events::id.eq(ticket_types::event_id)))
             .filter(ticket_instances::id.eq(self.id))
             .select(events::all_columns)
-            .first(conn)
+            .first::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Could not load event for ticket instance")
+            .map(Event::from)
     }
 
     pub fn redeem_key_unique_per_event(

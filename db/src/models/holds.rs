@@ -495,8 +495,9 @@ impl Hold {
         use schema::*;
         events::table
             .filter(events::id.eq(self.event_id))
-            .first(conn)
+            .first::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Could not load event for code")
+            .map(Event::from)
     }
 
     pub fn organization(&self, conn: &PgConnection) -> Result<Organization, DatabaseError> {

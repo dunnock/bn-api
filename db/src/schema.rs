@@ -284,13 +284,9 @@ table! {
         status -> Text,
         publish_date -> Nullable<Timestamp>,
         redeem_date -> Nullable<Timestamp>,
-        promo_image_url -> Nullable<Text>,
-        additional_info -> Nullable<Text>,
         age_limit -> Nullable<Varchar>,
-        top_line_info -> Nullable<Varchar>,
         cancelled_at -> Nullable<Timestamp>,
         updated_at -> Timestamp,
-        video_url -> Nullable<Text>,
         is_external -> Bool,
         external_url -> Nullable<Text>,
         override_status -> Nullable<Text>,
@@ -300,7 +296,6 @@ table! {
         event_end -> Nullable<Timestamp>,
         sendgrid_list_id -> Nullable<Int8>,
         event_type -> Text,
-        cover_image_url -> Nullable<Text>,
         private_access_code -> Nullable<Text>,
         facebook_pixel_key -> Nullable<Text>,
         deleted_at -> Nullable<Timestamp>,
@@ -309,6 +304,7 @@ table! {
         facebook_event_id -> Nullable<Text>,
         settled_at -> Nullable<Timestamp>,
         cloned_from_event_id -> Nullable<Uuid>,
+        additional_json -> Jsonb,
     }
 }
 

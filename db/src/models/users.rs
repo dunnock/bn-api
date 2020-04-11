@@ -6,10 +6,10 @@ use diesel;
 use diesel::dsl::{exists, select};
 use diesel::expression::dsl;
 use diesel::expression::sql_literal::sql;
-use diesel::pg::types::sql_types::{Array, Jsonb};
+use diesel::pg::types::sql_types::Array;
 use diesel::prelude::*;
 use diesel::sql_query;
-use diesel::sql_types::{BigInt, Bool, Nullable, Text, Timestamp, Uuid as dUuid};
+use diesel::sql_types::{BigInt, Nullable, Text, Timestamp, Uuid as dUuid};
 use models::*;
 use schema::{event_users, events, genres, organization_users, organizations, user_genres, users};
 use serde_json::Value;
@@ -385,7 +385,7 @@ impl User {
         use schema::*;
         let (start_time, end_time) = Event::dates_by_past_or_upcoming(None, None, past_or_upcoming);
 
-        let (events, total): (Vec<Event>, i64) = transfers::table
+        let (events, total): (Vec<EventData>, i64) = transfers::table
             .inner_join(transfer_tickets::table.on(transfer_tickets::transfer_id.eq(transfers::id)))
             .inner_join(ticket_instances::table.on(transfer_tickets::ticket_instance_id.eq(ticket_instances::id)))
             .inner_join(assets::table.on(ticket_instances::asset_id.eq(assets::id)))
@@ -403,7 +403,7 @@ impl User {
             .to_db_error(ErrorCode::QueryError, "Could not load transfer events for user")?;
 
         let mut result: Vec<UserTransferActivitySummary> = Vec::new();
-        for event in events {
+        for event in events.into_iter().map(Event::from) {
             let mut ticket_activity_items: HashMap<Uuid, Vec<ActivityItem>> = HashMap::new();
             let activity_items = ActivityItem::load_transfers(None, Some(event.id), Some(self.id), true, conn)?;
 
@@ -470,78 +470,10 @@ impl User {
 
         #[derive(Queryable, QueryableByName)]
         struct R {
-            #[sql_type = "dUuid"]
-            id: Uuid,
-            #[sql_type = "Text"]
-            name: String,
-            #[sql_type = "dUuid"]
-            organization_id: Uuid,
-            #[sql_type = "Nullable<dUuid>"]
-            venue_id: Option<Uuid>,
-            #[sql_type = "Timestamp"]
-            created_at: NaiveDateTime,
-            #[sql_type = "Nullable<Timestamp>"]
-            event_start: Option<NaiveDateTime>,
-            #[sql_type = "Nullable<Timestamp>"]
-            door_time: Option<NaiveDateTime>,
-            #[sql_type = "Text"]
-            status: EventStatus,
-            #[sql_type = "Nullable<Timestamp>"]
-            publish_date: Option<NaiveDateTime>,
-            #[sql_type = "Nullable<Timestamp>"]
-            redeem_date: Option<NaiveDateTime>,
-            #[sql_type = "Nullable<Text>"]
-            promo_image_url: Option<String>,
-            #[sql_type = "Nullable<Text>"]
-            additional_info: Option<String>,
-            #[sql_type = "Nullable<Text>"]
-            age_limit: Option<String>,
-            #[sql_type = "Nullable<Text>"]
-            top_line_info: Option<String>,
-            #[sql_type = "Nullable<Timestamp>"]
-            cancelled_at: Option<NaiveDateTime>,
-            #[sql_type = "Timestamp"]
-            updated_at: NaiveDateTime,
-            #[sql_type = "Nullable<Text>"]
-            video_url: Option<String>,
-            #[sql_type = "Bool"]
-            is_external: bool,
-            #[sql_type = "Nullable<Text>"]
-            external_url: Option<String>,
-            #[sql_type = "Nullable<Text>"]
-            override_status: Option<EventOverrideStatus>,
-            #[sql_type = "Nullable<BigInt>"]
-            client_fee_in_cents: Option<i64>,
-            #[sql_type = "Nullable<BigInt>"]
-            company_fee_in_cents: Option<i64>,
-            #[sql_type = "Nullable<BigInt>"]
-            settlement_amount_in_cents: Option<i64>,
-            #[sql_type = "Nullable<Timestamp>"]
-            event_end: Option<NaiveDateTime>,
-            #[sql_type = "Nullable<BigInt>"]
-            sendgrid_list_id: Option<i64>,
-            #[sql_type = "Text"]
-            event_type: EventTypes,
-            #[sql_type = "Nullable<Text>"]
-            cover_image_url: Option<String>,
-            #[sql_type = "Nullable<Text>"]
-            private_access_code: Option<String>,
-            #[sql_type = "Nullable<Text>"]
-            facebook_pixel_key: Option<String>,
-            #[sql_type = "Nullable<Timestamp>"]
-            deleted_at: Option<NaiveDateTime>,
-            #[sql_type = "Nullable<Jsonb>"]
-            extra_admin_data: Option<Value>,
-            #[sql_type = "dUuid"]
-            slug_id: Uuid,
-            #[sql_type = "Nullable<Timestamp>"]
-            settled_at: Option<NaiveDateTime>,
+            #[diesel(embed)]
+            event: EventData,
             #[sql_type = "BigInt"]
             total: i64,
-            #[sql_type = "Nullable<Text>"]
-            facebook_event_id: Option<String>,
-            #[sql_type = "Nullable<dUuid>"]
-            cloned_from_event_id: Option<Uuid>,
         }
 
         let mut query = sql_query(
@@ -596,43 +528,7 @@ impl User {
             )?;
 
         let total = results.get(0).map(|s| s.total).unwrap_or(0);
-        let events = results.into_iter().map(|event| Event {
-            id: event.id,
-            name: event.name,
-            organization_id: event.organization_id,
-            venue_id: event.venue_id,
-            created_at: event.created_at,
-            event_start: event.event_start,
-            door_time: event.door_time,
-            status: event.status,
-            publish_date: event.publish_date,
-            redeem_date: event.redeem_date,
-            promo_image_url: event.promo_image_url,
-            additional_info: event.additional_info,
-            age_limit: event.age_limit,
-            top_line_info: event.top_line_info,
-            cancelled_at: event.cancelled_at,
-            updated_at: event.updated_at,
-            video_url: event.video_url,
-            is_external: event.is_external,
-            external_url: event.external_url,
-            override_status: event.override_status,
-            client_fee_in_cents: event.client_fee_in_cents,
-            company_fee_in_cents: event.company_fee_in_cents,
-            settlement_amount_in_cents: event.settlement_amount_in_cents,
-            event_end: event.event_end,
-            sendgrid_list_id: event.sendgrid_list_id,
-            event_type: event.event_type,
-            cover_image_url: event.cover_image_url,
-            private_access_code: event.private_access_code,
-            facebook_pixel_key: event.facebook_pixel_key,
-            deleted_at: event.deleted_at,
-            extra_admin_data: event.extra_admin_data,
-            settled_at: event.settled_at,
-            slug_id: Some(event.slug_id),
-            facebook_event_id: event.facebook_event_id,
-            cloned_from_event_id: event.cloned_from_event_id,
-        });
+        let events = results.into_iter().map(|r| Event::from(r.event));
 
         let mut result: Vec<ActivitySummary> = Vec::new();
         for event in events {
@@ -1141,7 +1037,7 @@ impl User {
             .into_boxed();
 
         let result = if self.is_admin() {
-            events_query.load(conn)
+            events_query.load::<EventData>(conn)
         } else {
             let user_organizations = self.get_scopes_by_organization(conn)?;
             let user_organization_ids: Vec<Uuid> = user_organizations
@@ -1153,9 +1049,11 @@ impl User {
             events_query
                 .filter(events::organization_id.eq_any(user_organization_ids))
                 .select(events::all_columns)
-                .load(conn)
+                .load::<EventData>(conn)
         };
-        result.to_db_error(ErrorCode::QueryError, "Error loading scannable events")
+        result
+            .map(EventData::vec_into_events)
+            .to_db_error(ErrorCode::QueryError, "Error loading scannable events")
     }
 
     pub fn full_name(&self) -> String {

@@ -89,8 +89,9 @@ impl TicketType {
             .inner_join(events::table)
             .filter(ticket_types::id.eq(self.id))
             .select(events::all_columns)
-            .load(conn)
+            .load::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Could not retrieve event for ticket type")
+            .map(EventData::vec_into_events)
             .expect_single()?;
         Ok(res)
     }

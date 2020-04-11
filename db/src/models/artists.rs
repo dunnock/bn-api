@@ -131,8 +131,9 @@ impl Artist {
             .filter(events::deleted_at.is_null())
             .order_by(events::name)
             .select(events::all_columns)
-            .load(conn)
+            .load::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Could not load events for artist")
+            .map(EventData::vec_into_events)
     }
 
     pub fn genres(&self, conn: &PgConnection) -> Result<Vec<String>, DatabaseError> {

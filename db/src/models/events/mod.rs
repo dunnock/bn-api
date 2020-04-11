@@ -1,9 +1,10 @@
+mod model;
+pub(crate) use self::model::{EventData, EventEditableAttributesData, EventId, NewEventData};
+
 use chrono::prelude::*;
-use chrono::Duration;
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use chrono_tz::Tz;
 use dev::times;
-use diesel;
 use diesel::dsl::{exists, select};
 use diesel::expression::dsl;
 use diesel::expression::sql_literal::sql;
@@ -32,11 +33,7 @@ use validator::{Validate, ValidationErrors};
 use validators;
 use validators::*;
 
-#[derive(Associations, Identifiable, Queryable)]
-#[belongs_to(Organization)]
-#[derive(Clone, Serialize, Deserialize, PartialEq, QueryableByName, Debug)]
-#[belongs_to(Venue)]
-#[table_name = "events"]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Event {
     pub id: Uuid,
     pub name: String,
@@ -48,13 +45,9 @@ pub struct Event {
     pub status: EventStatus,
     pub publish_date: Option<NaiveDateTime>,
     pub redeem_date: Option<NaiveDateTime>,
-    pub promo_image_url: Option<String>,
-    pub additional_info: Option<String>,
     pub age_limit: Option<String>,
-    pub top_line_info: Option<String>,
     pub cancelled_at: Option<NaiveDateTime>,
     pub updated_at: NaiveDateTime,
-    pub video_url: Option<String>,
     pub is_external: bool,
     pub external_url: Option<String>,
     pub override_status: Option<EventOverrideStatus>,
@@ -64,7 +57,6 @@ pub struct Event {
     pub event_end: Option<NaiveDateTime>,
     pub sendgrid_list_id: Option<i64>,
     pub event_type: EventTypes,
-    pub cover_image_url: Option<String>,
     pub private_access_code: Option<String>,
     pub facebook_pixel_key: Option<String>,
     pub deleted_at: Option<NaiveDateTime>,
@@ -73,6 +65,11 @@ pub struct Event {
     pub facebook_event_id: Option<String>,
     pub settled_at: Option<NaiveDateTime>,
     pub cloned_from_event_id: Option<Uuid>,
+    pub cover_image_url: Option<String>,
+    pub video_url: Option<String>,
+    pub top_line_info: Option<String>,
+    pub additional_info: Option<String>,
+    pub promo_image_url: Option<String>,
 }
 
 impl PartialOrd for Event {
@@ -81,8 +78,7 @@ impl PartialOrd for Event {
     }
 }
 
-#[derive(Default, Insertable, Serialize, Deserialize, Validate, Clone)]
-#[table_name = "events"]
+#[derive(Default, Serialize, Deserialize, Validate, Clone)]
 pub struct NewEvent {
     pub name: String,
     pub organization_id: Uuid,
@@ -165,37 +161,40 @@ impl NewEvent {
             ),
         )?;
 
-        let result: Event = diesel::insert_into(events::table)
-            .values(&new_event)
+        let event_json_data = Some(json!(&new_event)); // for back compatibility
+        let data: NewEventData = new_event.into();
+        let result: EventData = diesel::insert_into(events::table)
+            .values(&data)
             .get_result(conn)
             .to_db_error(ErrorCode::InsertError, "Could not create new event")?;
 
-        let venue = result.venue(conn)?;
+        let event: Event = result.into();
+        let venue = event.venue(conn)?;
         let slug = Slug::generate_slug(
             &SlugContext::Event {
-                id: result.id,
-                name: result.name.clone(),
+                id: event.id,
+                name: event.name.clone(),
                 venue,
             },
             SlugTypes::Event,
             conn,
         )?;
-        let result = diesel::update(&result)
+        let data: EventData = diesel::update(&EventId::from(&event))
             .set((events::updated_at.eq(dsl::now), events::slug_id.eq(slug.id)))
-            .get_result::<Event>(conn)
+            .get_result(conn)
             .to_db_error(ErrorCode::UpdateError, "Could not update event slug")?;
 
         DomainEvent::create(
             DomainEventTypes::EventCreated,
             format!("Event '{}' created", &self.name),
             Tables::Events,
-            Some(result.id),
+            Some(event.id),
             current_user_id,
-            Some(json!(&new_event)),
+            event_json_data,
         )
         .commit(conn)?;
 
-        Ok(result)
+        Ok(data.into())
     }
 
     pub fn default_status() -> EventStatus {
@@ -207,8 +206,7 @@ impl NewEvent {
     }
 }
 
-#[derive(AsChangeset, Default, Deserialize, Validate, Serialize)]
-#[table_name = "events"]
+#[derive(Default, Deserialize, Validate, Serialize)]
 pub struct EventEditableAttributes {
     pub name: Option<String>,
     pub venue_id: Option<Uuid>,
@@ -417,10 +415,11 @@ impl Event {
     }
 
     pub fn mark_settled(&self, conn: &PgConnection) -> Result<Event, DatabaseError> {
-        diesel::update(self)
+        diesel::update(&EventId::from(self))
             .set((events::settled_at.eq(dsl::now), events::updated_at.eq(dsl::now)))
-            .get_result(conn)
+            .get_result::<EventData>(conn)
             .to_db_error(ErrorCode::UpdateError, "Could not mark event as having been settled")
+            .map(|event| event.into())
     }
 
     pub fn find_organization_users(event_id: Uuid, conn: &PgConnection) -> Result<Vec<User>, DatabaseError> {
@@ -445,7 +444,7 @@ impl Event {
     ) -> Result<Vec<Event>, DatabaseError> {
         use schema::*;
 
-        let mut events: Vec<Event> = events::table
+        let mut events: Vec<EventData> = events::table
             .inner_join(order_items::table.on(order_items::event_id.eq(events::id.nullable())))
             .inner_join(orders::table.on(orders::id.eq(order_items::order_id)))
             .filter(events::deleted_at.is_null())
@@ -459,7 +458,7 @@ impl Event {
             .get_results(conn)
             .to_db_error(ErrorCode::QueryError, "Could not retrieve events")?;
 
-        let mut refund_events: Vec<Event> = refunds::table
+        let mut refund_events: Vec<EventData> = refunds::table
             .inner_join(refund_items::table.on(refund_items::refund_id.eq(refunds::id)))
             .inner_join(order_items::table.on(order_items::id.eq(refund_items::order_item_id)))
             .inner_join(events::table.on(order_items::event_id.eq(events::id.nullable())))
@@ -477,7 +476,7 @@ impl Event {
 
         events.append(&mut refund_events);
         events.sort_by_key(|e| e.event_end);
-        Ok(events)
+        Ok(EventData::vec_into_events(events))
     }
 
     pub fn event_payload_data(
@@ -564,7 +563,8 @@ impl Event {
             return DatabaseError::business_process_error("Event is ineligible for deletion");
         }
 
-        diesel::update(&self)
+        let data: EventData = self.into();
+        diesel::update(&data)
             .set((
                 events::deleted_at.eq(dsl::now.nullable()),
                 events::updated_at.eq(dsl::now),
@@ -576,7 +576,7 @@ impl Event {
             DomainEventTypes::EventDeleted,
             "Event deleted".to_string(),
             Tables::Events,
-            Some(self.id),
+            Some(data.id),
             Some(user_id),
             None,
         )
@@ -766,16 +766,16 @@ impl Event {
             }
         }
 
-        let result: Event = DatabaseError::wrap(
-            ErrorCode::UpdateError,
-            "Could not update event",
-            diesel::update(self)
-                .set((&event, events::updated_at.eq(dsl::now)))
-                .get_result(conn),
-        )?;
+        let event_json = Some(json!(&event));
+        let update = EventEditableAttributesData::prepare_update(self.id, event, conn)?;
+        let event: Event = diesel::update(&EventId::from(self))
+            .set((&update, events::updated_at.eq(dsl::now)))
+            .get_result::<EventData>(conn)
+            .to_db_error(ErrorCode::UpdateError, "Could not update event")?
+            .into();
 
-        if previous_start != result.event_start && self.status == EventStatus::Published {
-            result.regenerate_drip_actions(conn)?;
+        if previous_start != event.event_start && self.status == EventStatus::Published {
+            event.regenerate_drip_actions(conn)?;
         }
 
         DomainEvent::create(
@@ -784,11 +784,11 @@ impl Event {
             Tables::Events,
             Some(self.id),
             current_user_id,
-            Some(json!(&event)),
+            event_json,
         )
         .commit(conn)?;
 
-        Ok(result)
+        Ok(event)
     }
 
     pub fn regenerate_drip_actions(&self, conn: &PgConnection) -> Result<(), DatabaseError> {
@@ -1022,11 +1022,11 @@ impl Event {
             return Err(errors.into());
         }
 
-        let update_fields = EventEditableAttributes {
+        let update_fields = EventEditableAttributesData {
             publish_date: Some(None),
             ..Default::default()
         };
-        diesel::update(self)
+        diesel::update(&EventId::from(self))
             .set((
                 update_fields,
                 events::status.eq(EventStatus::Draft),
@@ -1073,14 +1073,14 @@ impl Event {
         }
 
         match self.publish_date {
-            Some(_) => diesel::update(self)
+            Some(_) => diesel::update(&EventId::from(self))
                 .set((
                     events::status.eq(EventStatus::Published),
                     events::updated_at.eq(dsl::now),
                 ))
                 .execute(conn)
                 .to_db_error(ErrorCode::UpdateError, "Could not publish record")?,
-            None => diesel::update(self)
+            None => diesel::update(&EventId::from(self))
                 .set((
                     events::status.eq(EventStatus::Published),
                     events::publish_date.eq(dsl::now.nullable()),
@@ -1116,16 +1116,18 @@ impl Event {
             .select(events::all_columns)
             .order_by(events::name.asc())
             .distinct()
-            .load(conn)
+            .load::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Error loading organizations")
+            .map(EventData::vec_into_events)
     }
 
     pub fn find(id: Uuid, conn: &PgConnection) -> Result<Event, DatabaseError> {
         events::table
             .filter(events::deleted_at.is_null())
             .find(id)
-            .first::<Event>(conn)
+            .first::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Error loading event")
+            .map(|event| event.into())
     }
 
     pub fn find_incl_org_venue_fees(
@@ -1133,7 +1135,7 @@ impl Event {
         conn: &PgConnection,
     ) -> Result<(Event, Organization, Option<Venue>, FeeSchedule), DatabaseError> {
         use schema::*;
-        let res: (Event, Organization, Option<Venue>, FeeSchedule) = events::table
+        let res: (EventData, Organization, Option<Venue>, FeeSchedule) = events::table
             .inner_join(organizations::table.inner_join(fee_schedules::table))
             .left_join(venues::table)
             .filter(events::id.eq(id))
@@ -1147,7 +1149,7 @@ impl Event {
             .load(conn)
             .to_db_error(ErrorCode::QueryError, "Error loading event")
             .expect_single()?;
-        Ok(res)
+        Ok((res.0.into(), res.1, res.2, res.3))
     }
 
     pub fn find_by_ids(ids: Vec<Uuid>, conn: &PgConnection) -> Result<Vec<Event>, DatabaseError> {
@@ -1155,15 +1157,17 @@ impl Event {
             .filter(events::deleted_at.is_null())
             .filter(events::id.eq_any(ids))
             .order_by(events::name)
-            .get_results(conn)
+            .get_results::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Error loading events")
+            .map(EventData::vec_into_events)
     }
 
     pub fn cancel(self, current_user_id: Option<Uuid>, conn: &PgConnection) -> Result<Event, DatabaseError> {
-        let event: Event = diesel::update(&self)
+        let event: Event = diesel::update(&EventId::from(&self))
             .set(events::cancelled_at.eq(dsl::now.nullable()))
-            .get_result(conn)
-            .to_db_error(ErrorCode::UpdateError, "Could not update event")?;
+            .get_result::<EventData>(conn)
+            .to_db_error(ErrorCode::UpdateError, "Could not update event")?
+            .into();
 
         DomainEvent::create(
             DomainEventTypes::EventCancelled,
@@ -1200,8 +1204,9 @@ impl Event {
             .filter(events::status.eq(status))
             .filter(events::is_external.eq(false))
             .order_by(events::event_end.asc())
-            .get_results(conn)
+            .get_results::<EventData>(conn)
             .to_db_error(ErrorCode::QueryError, "Could not retrieve events")
+            .map(EventData::vec_into_events)
     }
 
     /**
@@ -1321,32 +1326,28 @@ impl Event {
     }
 
     pub fn find_all_active_events_for_venue(venue_id: &Uuid, conn: &PgConnection) -> Result<Vec<Event>, DatabaseError> {
-        DatabaseError::wrap(
-            ErrorCode::QueryError,
-            "Error loading event via venue",
-            events::table
-                .filter(events::venue_id.eq(venue_id))
-                .filter(events::status.eq(EventStatus::Published))
-                .filter(events::deleted_at.is_null())
-                .filter(events::cancelled_at.is_null())
-                .filter(events::private_access_code.is_null())
-                .order_by(events::name)
-                .load(conn),
-        )
+        events::table
+            .filter(events::venue_id.eq(venue_id))
+            .filter(events::status.eq(EventStatus::Published))
+            .filter(events::deleted_at.is_null())
+            .filter(events::cancelled_at.is_null())
+            .filter(events::private_access_code.is_null())
+            .order_by(events::name)
+            .load::<EventData>(conn)
+            .map(EventData::vec_into_events)
+            .to_db_error(ErrorCode::QueryError, "Error loading event via venue")
     }
 
     pub fn find_all_active_events(conn: &PgConnection) -> Result<Vec<Event>, DatabaseError> {
-        DatabaseError::wrap(
-            ErrorCode::QueryError,
-            "Error loading all active events",
-            events::table
-                .filter(events::status.eq(EventStatus::Published))
-                .filter(events::deleted_at.is_null())
-                .filter(events::cancelled_at.is_null())
-                .filter(events::private_access_code.is_null())
-                .order_by(events::name)
-                .load(conn),
-        )
+        events::table
+            .filter(events::status.eq(EventStatus::Published))
+            .filter(events::deleted_at.is_null())
+            .filter(events::cancelled_at.is_null())
+            .filter(events::private_access_code.is_null())
+            .order_by(events::name)
+            .load::<EventData>(conn)
+            .map(EventData::vec_into_events)
+            .to_db_error(ErrorCode::QueryError, "Error loading all active events")
     }
 
     pub fn find_all_events_for_organization(
@@ -1487,7 +1488,7 @@ impl Event {
             eligible_for_deletion: bool,
         }
 
-        let query_events = include_str!("../queries/find_all_events_for_organization.sql");
+        let query_events = include_str!("../../queries/find_all_events_for_organization.sql");
 
         jlog!(Level::Debug, "Fetching summary data for event");
         let events: Vec<R> = diesel::sql_query(query_events)
@@ -1500,7 +1501,7 @@ impl Event {
             .get_results(conn)
             .to_db_error(ErrorCode::QueryError, "Could not load events for organization")?;
 
-        let query_ticket_types = include_str!("../queries/find_all_events_for_organization_ticket_type.sql");
+        let query_ticket_types = include_str!("../../queries/find_all_events_for_organization_ticket_type.sql");
 
         jlog!(Level::Debug, "Fetching summary data for ticket types");
 
@@ -1758,7 +1759,7 @@ impl Event {
             query = query.filter(ticket_instances::updated_at.nullable().ge(changes_since))
         }
 
-        let results = query.order_by(users::last_name.asc())
+        query.order_by(users::last_name.asc())
             .then_order_by(ticket_instances::id)
             .select((
                 sql::<dUuid>("ticket_instances.id AS id")
@@ -1786,9 +1787,8 @@ impl Event {
             ))
             .paginate(paging.page as i64)
             .per_page(paging.limit as i64)
-            .load_and_count_pages(conn);
-
-        DatabaseError::wrap(ErrorCode::QueryError, "Unable to load all redeemable tickets", results)
+            .load_and_count_pages(conn)
+            .to_db_error(ErrorCode::QueryError, "Unable to load all redeemable tickets")
     }
 
     pub fn guest_list(
@@ -2071,7 +2071,7 @@ impl Event {
             query = query.filter(venues::region_id.eq(region_id));
         }
 
-        let result = query
+        query
             .filter(events::event_end.ge(start_time))
             .filter(events::event_end.le(end_time))
             .filter(events::deleted_at.is_null())
@@ -2081,9 +2081,9 @@ impl Event {
             .then_order_by(events::name.asc())
             .paginate(paging.page as i64)
             .per_page(paging.limit as i64)
-            .load_and_count_pages(conn);
-
-        DatabaseError::wrap(ErrorCode::QueryError, "Unable to load all events", result)
+            .load_and_count_pages::<EventData>(conn)
+            .map(|(events, count)| (EventData::vec_into_events(events), count))
+            .to_db_error(ErrorCode::QueryError, "Unable to load all events")
     }
 
     pub fn add_artist(
