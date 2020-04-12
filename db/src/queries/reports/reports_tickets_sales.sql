@@ -1,3 +1,1 @@
-SELECT * FROM ticket_sales_per_ticket_pricing($1, $2, $3) AS r
-WHERE ($4 IS NULL OR r.event_id = $4)
-  AND ($5 IS NULL OR r.organization_id = $5);
+SELECT * FROM ticket_sales_per_ticket_pricing($1, $2, $3, $4, $5);

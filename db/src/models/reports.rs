@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use utils::errors::*;
 use uuid::Uuid;
 
-sql_function!(fn ticket_sales_per_ticket_pricing(start: Nullable<Timestamp>, end: Nullable<Timestamp>, group_by: Option<Text>) -> Vec<TicketSalesRow>);
+sql_function!(fn ticket_sales_per_ticket_pricing(start: Nullable<Timestamp>, end: Nullable<Timestamp>, group_by: Text, event_id: Nullable<dUuid>, organization_id: Nullable<dUuid>) -> Vec<TicketSalesRow>);
 pub struct Report {}
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, QueryableByName)]

@@ -6,9 +6,11 @@ DROP FUNCTION IF EXISTS ticket_sales_per_ticket_pricing(start TIMESTAMP, "end" T
 DROP FUNCTION IF EXISTS ticket_sales_per_ticket_pricing(start TIMESTAMP, "end" TIMESTAMP, group_by_ticket_type BOOLEAN, group_by_event_id BOOLEAN, group_by_hold_id BOOLEAN);
 -- New function call
 DROP FUNCTION IF EXISTS ticket_sales_per_ticket_pricing(start TIMESTAMP, "end" TIMESTAMP, group_by TEXT);
+-- New optimized function call
+DROP FUNCTION IF EXISTS ticket_sales_per_ticket_pricing(start TIMESTAMP, "end" TIMESTAMP, group_by TEXT, event_id UUID, organization_id UUID);
 -- The group_by can be a combination of 'hold', 'ticket_type', 'ticket_pricing' or a combination: 'ticket_type|ticket_pricing|hold'
 -- Default grouping is by event if no sub-group is defined
-CREATE OR REPLACE FUNCTION ticket_sales_per_ticket_pricing(start TIMESTAMP, "end" TIMESTAMP, group_by TEXT)
+CREATE OR REPLACE FUNCTION ticket_sales_per_ticket_pricing(start TIMESTAMP, "end" TIMESTAMP, group_by TEXT, event_id UUID, organization_id UUID)
     RETURNS TABLE
             (
                 organization_id                    UUID,
@@ -183,6 +185,8 @@ FROM order_items oi
 WHERE oi.ticket_type_id IS NOT NULL
   AND ($1 IS NULL OR o.paid_at >= $1)
   AND ($2 IS NULL OR o.paid_at <= $2)
+  AND ($4 IS NULL OR e.id = $4)
+  AND ($5 IS NULL OR e.organization_id = $5)
 GROUP BY e.id, e.event_start, tt.id, tt.name, tt.status, tt.rank, tp.name, tp.price_in_cents, gh.id, gh.name, gh.hold_type, oi_t_fees.client_fee_in_cents,
          gh.discount_in_cents, c.id, c.name, c.redemption_code, oi_promo_code_price.unit_price_in_cents
 ORDER BY e.id, tt.rank, c.redemption_code, (tp.price_in_cents - gh.discount_in_cents) DESC, oi_t_fees.client_fee_in_cents;
