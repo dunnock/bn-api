@@ -29,6 +29,7 @@ pub struct EventBuilder<'a> {
     private_access_code: Option<String>,
     event_type: Option<EventTypes>,
     additional_info: Option<String>,
+    top_line_info: Option<String>,
 }
 
 impl<'a> EventBuilder<'a> {
@@ -53,6 +54,7 @@ impl<'a> EventBuilder<'a> {
             sales_end: None,
             event_type: None,
             additional_info: None,
+            top_line_info: None,
         }
     }
 
@@ -138,6 +140,11 @@ impl<'a> EventBuilder<'a> {
     pub fn with_ticket_pricing(mut self) -> Self {
         self.with_tickets = true;
         self.with_ticket_pricing = true;
+        self
+    }
+
+    pub fn with_top_line_info(mut self, top_line_info: Option<String>) -> Self {
+        self.top_line_info = top_line_info;
         self
     }
 

@@ -1133,6 +1133,26 @@ fn summary() {
 }
 
 #[test]
+fn summary_fields() {
+    let project = TestProject::new();
+    let connection = project.get_connection();
+    let event = project
+        .create_event()
+        .with_ticket_type_count(1)
+        .with_tickets()
+        .with_ticket_pricing()
+        .with_top_line_info(Some("Event top line".into()))
+        .finish();
+    let summary = event.summary(connection).expect("failed to retrieve summary");
+    assert_eq!(summary.promo_image_url, event.promo_image_url);
+    assert_eq!(summary.additional_info, event.additional_info);
+    assert_eq!(summary.top_line_info, event.top_line_info);
+    assert_eq!(summary.status, event.status);
+    assert_eq!(summary.ticket_types.len(), 1);
+    assert_eq!(summary.name, event.name);
+}
+
+#[test]
 fn activity_summary() {
     let project = TestProject::new();
     let connection = project.get_connection();
